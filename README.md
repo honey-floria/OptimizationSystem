@@ -47,6 +47,8 @@
 
 上游数据或业务团队需要以约定格式提供数据资产。本项目只负责校验输入格式、读取数据并执行实验，不承担数据内容正确性责任。
 
+数据集准备和 Google Colab 使用方式见 [`docs/DATASETS.md`](docs/DATASETS.md)，可直接运行的 Notebook 位于 [`notebooks/finqa_assets_colab.ipynb`](notebooks/finqa_assets_colab.ipynb)。
+
 ## 3. 上游输入接口
 
 项目依赖以下输入资产：
