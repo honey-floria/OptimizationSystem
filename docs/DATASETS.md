@@ -10,9 +10,9 @@
 
 | 项目用途 | 数据来源 | 默认划分 | 建议规模 |
 |---|---|---|---:|
-| 量化校准集 | `dreamerdeo/finqa` | `train` 随机抽样 | 1,024 |
-| 质量调优集 | `dreamerdeo/finqa` | `validation` | 883 |
-| 最终质量评估集 | `dreamerdeo/finqa` | `test` 去除回归重叠 | 约 1,147 |
+| 量化校准集 | `czyssrs/FinQA` | `train` 随机抽样 | 1,024 |
+| 质量调优集 | `czyssrs/FinQA` | `dev` | 883 |
+| 最终质量评估集 | `czyssrs/FinQA` | `test` 去除回归重叠 | 约 1,147 |
 | 数值高风险回归集 | `Aiera/finqa-verified` | `test` | 91 |
 
 FinQA 包含财务报告文本、表格、问题和数值推理答案，适合验证数字、比例、增长率和表格理解能力。Aiera 的 verified 子集只有 91 条，但每条样本经过人工核验，适合作为第一版固定回归集。
@@ -46,7 +46,7 @@ FinQA 包含财务报告文本、表格、问题和数值推理答案，适合�
 也可以在 Colab 单元格中直接执行：
 
 ```python
-!pip -q install -U "datasets>=2.19,<4.0" huggingface_hub pandas pyarrow
+!pip -q install -U datasets huggingface_hub pandas pyarrow
 
 from google.colab import drive
 drive.mount("/content/drive")
@@ -71,8 +71,8 @@ print(assets.summary())
 
 然后再安装依赖并执行 Notebook。
 
-`dreamerdeo/finqa` 当前仍使用 Hugging Face 数据集脚本，因此不兼容已经移除脚本支持的
-`datasets` 4.x。如果当前 Colab 运行时已经导入过 4.x，安装上述兼容版本后需要重启运行时，
+项目直接读取 FinQA 官方仓库的 JSON 文件，不依赖已被 `datasets` 4.x 移除的 Hugging Face
+数据集脚本。更新项目源码后如果当前运行时已经导入过旧版 `finqa_assets.py`，需要重启运行时，
 再从头执行 Notebook。
 
 ## 5. 数据下载与缓存
@@ -150,7 +150,7 @@ Aiera Verified 的答案主要是数字，建议将模型输出解析为数字�
 ## 9. 来源和许可证
 
 - [FinQA 官方仓库](https://github.com/czyssrs/FinQA)：包含数据说明和 MIT License。
-- [Hugging Face dreamerdeo/finqa](https://huggingface.co/datasets/dreamerdeo/finqa)：Colab 中使用的便捷镜像，包含 `train`、`validation`、`test`。
+- [Hugging Face dreamerdeo/finqa](https://huggingface.co/datasets/dreamerdeo/finqa)：旧版便捷镜像；因依赖数据集脚本，当前代码不再直接加载。
 - [Hugging Face Aiera/finqa-verified](https://huggingface.co/datasets/Aiera/finqa-verified)：91 条人工核验样本，页面标示 MIT License。
 
 运行时建议记录数据集版本、commit/revision、下载时间和样本哈希。即使个人非商用，也不要将数据重新打包进公开仓库或 Docker 镜像；使用前应阅读对应仓库的最新数据卡和许可证。

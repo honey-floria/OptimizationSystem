@@ -10,8 +10,11 @@ from pathlib import Path
 from typing import Any
 
 
-FINQA_DATASET = "dreamerdeo/finqa"
+FINQA_DATASET = "czyssrs/FinQA"
 VERIFIED_DATASET = "Aiera/finqa-verified"
+FINQA_SOURCE_URL = (
+    "https://raw.githubusercontent.com/czyssrs/FinQA/{revision}/dataset/{split}.json"
+)
 
 
 def _require_datasets():
@@ -26,6 +29,15 @@ def _require_datasets():
 
 def normalize_question(text: str) -> str:
     return re.sub(r"\s+", " ", str(text).lower().strip())
+
+
+def _get_question(row: dict[str, Any]) -> str:
+    question = row.get("question")
+    if question is None and isinstance(row.get("qa"), dict):
+        question = row["qa"].get("question")
+    if question is None:
+        raise KeyError("FinQA row does not contain question or qa.question.")
+    return str(question)
 
 
 def render_table(table: list[list[Any]] | None) -> str:
@@ -43,7 +55,7 @@ def render_finqa_prompt(row: dict[str, Any]) -> str:
         f"Financial context:\n{pre_text}\n\n"
         f"Financial table:\n{table_text}\n\n"
         f"Additional context:\n{post_text}\n\n"
-        f"Question:\n{row['question']}\n\nAnswer:"
+        f"Question:\n{_get_question(row)}\n\nAnswer:"
     )
 
 
@@ -73,13 +85,21 @@ class FinQAAssets:
 
 def _remove_regression_overlap(quality_test: Any, regression: Any) -> Any:
     regression_questions = {
-        normalize_question(row["question"])
+        normalize_question(_get_question(row))
         for row in regression
-        if "question" in row
     }
     return quality_test.filter(
-        lambda row: normalize_question(row["question"]) not in regression_questions
+        lambda row: normalize_question(_get_question(row))
+        not in regression_questions
     )
+
+
+def _finqa_data_files(revision: str) -> dict[str, str]:
+    return {
+        "train": FINQA_SOURCE_URL.format(revision=revision, split="train"),
+        "validation": FINQA_SOURCE_URL.format(revision=revision, split="dev"),
+        "test": FINQA_SOURCE_URL.format(revision=revision, split="test"),
+    }
 
 
 def prepare_assets(
@@ -96,25 +116,17 @@ def prepare_assets(
     output_path.mkdir(parents=True, exist_ok=True)
     cache_dir = output_path / "hf_cache"
 
-    finqa_kwargs: dict[str, Any] = {
-        "cache_dir": str(cache_dir),
-        "trust_remote_code": True,
-    }
+    source_revision = finqa_revision or "main"
+    finqa_kwargs: dict[str, Any] = {"cache_dir": str(cache_dir)}
     verified_kwargs: dict[str, Any] = {"cache_dir": str(cache_dir)}
-    if finqa_revision:
-        finqa_kwargs["revision"] = finqa_revision
     if verified_revision:
         verified_kwargs["revision"] = verified_revision
 
-    try:
-        finqa = load_dataset(FINQA_DATASET, **finqa_kwargs)
-    except RuntimeError as exc:
-        if "Dataset scripts are no longer supported" not in str(exc):
-            raise
-        raise RuntimeError(
-            f"{FINQA_DATASET} requires datasets<4.0. Install the dependencies "
-            "from requirements-colab.txt and restart the Python runtime."
-        ) from exc
+    finqa = load_dataset(
+        "json",
+        data_files=_finqa_data_files(source_revision),
+        **finqa_kwargs,
+    )
     verified = load_dataset(
         VERIFIED_DATASET,
         split="test",
@@ -141,7 +153,7 @@ def prepare_assets(
     manifest = {
         "finqa_dataset": FINQA_DATASET,
         "verified_dataset": VERIFIED_DATASET,
-        "finqa_revision": finqa_revision or "default",
+        "finqa_revision": source_revision,
         "verified_revision": verified_revision or "default",
         "seed": seed,
         "calibration_size": calibration_size,
