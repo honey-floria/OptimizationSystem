@@ -96,14 +96,25 @@ def prepare_assets(
     output_path.mkdir(parents=True, exist_ok=True)
     cache_dir = output_path / "hf_cache"
 
-    finqa_kwargs: dict[str, Any] = {"cache_dir": str(cache_dir)}
+    finqa_kwargs: dict[str, Any] = {
+        "cache_dir": str(cache_dir),
+        "trust_remote_code": True,
+    }
     verified_kwargs: dict[str, Any] = {"cache_dir": str(cache_dir)}
     if finqa_revision:
         finqa_kwargs["revision"] = finqa_revision
     if verified_revision:
         verified_kwargs["revision"] = verified_revision
 
-    finqa = load_dataset(FINQA_DATASET, **finqa_kwargs)
+    try:
+        finqa = load_dataset(FINQA_DATASET, **finqa_kwargs)
+    except RuntimeError as exc:
+        if "Dataset scripts are no longer supported" not in str(exc):
+            raise
+        raise RuntimeError(
+            f"{FINQA_DATASET} requires datasets<4.0. Install the dependencies "
+            "from requirements-colab.txt and restart the Python runtime."
+        ) from exc
     verified = load_dataset(
         VERIFIED_DATASET,
         split="test",

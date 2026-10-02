@@ -46,7 +46,7 @@ FinQA 包含财务报告文本、表格、问题和数值推理答案，适合�
 也可以在 Colab 单元格中直接执行：
 
 ```python
-!pip -q install -U datasets huggingface_hub pandas pyarrow
+!pip -q install -U "datasets>=2.19,<4.0" huggingface_hub pandas pyarrow
 
 from google.colab import drive
 drive.mount("/content/drive")
@@ -70,6 +70,10 @@ print(assets.summary())
 ```
 
 然后再安装依赖并执行 Notebook。
+
+`dreamerdeo/finqa` 当前仍使用 Hugging Face 数据集脚本，因此不兼容已经移除脚本支持的
+`datasets` 4.x。如果当前 Colab 运行时已经导入过 4.x，安装上述兼容版本后需要重启运行时，
+再从头执行 Notebook。
 
 ## 5. 数据下载与缓存
 
