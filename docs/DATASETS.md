@@ -72,8 +72,8 @@ print(assets.summary())
 然后再安装依赖并执行 Notebook。
 
 项目直接读取 FinQA 官方仓库的 JSON 文件，不依赖已被 `datasets` 4.x 移除的 Hugging Face
-数据集脚本。更新项目源码后如果当前运行时已经导入过旧版 `finqa_assets.py`，需要重启运行时，
-再从头执行 Notebook。
+数据集脚本；Aiera verified 子集同样通过 Hub 的 Parquet 导出读取。更新项目源码后如果当前
+运行时已经导入过旧版 `finqa_assets.py`，需要重启运行时，再从头执行 Notebook。
 
 ## 5. 数据下载与缓存
 

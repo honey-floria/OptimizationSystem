@@ -15,6 +15,9 @@ VERIFIED_DATASET = "Aiera/finqa-verified"
 FINQA_SOURCE_URL = (
     "https://raw.githubusercontent.com/czyssrs/FinQA/{revision}/dataset/{split}.json"
 )
+VERIFIED_PARQUET_URL = (
+    "hf://datasets/Aiera/finqa-verified@~parquet/default/test/0000.parquet"
+)
 
 
 def _require_datasets():
@@ -118,19 +121,21 @@ def prepare_assets(
 
     source_revision = finqa_revision or "main"
     finqa_kwargs: dict[str, Any] = {"cache_dir": str(cache_dir)}
-    verified_kwargs: dict[str, Any] = {"cache_dir": str(cache_dir)}
-    if verified_revision:
-        verified_kwargs["revision"] = verified_revision
-
     finqa = load_dataset(
         "json",
         data_files=_finqa_data_files(source_revision),
         **finqa_kwargs,
     )
+    verified_source = VERIFIED_PARQUET_URL
+    if verified_revision:
+        verified_source = VERIFIED_PARQUET_URL.replace(
+            "@~parquet/", f"@{verified_revision}/"
+        )
     verified = load_dataset(
-        VERIFIED_DATASET,
+        "parquet",
+        data_files={"test": verified_source},
         split="test",
-        **verified_kwargs,
+        cache_dir=str(cache_dir),
     )
 
     if calibration_size > len(finqa["train"]):
