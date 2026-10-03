@@ -142,18 +142,24 @@
 ### 5.4 环境锁定
 
 环境锁定与验收工具已实现，使用方式见 [`docs/ENVIRONMENT_LOCK.md`](ENVIRONMENT_LOCK.md)。
-当前先在 Colab 锁定 NVIDIA/T4 环境；昇腾、CANN 和真实容器构建按既定计划延后。
+已完成 NVIDIA/T4 环境锁定，五项检查通过，结果见
+[`out/environment_lock/validation.json`](../out/environment_lock/validation.json)。昇腾、CANN 和
+真实容器构建按既定计划延后，当前三项保持 `not_run`。
 
-- [ ] 创建 NVIDIA 环境文件
+- [x] 创建 NVIDIA 环境文件
 - [ ] 创建昇腾环境文件
-- [ ] 固定 Python、PyTorch 和 Transformers 版本
+- [x] 固定 Python、PyTorch 和 Transformers 版本
 - [ ] 固定 CUDA/CANN 版本
-- [ ] 固定推理框架版本
+- [x] 固定推理框架版本
 - [ ] 构建基础容器镜像
-- [ ] 保存 `pip freeze` 或等价依赖清单
-- [ ] 保存硬件和驱动信息
+- [x] 保存 `pip freeze` 或等价依赖清单
+- [x] 保存 NVIDIA 硬件和驱动信息（昇腾另行补齐）
 
 ### 5.5 阶段验收
+
+NVIDIA 基线阶段验收工具已实现，范围与证据说明见
+[`docs/STAGE5_ACCEPTANCE.md`](STAGE5_ACCEPTANCE.md)。完成状态以完整 FinQA dev 质量报告和
+`out/stage5/validation.json` 为准，报告拉回前暂不勾选。
 
 - [ ] FP16/BF16 模型可稳定运行
 - [ ] Benchmark 可重复执行

@@ -1,0 +1,49 @@
+{
+  "nvidia_lock": "C:\\Users\\u1c4pu\\OptimizationSystem\\out\\environment_lock\\nvidia_environment.json",
+  "ascend_lock": "C:\\Users\\u1c4pu\\OptimizationSystem\\out\\environment_lock\\ascend_environment.pending.json",
+  "dependency_lock": "C:\\Users\\u1c4pu\\OptimizationSystem\\out\\environment_lock\\requirements.freeze.txt",
+  "container_evidence": null,
+  "complete": false,
+  "checks": [
+    {
+      "name": "nvidia_environment_file_created",
+      "status": "pass",
+      "detail": "Versioned NVIDIA environment lock is complete."
+    },
+    {
+      "name": "ascend_environment_file_created",
+      "status": "not_run",
+      "detail": "Ascend lock requires evidence from a real Ascend host."
+    },
+    {
+      "name": "python_torch_transformers_versions_pinned",
+      "status": "pass",
+      "detail": "Python, PyTorch, and Transformers versions are pinned."
+    },
+    {
+      "name": "cuda_and_cann_versions_pinned",
+      "status": "not_run",
+      "detail": "CUDA is pinned; CANN awaits the real Ascend environment."
+    },
+    {
+      "name": "inference_framework_version_pinned",
+      "status": "pass",
+      "detail": "The active NVIDIA inference framework is pinned."
+    },
+    {
+      "name": "base_container_image_built",
+      "status": "not_run",
+      "detail": "A successful container build with image digest is required."
+    },
+    {
+      "name": "dependency_lock_saved",
+      "status": "pass",
+      "detail": "pip freeze is saved, hashed, and includes core packages."
+    },
+    {
+      "name": "hardware_and_driver_recorded",
+      "status": "pass",
+      "detail": "NVIDIA model, memory, and driver are recorded."
+    }
+  ]
+}
