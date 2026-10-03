@@ -46,6 +46,7 @@ def validate_stage5(
     benchmark_validation_file: str | Path,
     benchmark_report_file: str | Path,
     quality_validation_file: str | Path,
+    quality_report_file: str | Path,
     environment_validation_file: str | Path,
     dataset_validation_file: str | Path,
     business_validation_file: str | Path,
@@ -56,6 +57,7 @@ def validate_stage5(
     _, benchmark_validation = _load(benchmark_validation_file)
     _, benchmark = _load(benchmark_report_file)
     _, quality = _load(quality_validation_file)
+    _, quality_report = _load(quality_report_file)
     _, environment = _load(environment_validation_file)
     _, dataset = _load(dataset_validation_file)
     _, business = _load(business_validation_file)
@@ -70,7 +72,7 @@ def validate_stage5(
         and len(benchmark.get("cases", [])) >= 2
     )
     quality_ready = quality.get("complete") is True
-    quality_environment = quality.get("environment", {})
+    quality_environment = quality_report.get("environment", {})
     benchmark_environment = benchmark.get("environment", {})
     quality_environment_matches = all(
         quality_environment.get(field) == benchmark_environment.get(field)
