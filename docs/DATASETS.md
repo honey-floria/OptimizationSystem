@@ -54,7 +54,7 @@ drive.mount("/content/drive")
 from src.data.finqa_assets import prepare_assets
 
 assets = prepare_assets(
-    output_dir="/content/drive/MyDrive/banking_llm_project/datasets",
+    output_dir="/content/drive/MyDrive/OptimizationSystem/out/datasets",
     calibration_size=1024,
     seed=42,
 )
@@ -83,7 +83,7 @@ print(assets.summary())
 from src.data.finqa_assets import load_assets
 
 assets = load_assets(
-    "/content/drive/MyDrive/banking_llm_project/datasets"
+    "/content/drive/MyDrive/OptimizationSystem/out/datasets"
 )
 
 print(len(assets.calibration))
