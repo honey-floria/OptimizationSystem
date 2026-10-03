@@ -13,5 +13,6 @@
   "max_calibration_samples": 1024,
   "max_calibration_seq_len": 512,
   "model_input_root": "/content/drive/MyDrive/banking_llm_project/model_input_real",
-  "result_root": "/content/drive/MyDrive/OptimizationSystem/out/awq"
+  "result_root": "/content/drive/MyDrive/OptimizationSystem/out/awq",
+  "model_root": "/content/drive/MyDrive/banking_llm_project/awq"
 }

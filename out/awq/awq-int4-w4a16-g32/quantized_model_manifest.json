@@ -11,11 +11,13 @@
     "quantization_granularity": "groupwise",
     "backend_package": "autoawq"
   },
-  "model_path": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq-int4-w4a16-g32",
+  "model_path": "/content/drive/MyDrive/banking_llm_project/awq/awq-int4-w4a16-g32",
   "source_model_path": "/content/drive/MyDrive/banking_llm_project/model_input_real/qwen2.5-0.5b-instruct",
-  "required_files": [
-    "config.json",
-    "quantization_config.json"
-  ],
+  "required_files": ["config.json", "quantization_config.json"],
+  "analysis_artifacts": {
+    "config": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq-int4-w4a16-g32/quantization_config.json",
+    "manifest": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq-int4-w4a16-g32/quantized_model_manifest.json",
+    "events": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq-int4-w4a16-g32/quantization_events.jsonl"
+  },
   "backend_version": "0.2.9"
 }
