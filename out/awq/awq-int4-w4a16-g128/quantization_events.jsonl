@@ -1,0 +1,2 @@
+{"event": "quantization", "plan_id": "awq-int4-w4a16-g128", "method": "awq", "timestamp": "2026-10-03T18:56:39.085692+00:00", "status": "started"}
+{"event": "quantization", "plan_id": "awq-int4-w4a16-g128", "method": "awq", "timestamp": "2026-10-03T18:56:39.085692+00:00", "status": "completed", "elapsed_seconds": 360.129326255}
