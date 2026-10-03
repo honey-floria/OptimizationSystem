@@ -36,6 +36,6 @@
     }
   ],
   "weight_sha256": {
-    "model.safetensors": "c038f68c14e645ac7c5444e26a02eda35a8b175f481328df457951b0779cf155"
+    "model.safetensors": "80454cc61c251b24ae1dbe1d41dbce612ffa737de36d14f1812c7bef85692320"
   }
 }
