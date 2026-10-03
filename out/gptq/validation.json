@@ -1,0 +1,26 @@
+{
+  "evidence": "/content/drive/MyDrive/OptimizationSystem/out/gptq/gptq_evidence.json",
+  "complete": false,
+  "checks": [
+    {
+      "name": "gptq_awq_comparable_matrix",
+      "status": "pass",
+      "detail": "GPTQ uses INT4 group sizes 32, 64, and 128."
+    },
+    {
+      "name": "gptq_backend_recorded",
+      "status": "pass",
+      "detail": "GPTQModel version is recorded."
+    },
+    {
+      "name": "gptq_quantized_artifacts",
+      "status": "not_run",
+      "detail": "Each GPTQ plan has config, manifest, and event log."
+    },
+    {
+      "name": "gptq_real_execution",
+      "status": "not_run",
+      "detail": "All GPTQ plans completed real export."
+    }
+  ]
+}
