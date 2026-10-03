@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "target": "nvidia",
+  "status": "locked",
+  "profile_id": "cb33bf43e32a-nvidia-fp16",
+  "runtime": {
+    "hostname": "cb33bf43e32a",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "python": "3.13.15",
+    "container_runtime": "google-colab",
+    "container_version": "release-colab-external-images_20261001-060042_RC00"
+  },
+  "hardware": {
+    "available": true,
+    "count": 1,
+    "devices": [
+      {
+        "index": 0,
+        "name": "Tesla T4",
+        "memory_mib": 15360,
+        "driver_version": "580.82.07"
+      }
+    ]
+  },
+  "software": {
+    "cuda_version": "13.0",
+    "cudnn_version": "92700",
+    "driver_version": "580.82.07"
+  },
+  "frameworks": {
+    "torch": "2.11.0+cu130",
+    "transformers": "5.18.0",
+    "accelerate": "1.15.0"
+  },
+  "inference": {
+    "framework": "transformers",
+    "version": "5.18.0",
+    "dtype": "float16",
+    "device": "cuda:0"
+  },
+  "dependencies": {
+    "file": "/content/drive/MyDrive/OptimizationSystem/out/environment_lock/requirements.freeze.txt",
+    "sha256": "936c3a4386ed940b660f4995364d67008d927ec177d5ce0cdda7b3fca40bd070",
+    "package_count": 724
+  },
+  "source_evidence": {
+    "hardware_manifest": "/content/drive/MyDrive/OptimizationSystem/out/hardware/nvidia_colab.json",
+    "benchmark_report": "/content/drive/MyDrive/OptimizationSystem/out/benchmark/baseline_fp16_report.json"
+  }
+}
