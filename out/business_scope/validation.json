@@ -1,0 +1,45 @@
+{
+  "config": "/Users/ys/PycharmProjects/OptimizationSystem/configs/business_scope.json",
+  "primary_scenario_id": "financial_report_numeric_qa",
+  "scenario_ids": [
+    "internal_financial_faq",
+    "financial_report_numeric_qa",
+    "credit_policy_compliance_qa"
+  ],
+  "active_scenario_ids": [
+    "financial_report_numeric_qa"
+  ],
+  "complete": true,
+  "checks": [
+    {
+      "name": "first_business_scenario_confirmed",
+      "status": "pass",
+      "detail": "L1/L2/L3 scenario portfolio, primary scenario, and approval are recorded."
+    },
+    {
+      "name": "business_risk_level_confirmed",
+      "status": "pass",
+      "detail": "Each scenario has a risk-aligned compression policy."
+    },
+    {
+      "name": "allowed_model_outputs_confirmed",
+      "status": "pass",
+      "detail": "Allowed outputs and abstention behavior are defined per scenario."
+    },
+    {
+      "name": "mandatory_human_review_confirmed",
+      "status": "pass",
+      "detail": "Mandatory human-review conditions are defined per scenario."
+    },
+    {
+      "name": "quality_metrics_and_thresholds_confirmed",
+      "status": "pass",
+      "detail": "Risk-specific quality, regression, and grounding gates are defined."
+    },
+    {
+      "name": "out_of_scope_functions_confirmed",
+      "status": "pass",
+      "detail": "Global and scenario-specific exclusions are explicitly listed."
+    }
+  ]
+}
