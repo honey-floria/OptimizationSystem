@@ -124,21 +124,25 @@
 ### 5.3 Benchmark
 
 统一 Benchmark 与验收工具已实现，使用方式见 [`docs/BENCHMARK.md`](BENCHMARK.md)。
-完成状态以 T4 上的真实测试报告和 `out/benchmark/validation.json` 为准，报告拉回前暂不勾选。
+已在 Tesla T4 上完成真实 FP16 Benchmark，十一项检查结果见
+[`out/benchmark/validation.json`](../out/benchmark/validation.json)。
 
-- [ ] 实现统一 benchmark 命令
-- [ ] 测量 TTFT
-- [ ] 测量单 token 延迟
-- [ ] 测量端到端延迟
-- [ ] 测量 tokens/s
-- [ ] 测量 batch throughput
-- [ ] 测量 P50/P95/P99 延迟
-- [ ] 测量显存和 KV Cache 显存
-- [ ] 测量不同 batch size
-- [ ] 测量不同输入长度和输出长度
-- [ ] 生成 FP16/BF16 基线报告
+- [x] 实现统一 benchmark 命令
+- [x] 测量 TTFT
+- [x] 测量单 token 延迟
+- [x] 测量端到端延迟
+- [x] 测量 tokens/s
+- [x] 测量 batch throughput
+- [x] 测量 P50/P95/P99 延迟
+- [x] 测量显存和 KV Cache 显存
+- [x] 测量不同 batch size
+- [x] 测量不同输入长度和输出长度
+- [x] 生成 FP16/BF16 基线报告
 
 ### 5.4 环境锁定
+
+环境锁定与验收工具已实现，使用方式见 [`docs/ENVIRONMENT_LOCK.md`](ENVIRONMENT_LOCK.md)。
+当前先在 Colab 锁定 NVIDIA/T4 环境；昇腾、CANN 和真实容器构建按既定计划延后。
 
 - [ ] 创建 NVIDIA 环境文件
 - [ ] 创建昇腾环境文件

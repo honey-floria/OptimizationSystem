@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "target": "nvidia",
+  "status": "locked",
+  "profile_id": "colab-t4-fp16-2026-10-03",
+  "runtime": {
+    "python": "3.13.15",
+    "container_runtime": "google-colab",
+    "container_version": "release-colab-external-images_20261001-060042_RC00"
+  },
+  "hardware": {
+    "gpu": "Tesla T4",
+    "count": 1,
+    "memory_mib": 15360,
+    "driver": "580.82.07"
+  },
+  "software": {
+    "cuda": "13.0",
+    "cudnn": "92700"
+  },
+  "frameworks": {
+    "torch": "2.11.0+cu130",
+    "transformers": "5.18.0",
+    "accelerate": "1.15.0"
+  },
+  "inference": {
+    "framework": "transformers",
+    "dtype": "float16",
+    "device": "cuda:0"
+  },
+  "source_evidence": {
+    "hardware": "out/hardware/nvidia_colab.json",
+    "benchmark": "out/benchmark/baseline_fp16_report.json"
+  }
+}
