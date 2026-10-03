@@ -85,6 +85,24 @@ def _load_json(path: str | Path) -> tuple[Path, dict[str, Any]]:
     return file_path, payload
 
 
+def _resolve_model_path(
+    manifest_path: Path, model_manifest: dict[str, Any]
+) -> Path:
+    model_value = model_manifest.get("model_path")
+    if not isinstance(model_value, str) or not model_value.strip():
+        raise ValueError("Model manifest must define a non-empty model_path.")
+    model_path = Path(model_value).expanduser()
+    if not model_path.is_absolute():
+        model_path = manifest_path.parent / model_path
+    model_path = model_path.resolve()
+    if not model_path.is_dir():
+        raise FileNotFoundError(
+            f"Local model directory does not exist: {model_path}. "
+            "Check model_path in the model manifest and mount Google Drive."
+        )
+    return model_path
+
+
 class BaselineService:
     def __init__(
         self,
@@ -115,7 +133,8 @@ class BaselineService:
         log_file: str | Path,
     ) -> "BaselineService":
         _, config = _load_json(config_file)
-        _, model_manifest = _load_json(model_manifest_file)
+        model_manifest_path, model_manifest = _load_json(model_manifest_file)
+        model_path = _resolve_model_path(model_manifest_path, model_manifest)
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -128,16 +147,15 @@ class BaselineService:
         }.get(config.get("dtype"))
         if dtype is None:
             raise ValueError("Baseline dtype must be float16 or bfloat16.")
-        model_path = Path(model_manifest["model_path"])
         tokenizer = AutoTokenizer.from_pretrained(
-            model_path,
+            str(model_path),
             local_files_only=True,
             trust_remote_code=model_manifest.get("runtime", {}).get(
                 "trust_remote_code", False
             ),
         )
         model = AutoModelForCausalLM.from_pretrained(
-            model_path,
+            str(model_path),
             local_files_only=True,
             trust_remote_code=model_manifest.get("runtime", {}).get(
                 "trust_remote_code", False
