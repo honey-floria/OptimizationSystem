@@ -3,7 +3,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.baseline.service import InferenceRequest, validate_baseline_evidence
+from src.baseline.service import (
+    InferenceRequest,
+    _resolve_model_path,
+    validate_baseline_evidence,
+)
 from src.input_validation.model_input import FAIL, PASS
 
 
@@ -78,6 +82,25 @@ class BaselineServiceTest(unittest.TestCase):
 
         self.assertEqual(request.request_id, "request-1")
         self.assertIn("What is the value?", request.render_prompt())
+
+    def test_relative_model_path_resolves_from_manifest(self):
+        model_path = Path(self.temporary_directory.name) / "model"
+        model_path.mkdir()
+        manifest_path = Path(self.temporary_directory.name) / "manifest.json"
+
+        resolved = _resolve_model_path(
+            manifest_path, {"model_path": "model"}
+        )
+
+        self.assertEqual(resolved, model_path.resolve())
+
+    def test_missing_model_path_has_clear_error(self):
+        manifest_path = Path(self.temporary_directory.name) / "manifest.json"
+
+        with self.assertRaisesRegex(FileNotFoundError, "does not exist"):
+            _resolve_model_path(
+                manifest_path, {"model_path": "missing-model"}
+            )
 
 
 if __name__ == "__main__":

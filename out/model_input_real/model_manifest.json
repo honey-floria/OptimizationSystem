@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
-  "model_path": "/content/drive/MyDrive/OptimizationSystem/out/model_input_real/qwen2.5-0.5b-instruct",
+  "model_path": "/content/drive/MyDrive/banking_llm_project/model_input_real/qwen2.5-0.5b-instruct",
   "version": "Qwen2.5-0.5B-Instruct",
   "commit": "7ae557604adf67be50417f59c2c2f167def9a775",
   "weight_files": [
