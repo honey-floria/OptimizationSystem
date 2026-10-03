@@ -7,6 +7,7 @@ import json
 import platform
 import sys
 import time
+import traceback
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -137,8 +138,9 @@ def run_gptq_plan(
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer, GPTQConfig
     except ImportError as exc:
-        _append_event(event_log, {**base_event, "status": "not_run", "error": repr(exc)})
-        return {"plan": plan.to_dict(), "status": "not_run", "detail": repr(exc)}
+        detail = traceback.format_exc()
+        _append_event(event_log, {**base_event, "status": "not_run", "error": detail})
+        return {"plan": plan.to_dict(), "status": "not_run", "detail": detail}
     if _package_version("gptqmodel") is None:
         detail = "gptqmodel is not installed."
         _append_event(event_log, {**base_event, "status": "not_run", "error": detail})
