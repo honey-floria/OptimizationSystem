@@ -63,20 +63,24 @@
 
 ### 4.2 评测资产输入
 
-校验工具已实现，使用方式见 [`docs/DATASET_INPUTS.md`](DATASET_INPUTS.md)。完成状态以真实
-数据 manifest 和 `out/dataset_input/validation.json` 为准，在报告拉回前暂不勾选。
+校验工具使用方式见 [`docs/DATASET_INPUTS.md`](DATASET_INPUTS.md)。验收依据为
+[`out/dataset_input/dataset_manifest.json`](../out/dataset_input/dataset_manifest.json) 和
+[`out/dataset_input/validation.json`](../out/dataset_input/validation.json)，九项自动检查均已通过。
 
-- [ ] 收到 `dataset_manifest.json` 或等价清单
-- [ ] 收到校准集路径和版本
-- [ ] 收到评估集路径和版本
-- [ ] 收到回归集路径和版本
-- [ ] 确认校准集与评估集相互隔离
-- [ ] 确认样本格式和字段定义
-- [ ] 确认业务指标计算脚本或调用接口
-- [ ] 确认高风险样本和关键错误判定方式
-- [ ] 记录评测资产版本和校验哈希
+- [x] 收到 `dataset_manifest.json` 或等价清单
+- [x] 收到校准集路径和版本
+- [x] 收到评估集路径和版本
+- [x] 收到回归集路径和版本
+- [x] 确认校准集与评估集相互隔离
+- [x] 确认样本格式和字段定义
+- [x] 确认业务指标计算脚本或调用接口
+- [x] 确认高风险样本和关键错误判定方式
+- [x] 记录评测资产版本和校验哈希
 
 ### 4.3 硬件环境输入
+
+采集与校验工具已实现，使用方式见 [`docs/HARDWARE_INPUTS.md`](HARDWARE_INPUTS.md)。Colab
+可完成 NVIDIA 环境采集；昇腾检查必须在真实昇腾机器运行，因此合并报告通过前暂不勾选。
 
 - [ ] 确认 NVIDIA GPU 型号、数量和显存
 - [ ] 确认 CUDA、驱动和容器版本
