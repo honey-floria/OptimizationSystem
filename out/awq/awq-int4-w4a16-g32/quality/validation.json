@@ -1,0 +1,31 @@
+{
+  "report": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq-int4-w4a16-g32/quality/baseline_quality_report.json",
+  "complete": true,
+  "checks": [
+    {
+      "name": "full_development_set_evaluated",
+      "status": "pass",
+      "detail": "Every versioned FinQA development sample was evaluated."
+    },
+    {
+      "name": "numeric_business_metrics_recorded",
+      "status": "pass",
+      "detail": "Numeric accuracy and parse rate are recorded."
+    },
+    {
+      "name": "minimum_parse_rate_gate_passed",
+      "status": "pass",
+      "detail": "The FP16 baseline meets the configured parse-rate gate."
+    },
+    {
+      "name": "model_dataset_environment_traceable",
+      "status": "pass",
+      "detail": "Model, dataset, and FP16 environment versions are traceable."
+    },
+    {
+      "name": "baseline_predictions_saved",
+      "status": "pass",
+      "detail": "Per-sample predictions are saved and hash-verified."
+    }
+  ]
+}

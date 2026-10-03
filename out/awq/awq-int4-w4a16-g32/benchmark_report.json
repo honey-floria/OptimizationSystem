@@ -1,0 +1,1534 @@
+{
+  "schema_version": 1,
+  "benchmark_name": "finqa-fp16-baseline-v1",
+  "created_at": "2026-10-03T22:21:58.705674+00:00",
+  "command": "python -m src.benchmark.runner run",
+  "model_metadata": {
+    "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+    "version": "Qwen2.5-0.5B-Instruct",
+    "commit": "7ae557604adf67be50417f59c2c2f167def9a775",
+    "weight_files": [
+      "config.json",
+      "quantization_config.json"
+    ],
+    "quantization": {
+      "plan_id": "awq-int4-w4a16-g32",
+      "method": "awq",
+      "bits": 4,
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 32,
+      "quantization_granularity": "groupwise",
+      "backend_package": "autoawq"
+    },
+    "quantized_manifest": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq-int4-w4a16-g32/quantized_model_manifest.json"
+  },
+  "environment": {
+    "captured_at": "2026-10-03T22:21:58.705743+00:00",
+    "python": "3.13.15",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cu130",
+    "transformers": "5.17.0",
+    "cuda": "13.0",
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "device": "cuda:0",
+    "dtype": "float16",
+    "seed": 42,
+    "deterministic": true
+  },
+  "baseline_config": {
+    "schema_version": 1,
+    "scenario_id": "financial_report_numeric_qa",
+    "prompt_template": "finqa-v1",
+    "dtype": "float16",
+    "device": "cuda:0",
+    "seed": 42,
+    "deterministic": true,
+    "max_input_tokens": 4096,
+    "generation": {
+      "max_new_tokens": 32,
+      "do_sample": false,
+      "num_beams": 1
+    }
+  },
+  "benchmark_config": {
+    "schema_version": 1,
+    "benchmark_name": "finqa-fp16-baseline-v1",
+    "warmup_runs": 1,
+    "measured_runs": 5,
+    "use_cache": true,
+    "matrix": {
+      "batch_sizes": [
+        1,
+        2,
+        4
+      ],
+      "input_lengths": [
+        128,
+        512
+      ],
+      "output_lengths": [
+        16,
+        32
+      ]
+    }
+  },
+  "workload": {
+    "prompt_sha256": "e0269b2a89b4a4f87de900cda6d4f5e86219e40d18ccdcc7f2c0cb2a5e7b93ae",
+    "synthetic_length_control": true
+  },
+  "cases": [
+    {
+      "case_id": "bs1-in128-out16",
+      "batch_size": 1,
+      "input_tokens": 128,
+      "output_tokens": 16,
+      "samples": [
+        {
+          "ttft_ms": 57.17670700050803,
+          "time_per_output_token_ms": 53.65296733331585,
+          "end_to_end_latency_ms": 861.9712170002458,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.56210472512267,
+          "requests_per_second": 1.1601315453201668,
+          "model_allocated_mib": 1855.9873046875,
+          "peak_allocated_mib": 1862.31591796875,
+          "incremental_peak_mib": 6.32861328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.67578125,
+          "estimated_kv_cache_mib": 1.6875
+        },
+        {
+          "ttft_ms": 59.56431699996756,
+          "time_per_output_token_ms": 52.9585945333262,
+          "end_to_end_latency_ms": 853.9432349998606,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.73660841168513,
+          "requests_per_second": 1.1710380257303206,
+          "model_allocated_mib": 1857.6748046875,
+          "peak_allocated_mib": 1864.00341796875,
+          "incremental_peak_mib": 6.32861328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.67578125,
+          "estimated_kv_cache_mib": 1.6875
+        },
+        {
+          "ttft_ms": 57.1706090004227,
+          "time_per_output_token_ms": 52.845325999987836,
+          "end_to_end_latency_ms": 849.8504990002402,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.82684074295693,
+          "requests_per_second": 1.176677546434808,
+          "model_allocated_mib": 1859.3623046875,
+          "peak_allocated_mib": 1865.69091796875,
+          "incremental_peak_mib": 6.32861328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.67578125,
+          "estimated_kv_cache_mib": 1.6875
+        },
+        {
+          "ttft_ms": 57.25645700022142,
+          "time_per_output_token_ms": 52.66642626665998,
+          "end_to_end_latency_ms": 847.2528510001212,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.88456318690831,
+          "requests_per_second": 1.1802851991817693,
+          "model_allocated_mib": 1861.0498046875,
+          "peak_allocated_mib": 1867.37841796875,
+          "incremental_peak_mib": 6.32861328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.67578125,
+          "estimated_kv_cache_mib": 1.6875
+        },
+        {
+          "ttft_ms": 56.90472200058139,
+          "time_per_output_token_ms": 53.19035893329177,
+          "end_to_end_latency_ms": 854.7601059999579,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.718702344305232,
+          "requests_per_second": 1.169918896519077,
+          "model_allocated_mib": 1862.7373046875,
+          "peak_allocated_mib": 1869.06591796875,
+          "incremental_peak_mib": 6.32861328125,
+          "peak_reserved_mib": 1984.0,
+          "kv_cache_mib": 1.67578125,
+          "estimated_kv_cache_mib": 1.6875
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 57.61456240034022,
+          "p50": 57.17670700050803,
+          "p95": 59.10274500001833,
+          "p99": 59.47200259997771,
+          "min": 56.90472200058139,
+          "max": 59.56431699996756
+        },
+        "per_output_token": {
+          "mean": 53.06273461331633,
+          "p50": 52.9585945333262,
+          "p95": 53.560445653311035,
+          "p99": 53.634462997314884,
+          "min": 52.66642626665998,
+          "max": 53.65296733331585
+        },
+        "end_to_end": {
+          "mean": 853.5555816000851,
+          "p50": 853.9432349998606,
+          "p95": 860.5289948001882,
+          "p99": 861.6827725602343,
+          "min": 847.2528510001212,
+          "max": 861.9712170002458
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 18.745763882195654,
+        "mean_requests_per_second": 1.1716102426372283
+      },
+      "memory": {
+        "model_allocated_mib": 1862.7373046875,
+        "peak_allocated_mib": 1869.06591796875,
+        "incremental_peak_mib": 6.32861328125,
+        "peak_reserved_mib": 1984.0,
+        "kv_cache_mib": 1.67578125,
+        "estimated_kv_cache_mib": 1.6875
+      }
+    },
+    {
+      "case_id": "bs1-in128-out32",
+      "batch_size": 1,
+      "input_tokens": 128,
+      "output_tokens": 32,
+      "samples": [
+        {
+          "ttft_ms": 58.2912200006831,
+          "time_per_output_token_ms": 54.08821625804839,
+          "end_to_end_latency_ms": 1735.0259240001833,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.443528455311206,
+          "requests_per_second": 0.5763602642284752,
+          "model_allocated_mib": 1856.1748046875,
+          "peak_allocated_mib": 1862.69091796875,
+          "incremental_peak_mib": 6.51611328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.86328125,
+          "estimated_kv_cache_mib": 1.875
+        },
+        {
+          "ttft_ms": 57.953518999966036,
+          "time_per_output_token_ms": 53.78466780644709,
+          "end_to_end_latency_ms": 1725.2782209998259,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.5477331195055,
+          "requests_per_second": 0.5796166599845469,
+          "model_allocated_mib": 1858.0498046875,
+          "peak_allocated_mib": 1864.56591796875,
+          "incremental_peak_mib": 6.51611328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.86328125,
+          "estimated_kv_cache_mib": 1.875
+        },
+        {
+          "ttft_ms": 57.64734600052179,
+          "time_per_output_token_ms": 53.80085051611757,
+          "end_to_end_latency_ms": 1725.4737120001664,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.545631716930448,
+          "requests_per_second": 0.5795509911540765,
+          "model_allocated_mib": 1859.9248046875,
+          "peak_allocated_mib": 1866.44091796875,
+          "incremental_peak_mib": 6.51611328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.86328125,
+          "estimated_kv_cache_mib": 1.875
+        },
+        {
+          "ttft_ms": 57.66215099993133,
+          "time_per_output_token_ms": 53.72702354839754,
+          "end_to_end_latency_ms": 1723.1998810002551,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.570103417965164,
+          "requests_per_second": 0.5803157318114114,
+          "model_allocated_mib": 1861.7998046875,
+          "peak_allocated_mib": 1868.31591796875,
+          "incremental_peak_mib": 6.51611328125,
+          "peak_reserved_mib": 1982.0,
+          "kv_cache_mib": 1.86328125,
+          "estimated_kv_cache_mib": 1.875
+        },
+        {
+          "ttft_ms": 57.84912400031317,
+          "time_per_output_token_ms": 53.59631687095375,
+          "end_to_end_latency_ms": 1719.3349469998793,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.61184759597761,
+          "requests_per_second": 0.5816202373743004,
+          "model_allocated_mib": 1863.6748046875,
+          "peak_allocated_mib": 1869.9755859375,
+          "incremental_peak_mib": 6.30078125,
+          "peak_reserved_mib": 1984.0,
+          "kv_cache_mib": 1.86328125,
+          "estimated_kv_cache_mib": 1.875
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 57.880672000283084,
+          "p50": 57.84912400031317,
+          "p95": 58.223679800539685,
+          "p99": 58.277711960654415,
+          "min": 57.64734600052179,
+          "max": 58.2912200006831
+        },
+        "per_output_token": {
+          "mean": 53.79941499999287,
+          "p50": 53.78466780644709,
+          "p95": 54.030743109662225,
+          "p99": 54.07672162837116,
+          "min": 53.59631687095375,
+          "max": 54.08821625804839
+        },
+        "end_to_end": {
+          "mean": 1725.662537000062,
+          "p50": 1725.2782209998259,
+          "p95": 1733.11548160018,
+          "p99": 1734.6438355201826,
+          "min": 1719.3349469998793,
+          "max": 1735.0259240001833
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 18.543768861137988,
+        "mean_requests_per_second": 0.5794927769105621
+      },
+      "memory": {
+        "model_allocated_mib": 1863.6748046875,
+        "peak_allocated_mib": 1869.9755859375,
+        "incremental_peak_mib": 6.51611328125,
+        "peak_reserved_mib": 1984.0,
+        "kv_cache_mib": 1.86328125,
+        "estimated_kv_cache_mib": 1.875
+      }
+    },
+    {
+      "case_id": "bs1-in512-out16",
+      "batch_size": 1,
+      "input_tokens": 512,
+      "output_tokens": 16,
+      "samples": [
+        {
+          "ttft_ms": 57.879075000528246,
+          "time_per_output_token_ms": 53.90784499995789,
+          "end_to_end_latency_ms": 866.4967499998966,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.465158697943078,
+          "requests_per_second": 1.1540724186214424,
+          "model_allocated_mib": 1862.3681640625,
+          "peak_allocated_mib": 1886.2529296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 1990.0,
+          "kv_cache_mib": 6.17578125,
+          "estimated_kv_cache_mib": 6.1875
+        },
+        {
+          "ttft_ms": 58.735587999763084,
+          "time_per_output_token_ms": 55.02406059998369,
+          "end_to_end_latency_ms": 884.0964969995184,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.09757198937156,
+          "requests_per_second": 1.1310982493357224,
+          "model_allocated_mib": 1868.5556640625,
+          "peak_allocated_mib": 1892.4404296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 1998.0,
+          "kv_cache_mib": 6.17578125,
+          "estimated_kv_cache_mib": 6.1875
+        },
+        {
+          "ttft_ms": 59.089952999784146,
+          "time_per_output_token_ms": 54.90102106668928,
+          "end_to_end_latency_ms": 882.6052690001234,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.12814919870795,
+          "requests_per_second": 1.1330093249192468,
+          "model_allocated_mib": 1874.7431640625,
+          "peak_allocated_mib": 1898.6279296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2004.0,
+          "kv_cache_mib": 6.17578125,
+          "estimated_kv_cache_mib": 6.1875
+        },
+        {
+          "ttft_ms": 58.73221399997419,
+          "time_per_output_token_ms": 55.49256199998732,
+          "end_to_end_latency_ms": 891.1206439997841,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 17.954920142108026,
+          "requests_per_second": 1.1221825088817516,
+          "model_allocated_mib": 1880.9306640625,
+          "peak_allocated_mib": 1904.8154296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2010.0,
+          "kv_cache_mib": 6.17578125,
+          "estimated_kv_cache_mib": 6.1875
+        },
+        {
+          "ttft_ms": 59.0328230000523,
+          "time_per_output_token_ms": 53.986115733338615,
+          "end_to_end_latency_ms": 868.8245590001316,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 16,
+          "output_tokens_per_second": 18.415685691957492,
+          "requests_per_second": 1.1509803557473433,
+          "model_allocated_mib": 1887.1181640625,
+          "peak_allocated_mib": 1911.0029296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2018.0,
+          "kv_cache_mib": 6.17578125,
+          "estimated_kv_cache_mib": 6.1875
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 58.693930600020394,
+          "p50": 58.735587999763084,
+          "p95": 59.07852699983778,
+          "p99": 59.08766779979487,
+          "min": 57.879075000528246,
+          "max": 59.089952999784146
+        },
+        "per_output_token": {
+          "mean": 54.66232087999136,
+          "p50": 54.90102106668928,
+          "p95": 55.3988617199866,
+          "p99": 55.473821943987176,
+          "min": 53.90784499995789,
+          "max": 55.49256199998732
+        },
+        "end_to_end": {
+          "mean": 878.6287437998908,
+          "p50": 882.6052690001234,
+          "p95": 889.715814599731,
+          "p99": 890.8396781197735,
+          "min": 866.4967499998966,
+          "max": 891.1206439997841
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 18.212297144017622,
+        "mean_requests_per_second": 1.1382685715011014
+      },
+      "memory": {
+        "model_allocated_mib": 1887.1181640625,
+        "peak_allocated_mib": 1911.0029296875,
+        "incremental_peak_mib": 23.884765625,
+        "peak_reserved_mib": 2018.0,
+        "kv_cache_mib": 6.17578125,
+        "estimated_kv_cache_mib": 6.1875
+      }
+    },
+    {
+      "case_id": "bs1-in512-out32",
+      "batch_size": 1,
+      "input_tokens": 512,
+      "output_tokens": 32,
+      "samples": [
+        {
+          "ttft_ms": 58.70987700018304,
+          "time_per_output_token_ms": 54.48416406450692,
+          "end_to_end_latency_ms": 1747.7189629998975,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.309579902407844,
+          "requests_per_second": 0.5721743719502451,
+          "model_allocated_mib": 1860.6806640625,
+          "peak_allocated_mib": 1884.5654296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 1988.0,
+          "kv_cache_mib": 6.36328125,
+          "estimated_kv_cache_mib": 6.375
+        },
+        {
+          "ttft_ms": 58.449578000363545,
+          "time_per_output_token_ms": 54.374593161282384,
+          "end_to_end_latency_ms": 1744.0619660001175,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.347971932092374,
+          "requests_per_second": 0.5733741228778867,
+          "model_allocated_mib": 1867.0556640625,
+          "peak_allocated_mib": 1890.9404296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 1996.0,
+          "kv_cache_mib": 6.36328125,
+          "estimated_kv_cache_mib": 6.375
+        },
+        {
+          "ttft_ms": 58.801832999961334,
+          "time_per_output_token_ms": 53.95781751614718,
+          "end_to_end_latency_ms": 1731.494176000524,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.48114792618876,
+          "requests_per_second": 0.5775358726933988,
+          "model_allocated_mib": 1873.4306640625,
+          "peak_allocated_mib": 1897.3154296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2002.0,
+          "kv_cache_mib": 6.36328125,
+          "estimated_kv_cache_mib": 6.375
+        },
+        {
+          "ttft_ms": 58.65847600034613,
+          "time_per_output_token_ms": 54.202985838709274,
+          "end_to_end_latency_ms": 1738.9510370003336,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.40189822434538,
+          "requests_per_second": 0.5750593195107931,
+          "model_allocated_mib": 1879.8056640625,
+          "peak_allocated_mib": 1903.6904296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2008.0,
+          "kv_cache_mib": 6.36328125,
+          "estimated_kv_cache_mib": 6.375
+        },
+        {
+          "ttft_ms": 60.56979000004503,
+          "time_per_output_token_ms": 54.57104209677533,
+          "end_to_end_latency_ms": 1752.2720950000803,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 18.262003995446,
+          "requests_per_second": 0.5706876248576875,
+          "model_allocated_mib": 1886.1806640625,
+          "peak_allocated_mib": 1910.0654296875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2016.0,
+          "kv_cache_mib": 6.36328125,
+          "estimated_kv_cache_mib": 6.375
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 59.037910800179816,
+          "p50": 58.70987700018304,
+          "p95": 60.21619860002829,
+          "p99": 60.499071720041684,
+          "min": 58.449578000363545,
+          "max": 60.56979000004503
+        },
+        "per_output_token": {
+          "mean": 54.31812053548422,
+          "p50": 54.374593161282384,
+          "p95": 54.553666490321646,
+          "p99": 54.567566975484596,
+          "min": 53.95781751614718,
+          "max": 54.57104209677533
+        },
+        "end_to_end": {
+          "mean": 1742.8996474001906,
+          "p50": 1744.0619660001175,
+          "p95": 1751.3614686000437,
+          "p99": 1752.089969720073,
+          "min": 1731.494176000524,
+          "max": 1752.2720950000803
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 18.36052039609607,
+        "mean_requests_per_second": 0.5737662623780022
+      },
+      "memory": {
+        "model_allocated_mib": 1886.1806640625,
+        "peak_allocated_mib": 1910.0654296875,
+        "incremental_peak_mib": 23.884765625,
+        "peak_reserved_mib": 2016.0,
+        "kv_cache_mib": 6.36328125,
+        "estimated_kv_cache_mib": 6.375
+      }
+    },
+    {
+      "case_id": "bs2-in128-out16",
+      "batch_size": 2,
+      "input_tokens": 128,
+      "output_tokens": 16,
+      "samples": [
+        {
+          "ttft_ms": 61.987957000383176,
+          "time_per_output_token_ms": 54.93115999997826,
+          "end_to_end_latency_ms": 885.9553570000571,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.11920143285271,
+          "requests_per_second": 2.2574500895532945,
+          "model_allocated_mib": 1895.9033203125,
+          "peak_allocated_mib": 1910.8466796875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 2020.0,
+          "kv_cache_mib": 3.3515625,
+          "estimated_kv_cache_mib": 3.375
+        },
+        {
+          "ttft_ms": 59.93859699992754,
+          "time_per_output_token_ms": 53.7220348000119,
+          "end_to_end_latency_ms": 865.769119000106,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.96135528252317,
+          "requests_per_second": 2.3100847051576983,
+          "model_allocated_mib": 1899.2548828125,
+          "peak_allocated_mib": 1914.1982421875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 2022.0,
+          "kv_cache_mib": 3.3515625,
+          "estimated_kv_cache_mib": 3.375
+        },
+        {
+          "ttft_ms": 57.99587399997108,
+          "time_per_output_token_ms": 53.7997950666977,
+          "end_to_end_latency_ms": 864.9928000004365,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.99452758448839,
+          "requests_per_second": 2.3121579740305243,
+          "model_allocated_mib": 1857.6533203125,
+          "peak_allocated_mib": 1872.5966796875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 1990.0,
+          "kv_cache_mib": 3.3515625,
+          "estimated_kv_cache_mib": 3.375
+        },
+        {
+          "ttft_ms": 58.2126959998277,
+          "time_per_output_token_ms": 53.765134133330626,
+          "end_to_end_latency_ms": 864.6897079997871,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 37.007494947549304,
+          "requests_per_second": 2.3129684342218315,
+          "model_allocated_mib": 1861.0048828125,
+          "peak_allocated_mib": 1875.9482421875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 1990.0,
+          "kv_cache_mib": 3.3515625,
+          "estimated_kv_cache_mib": 3.375
+        },
+        {
+          "ttft_ms": 57.76169900036621,
+          "time_per_output_token_ms": 53.96458779996465,
+          "end_to_end_latency_ms": 867.2305159998359,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.89907055808222,
+          "requests_per_second": 2.306191909880139,
+          "model_allocated_mib": 1864.3564453125,
+          "peak_allocated_mib": 1879.2998046875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 1990.0,
+          "kv_cache_mib": 3.3515625,
+          "estimated_kv_cache_mib": 3.375
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 59.17936460009514,
+          "p50": 58.2126959998277,
+          "p95": 61.57808500029205,
+          "p99": 61.90598260036495,
+          "min": 57.76169900036621,
+          "max": 61.987957000383176
+        },
+        "per_output_token": {
+          "mean": 54.03654235999662,
+          "p50": 53.7997950666977,
+          "p95": 54.73784555997554,
+          "p99": 54.89249711197772,
+          "min": 53.7220348000119,
+          "max": 54.93115999997826
+        },
+        "end_to_end": {
+          "mean": 869.7275000000445,
+          "p50": 865.769119000106,
+          "p95": 882.2103888000129,
+          "p99": 885.2063633600483,
+          "min": 864.6897079997871,
+          "max": 885.9553570000571
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 36.79632996109916,
+        "mean_requests_per_second": 2.2997706225686976
+      },
+      "memory": {
+        "model_allocated_mib": 1899.2548828125,
+        "peak_allocated_mib": 1914.1982421875,
+        "incremental_peak_mib": 14.943359375,
+        "peak_reserved_mib": 2022.0,
+        "kv_cache_mib": 3.3515625,
+        "estimated_kv_cache_mib": 3.375
+      }
+    },
+    {
+      "case_id": "bs2-in128-out32",
+      "batch_size": 2,
+      "input_tokens": 128,
+      "output_tokens": 32,
+      "samples": [
+        {
+          "ttft_ms": 59.53422099992167,
+          "time_per_output_token_ms": 53.983532258063214,
+          "end_to_end_latency_ms": 1733.0237209998813,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 36.92967339366521,
+          "requests_per_second": 1.1540522935520379,
+          "model_allocated_mib": 1871.4345703125,
+          "peak_allocated_mib": 1886.3779296875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 1994.0,
+          "kv_cache_mib": 3.7265625,
+          "estimated_kv_cache_mib": 3.75
+        },
+        {
+          "ttft_ms": 59.07573999957094,
+          "time_per_output_token_ms": 53.920750774200464,
+          "end_to_end_latency_ms": 1730.6190139997852,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 36.98098742835605,
+          "requests_per_second": 1.1556558571361266,
+          "model_allocated_mib": 1875.1611328125,
+          "peak_allocated_mib": 1890.1044921875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 1998.0,
+          "kv_cache_mib": 3.7265625,
+          "estimated_kv_cache_mib": 3.75
+        },
+        {
+          "ttft_ms": 58.18062400066992,
+          "time_per_output_token_ms": 53.679019419354105,
+          "end_to_end_latency_ms": 1722.2302260006472,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 37.16111762166689,
+          "requests_per_second": 1.1612849256770903,
+          "model_allocated_mib": 1878.8876953125,
+          "peak_allocated_mib": 1893.8310546875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 2002.0,
+          "kv_cache_mib": 3.7265625,
+          "estimated_kv_cache_mib": 3.75
+        },
+        {
+          "ttft_ms": 58.56798799959506,
+          "time_per_output_token_ms": 53.68653645162399,
+          "end_to_end_latency_ms": 1722.8506179999385,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 37.14773604359138,
+          "requests_per_second": 1.1608667513622306,
+          "model_allocated_mib": 1882.6142578125,
+          "peak_allocated_mib": 1897.5576171875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 2008.0,
+          "kv_cache_mib": 3.7265625,
+          "estimated_kv_cache_mib": 3.75
+        },
+        {
+          "ttft_ms": 58.16998800037254,
+          "time_per_output_token_ms": 53.54374725805927,
+          "end_to_end_latency_ms": 1718.02615300021,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 37.25205223927239,
+          "requests_per_second": 1.1641266324772621,
+          "model_allocated_mib": 1886.3408203125,
+          "peak_allocated_mib": 1901.2841796875,
+          "incremental_peak_mib": 14.943359375,
+          "peak_reserved_mib": 2012.0,
+          "kv_cache_mib": 3.7265625,
+          "estimated_kv_cache_mib": 3.75
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 58.70571220002603,
+          "p50": 58.56798799959506,
+          "p95": 59.442524799851526,
+          "p99": 59.51588175990764,
+          "min": 58.16998800037254,
+          "max": 59.53422099992167
+        },
+        "per_output_token": {
+          "mean": 53.76271723226021,
+          "p50": 53.68653645162399,
+          "p95": 53.97097596129066,
+          "p99": 53.9810209987087,
+          "min": 53.54374725805927,
+          "max": 53.983532258063214
+        },
+        "end_to_end": {
+          "mean": 1725.3499464000924,
+          "p50": 1722.8506179999385,
+          "p95": 1732.5427795998621,
+          "p99": 1732.9275327198775,
+          "min": 1718.02615300021,
+          "max": 1733.0237209998813
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 37.09431334531038,
+        "mean_requests_per_second": 1.1591972920409495
+      },
+      "memory": {
+        "model_allocated_mib": 1886.3408203125,
+        "peak_allocated_mib": 1901.2841796875,
+        "incremental_peak_mib": 14.943359375,
+        "peak_reserved_mib": 2012.0,
+        "kv_cache_mib": 3.7265625,
+        "estimated_kv_cache_mib": 3.75
+      }
+    },
+    {
+      "case_id": "bs2-in512-out16",
+      "batch_size": 2,
+      "input_tokens": 512,
+      "output_tokens": 16,
+      "samples": [
+        {
+          "ttft_ms": 66.60583400025644,
+          "time_per_output_token_ms": 54.0875871333507,
+          "end_to_end_latency_ms": 877.919641000517,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.44980531877764,
+          "requests_per_second": 2.2781128324236026,
+          "model_allocated_mib": 1873.7431640625,
+          "peak_allocated_mib": 1922.2763671875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2006.0,
+          "kv_cache_mib": 12.3515625,
+          "estimated_kv_cache_mib": 12.375
+        },
+        {
+          "ttft_ms": 67.07222099976207,
+          "time_per_output_token_ms": 54.17300013335383,
+          "end_to_end_latency_ms": 879.6672230000695,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.37739268136568,
+          "requests_per_second": 2.273587042585355,
+          "model_allocated_mib": 1886.0947265625,
+          "peak_allocated_mib": 1934.6279296875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2020.0,
+          "kv_cache_mib": 12.3515625,
+          "estimated_kv_cache_mib": 12.375
+        },
+        {
+          "ttft_ms": 67.4658529997032,
+          "time_per_output_token_ms": 54.24986080003388,
+          "end_to_end_latency_ms": 881.2137650002114,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.31354986833679,
+          "requests_per_second": 2.2695968667710495,
+          "model_allocated_mib": 1898.4462890625,
+          "peak_allocated_mib": 1946.9794921875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2034.0,
+          "kv_cache_mib": 12.3515625,
+          "estimated_kv_cache_mib": 12.375
+        },
+        {
+          "ttft_ms": 66.63807499990071,
+          "time_per_output_token_ms": 54.24796013333738,
+          "end_to_end_latency_ms": 880.3574769999614,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.34887058499011,
+          "requests_per_second": 2.271804411561882,
+          "model_allocated_mib": 1910.7978515625,
+          "peak_allocated_mib": 1959.3310546875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2048.0,
+          "kv_cache_mib": 12.3515625,
+          "estimated_kv_cache_mib": 12.375
+        },
+        {
+          "ttft_ms": 66.90927899944654,
+          "time_per_output_token_ms": 54.356839133348934,
+          "end_to_end_latency_ms": 882.2618659996806,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 32,
+          "output_tokens_per_second": 36.270410445249354,
+          "requests_per_second": 2.2669006528280846,
+          "model_allocated_mib": 1923.1494140625,
+          "peak_allocated_mib": 1971.6826171875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2064.0,
+          "kv_cache_mib": 12.3515625,
+          "estimated_kv_cache_mib": 12.375
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 66.93825239981379,
+          "p50": 66.90927899944654,
+          "p95": 67.38712659971497,
+          "p99": 67.45010771970556,
+          "min": 66.60583400025644,
+          "max": 67.4658529997032
+        },
+        "per_output_token": {
+          "mean": 54.22304946668495,
+          "p50": 54.24796013333738,
+          "p95": 54.33544346668592,
+          "p99": 54.35256000001633,
+          "min": 54.0875871333507,
+          "max": 54.356839133348934
+        },
+        "end_to_end": {
+          "mean": 880.283994400088,
+          "p50": 880.3574769999614,
+          "p95": 882.0522457997868,
+          "p99": 882.2199419597018,
+          "min": 877.919641000517,
+          "max": 882.2618659996806
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 36.35200577974391,
+        "mean_requests_per_second": 2.2720003612339945
+      },
+      "memory": {
+        "model_allocated_mib": 1923.1494140625,
+        "peak_allocated_mib": 1971.6826171875,
+        "incremental_peak_mib": 48.533203125,
+        "peak_reserved_mib": 2064.0,
+        "kv_cache_mib": 12.3515625,
+        "estimated_kv_cache_mib": 12.375
+      }
+    },
+    {
+      "case_id": "bs2-in512-out32",
+      "batch_size": 2,
+      "input_tokens": 512,
+      "output_tokens": 32,
+      "samples": [
+        {
+          "ttft_ms": 66.4365499997075,
+          "time_per_output_token_ms": 54.95030912903354,
+          "end_to_end_latency_ms": 1769.8961329997474,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 36.160314047089415,
+          "requests_per_second": 1.1300098139715442,
+          "model_allocated_mib": 1948.2275390625,
+          "peak_allocated_mib": 1996.7607421875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2092.0,
+          "kv_cache_mib": 12.7265625,
+          "estimated_kv_cache_mib": 12.75
+        },
+        {
+          "ttft_ms": 67.946364000818,
+          "time_per_output_token_ms": 54.793553322563255,
+          "end_to_end_latency_ms": 1766.546517000279,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 36.228878993051666,
+          "requests_per_second": 1.1321524685328646,
+          "model_allocated_mib": 1960.9541015625,
+          "peak_allocated_mib": 2009.4873046875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2106.0,
+          "kv_cache_mib": 12.7265625,
+          "estimated_kv_cache_mib": 12.75
+        },
+        {
+          "ttft_ms": 65.92454200017528,
+          "time_per_output_token_ms": 54.17642832259345,
+          "end_to_end_latency_ms": 1745.3938200005723,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 36.66794236728707,
+          "requests_per_second": 1.1458731989777209,
+          "model_allocated_mib": 1870.3916015625,
+          "peak_allocated_mib": 1918.9248046875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2006.0,
+          "kv_cache_mib": 12.7265625,
+          "estimated_kv_cache_mib": 12.75
+        },
+        {
+          "ttft_ms": 66.20042700069462,
+          "time_per_output_token_ms": 54.50402132256357,
+          "end_to_end_latency_ms": 1755.8250880001651,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 36.45009997715329,
+          "requests_per_second": 1.1390656242860404,
+          "model_allocated_mib": 1883.1181640625,
+          "peak_allocated_mib": 1931.6513671875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2018.0,
+          "kv_cache_mib": 12.7265625,
+          "estimated_kv_cache_mib": 12.75
+        },
+        {
+          "ttft_ms": 67.08987999991223,
+          "time_per_output_token_ms": 54.51774180642866,
+          "end_to_end_latency_ms": 1757.1398759992007,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 36.42282602209246,
+          "requests_per_second": 1.1382133131903893,
+          "model_allocated_mib": 1895.8447265625,
+          "peak_allocated_mib": 1944.3779296875,
+          "incremental_peak_mib": 48.533203125,
+          "peak_reserved_mib": 2032.0,
+          "kv_cache_mib": 12.7265625,
+          "estimated_kv_cache_mib": 12.75
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 66.71955260026152,
+          "p50": 66.4365499997075,
+          "p95": 67.77506720063684,
+          "p99": 67.91210464078176,
+          "min": 65.92454200017528,
+          "max": 67.946364000818
+        },
+        "per_output_token": {
+          "mean": 54.588410780636494,
+          "p50": 54.51774180642866,
+          "p95": 54.91895796773949,
+          "p99": 54.94403889677473,
+          "min": 54.17642832259345,
+          "max": 54.95030912903354
+        },
+        "end_to_end": {
+          "mean": 1758.960286799993,
+          "p50": 1757.1398759992007,
+          "p95": 1769.2262097998537,
+          "p99": 1769.7621483597686,
+          "min": 1745.3938200005723,
+          "max": 1769.8961329997474
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 36.38601228133478,
+        "mean_requests_per_second": 1.1370628837917118
+      },
+      "memory": {
+        "model_allocated_mib": 1960.9541015625,
+        "peak_allocated_mib": 2009.4873046875,
+        "incremental_peak_mib": 48.533203125,
+        "peak_reserved_mib": 2106.0,
+        "kv_cache_mib": 12.7265625,
+        "estimated_kv_cache_mib": 12.75
+      }
+    },
+    {
+      "case_id": "bs4-in128-out16",
+      "batch_size": 4,
+      "input_tokens": 128,
+      "output_tokens": 16,
+      "samples": [
+        {
+          "ttft_ms": 59.29413600006228,
+          "time_per_output_token_ms": 54.57764393334704,
+          "end_to_end_latency_ms": 877.9587950002679,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 72.89635956090682,
+          "requests_per_second": 4.556022472556676,
+          "model_allocated_mib": 1915.2666015625,
+          "peak_allocated_mib": 1939.1513671875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2046.0,
+          "kv_cache_mib": 6.703125,
+          "estimated_kv_cache_mib": 6.75
+        },
+        {
+          "ttft_ms": 60.14831799984677,
+          "time_per_output_token_ms": 54.05446733335945,
+          "end_to_end_latency_ms": 870.9653280002385,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 73.48168514003405,
+          "requests_per_second": 4.592605321252128,
+          "model_allocated_mib": 1921.9697265625,
+          "peak_allocated_mib": 1945.8544921875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2052.0,
+          "kv_cache_mib": 6.703125,
+          "estimated_kv_cache_mib": 6.75
+        },
+        {
+          "ttft_ms": 59.166646000448964,
+          "time_per_output_token_ms": 53.956537266640225,
+          "end_to_end_latency_ms": 868.5147050000523,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 73.6890229164239,
+          "requests_per_second": 4.605563932276493,
+          "model_allocated_mib": 1928.6728515625,
+          "peak_allocated_mib": 1952.5576171875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2060.0,
+          "kv_cache_mib": 6.703125,
+          "estimated_kv_cache_mib": 6.75
+        },
+        {
+          "ttft_ms": 59.10248399959528,
+          "time_per_output_token_ms": 54.27945093336651,
+          "end_to_end_latency_ms": 873.2942480000929,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 73.28572259185793,
+          "requests_per_second": 4.580357661991121,
+          "model_allocated_mib": 1935.3759765625,
+          "peak_allocated_mib": 1959.2607421875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2066.0,
+          "kv_cache_mib": 6.703125,
+          "estimated_kv_cache_mib": 6.75
+        },
+        {
+          "ttft_ms": 59.09722900014458,
+          "time_per_output_token_ms": 54.519851466648106,
+          "end_to_end_latency_ms": 876.8950009998662,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 72.98479285093994,
+          "requests_per_second": 4.561549553183746,
+          "model_allocated_mib": 1942.0791015625,
+          "peak_allocated_mib": 1965.9638671875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2072.0,
+          "kv_cache_mib": 6.703125,
+          "estimated_kv_cache_mib": 6.75
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 59.361762600019574,
+          "p50": 59.166646000448964,
+          "p95": 59.97748159988987,
+          "p99": 60.11415071985539,
+          "min": 59.09722900014458,
+          "max": 60.14831799984677
+        },
+        "per_output_token": {
+          "mean": 54.27759018667226,
+          "p50": 54.27945093336651,
+          "p95": 54.56608544000726,
+          "p99": 54.57533223467908,
+          "min": 53.956537266640225,
+          "max": 54.57764393334704
+        },
+        "end_to_end": {
+          "mean": 873.5256154001036,
+          "p50": 873.2942480000929,
+          "p95": 877.7460362001875,
+          "p99": 877.9162432402518,
+          "min": 868.5147050000523,
+          "max": 877.9587950002679
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 73.26751661203252,
+        "mean_requests_per_second": 4.579219788252033
+      },
+      "memory": {
+        "model_allocated_mib": 1942.0791015625,
+        "peak_allocated_mib": 1965.9638671875,
+        "incremental_peak_mib": 23.884765625,
+        "peak_reserved_mib": 2072.0,
+        "kv_cache_mib": 6.703125,
+        "estimated_kv_cache_mib": 6.75
+      }
+    },
+    {
+      "case_id": "bs4-in128-out32",
+      "batch_size": 4,
+      "input_tokens": 128,
+      "output_tokens": 32,
+      "samples": [
+        {
+          "ttft_ms": 59.36743099937303,
+          "time_per_output_token_ms": 54.29049177420834,
+          "end_to_end_latency_ms": 1742.3726759998317,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 73.46304367781096,
+          "requests_per_second": 2.2957201149315924,
+          "model_allocated_mib": 1871.8134765625,
+          "peak_allocated_mib": 1895.6982421875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2000.0,
+          "kv_cache_mib": 7.453125,
+          "estimated_kv_cache_mib": 7.5
+        },
+        {
+          "ttft_ms": 59.06622200018319,
+          "time_per_output_token_ms": 53.85436729031954,
+          "end_to_end_latency_ms": 1728.551608000089,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 74.05043587220071,
+          "requests_per_second": 2.314076121006272,
+          "model_allocated_mib": 1879.2666015625,
+          "peak_allocated_mib": 1903.1513671875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2008.0,
+          "kv_cache_mib": 7.453125,
+          "estimated_kv_cache_mib": 7.5
+        },
+        {
+          "ttft_ms": 58.83210699994379,
+          "time_per_output_token_ms": 54.61687983871901,
+          "end_to_end_latency_ms": 1751.955382000233,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 73.06122137303551,
+          "requests_per_second": 2.2831631679073596,
+          "model_allocated_mib": 1886.7197265625,
+          "peak_allocated_mib": 1910.6044921875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2016.0,
+          "kv_cache_mib": 7.453125,
+          "estimated_kv_cache_mib": 7.5
+        },
+        {
+          "ttft_ms": 59.64728599974478,
+          "time_per_output_token_ms": 54.16422693548567,
+          "end_to_end_latency_ms": 1738.7383209998006,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 73.61659799756302,
+          "requests_per_second": 2.3005186874238444,
+          "model_allocated_mib": 1894.1728515625,
+          "peak_allocated_mib": 1918.0576171875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2024.0,
+          "kv_cache_mib": 7.453125,
+          "estimated_kv_cache_mib": 7.5
+        },
+        {
+          "ttft_ms": 58.835926999563526,
+          "time_per_output_token_ms": 53.584018129039315,
+          "end_to_end_latency_ms": 1719.9404889997822,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 74.42117958071758,
+          "requests_per_second": 2.3256618618974243,
+          "model_allocated_mib": 1901.6259765625,
+          "peak_allocated_mib": 1925.5107421875,
+          "incremental_peak_mib": 23.884765625,
+          "peak_reserved_mib": 2032.0,
+          "kv_cache_mib": 7.453125,
+          "estimated_kv_cache_mib": 7.5
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 59.14979459976166,
+          "p50": 59.06622200018319,
+          "p95": 59.59131499967043,
+          "p99": 59.63609179972991,
+          "min": 58.83210699994379,
+          "max": 59.64728599974478
+        },
+        "per_output_token": {
+          "mean": 54.10199679355438,
+          "p50": 54.16422693548567,
+          "p95": 54.55160222581687,
+          "p99": 54.60382431613858,
+          "min": 53.584018129039315,
+          "max": 54.61687983871901
+        },
+        "end_to_end": {
+          "mean": 1736.3116951999473,
+          "p50": 1738.7383209998006,
+          "p95": 1750.0388408001527,
+          "p99": 1751.5720737602169,
+          "min": 1719.9404889997822,
+          "max": 1751.955382000233
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 73.72249570026555,
+        "mean_requests_per_second": 2.3038279906332986
+      },
+      "memory": {
+        "model_allocated_mib": 1901.6259765625,
+        "peak_allocated_mib": 1925.5107421875,
+        "incremental_peak_mib": 23.884765625,
+        "peak_reserved_mib": 2032.0,
+        "kv_cache_mib": 7.453125,
+        "estimated_kv_cache_mib": 7.5
+      }
+    },
+    {
+      "case_id": "bs4-in512-out16",
+      "batch_size": 4,
+      "input_tokens": 512,
+      "output_tokens": 16,
+      "samples": [
+        {
+          "ttft_ms": 70.81763600035629,
+          "time_per_output_token_ms": 54.37020906665566,
+          "end_to_end_latency_ms": 886.3707720001912,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 72.2045469251847,
+          "requests_per_second": 4.512784182824044,
+          "model_allocated_mib": 1933.8056640625,
+          "peak_allocated_mib": 2032.3388671875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2166.0,
+          "kv_cache_mib": 24.703125,
+          "estimated_kv_cache_mib": 24.75
+        },
+        {
+          "ttft_ms": 67.92615199992724,
+          "time_per_output_token_ms": 54.24731180003922,
+          "end_to_end_latency_ms": 881.6358290005155,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 72.59233109044004,
+          "requests_per_second": 4.537020693152503,
+          "model_allocated_mib": 1958.5087890625,
+          "peak_allocated_mib": 1958.54345703125,
+          "incremental_peak_mib": 0.03466796875,
+          "peak_reserved_mib": 2160.0,
+          "kv_cache_mib": 24.703125,
+          "estimated_kv_cache_mib": 24.75
+        },
+        {
+          "ttft_ms": 70.09357100014313,
+          "time_per_output_token_ms": 55.50228440000259,
+          "end_to_end_latency_ms": 902.6278370001819,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 70.90408402725464,
+          "requests_per_second": 4.431505251703415,
+          "model_allocated_mib": 1882.3837890625,
+          "peak_allocated_mib": 1980.9169921875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2100.0,
+          "kv_cache_mib": 24.703125,
+          "estimated_kv_cache_mib": 24.75
+        },
+        {
+          "ttft_ms": 69.45632899987686,
+          "time_per_output_token_ms": 54.48836260002281,
+          "end_to_end_latency_ms": 886.781768000219,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 72.17108234456191,
+          "requests_per_second": 4.510692646535119,
+          "model_allocated_mib": 1907.0869140625,
+          "peak_allocated_mib": 2005.6201171875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2132.0,
+          "kv_cache_mib": 24.703125,
+          "estimated_kv_cache_mib": 24.75
+        },
+        {
+          "ttft_ms": 70.1130439992994,
+          "time_per_output_token_ms": 54.99190020000242,
+          "end_to_end_latency_ms": 894.9915469993357,
+          "generated_tokens_per_request": 16,
+          "total_output_tokens": 64,
+          "output_tokens_per_second": 71.50905526937619,
+          "requests_per_second": 4.469315954336012,
+          "model_allocated_mib": 1931.7900390625,
+          "peak_allocated_mib": 2030.3232421875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2164.0,
+          "kv_cache_mib": 24.703125,
+          "estimated_kv_cache_mib": 24.75
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 69.68134639992059,
+          "p50": 70.09357100014313,
+          "p95": 70.67671760014491,
+          "p99": 70.78945232031401,
+          "min": 67.92615199992724,
+          "max": 70.81763600035629
+        },
+        "per_output_token": {
+          "mean": 54.72001361334454,
+          "p50": 54.48836260002281,
+          "p95": 55.400207560002556,
+          "p99": 55.48186903200258,
+          "min": 54.24731180003922,
+          "max": 55.50228440000259
+        },
+        "end_to_end": {
+          "mean": 890.4815506000887,
+          "p50": 886.781768000219,
+          "p95": 901.1005790000127,
+          "p99": 902.322385400148,
+          "min": 881.6358290005155,
+          "max": 902.6278370001819
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 71.8762199313635,
+        "mean_requests_per_second": 4.492263745710218
+      },
+      "memory": {
+        "model_allocated_mib": 1958.5087890625,
+        "peak_allocated_mib": 2032.3388671875,
+        "incremental_peak_mib": 98.533203125,
+        "peak_reserved_mib": 2166.0,
+        "kv_cache_mib": 24.703125,
+        "estimated_kv_cache_mib": 24.75
+      }
+    },
+    {
+      "case_id": "bs4-in512-out32",
+      "batch_size": 4,
+      "input_tokens": 512,
+      "output_tokens": 32,
+      "samples": [
+        {
+          "ttft_ms": 68.95419500051503,
+          "time_per_output_token_ms": 54.330932483876936,
+          "end_to_end_latency_ms": 1753.2131020007,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 73.00880871465726,
+          "requests_per_second": 2.2815252723330395,
+          "model_allocated_mib": 1981.9462890625,
+          "peak_allocated_mib": 2080.4794921875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2230.0,
+          "kv_cache_mib": 25.453125,
+          "estimated_kv_cache_mib": 25.5
+        },
+        {
+          "ttft_ms": 70.93276599971432,
+          "time_per_output_token_ms": 55.11142490324287,
+          "end_to_end_latency_ms": 1779.3869380002434,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 71.93488794733554,
+          "requests_per_second": 2.2479652483542356,
+          "model_allocated_mib": 2007.3994140625,
+          "peak_allocated_mib": 2105.9326171875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2262.0,
+          "kv_cache_mib": 25.453125,
+          "estimated_kv_cache_mib": 25.5
+        },
+        {
+          "ttft_ms": 69.97115099966322,
+          "time_per_output_token_ms": 55.19051209678089,
+          "end_to_end_latency_ms": 1780.877025999871,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 71.87469888783285,
+          "requests_per_second": 2.2460843402447765,
+          "model_allocated_mib": 2032.8525390625,
+          "peak_allocated_mib": 2131.3857421875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2294.0,
+          "kv_cache_mib": 25.453125,
+          "estimated_kv_cache_mib": 25.5
+        },
+        {
+          "ttft_ms": 70.05868699980056,
+          "time_per_output_token_ms": 55.22202054837708,
+          "end_to_end_latency_ms": 1781.9413239994901,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 71.83177037092868,
+          "requests_per_second": 2.2447428240915213,
+          "model_allocated_mib": 2058.3056640625,
+          "peak_allocated_mib": 2156.8388671875,
+          "incremental_peak_mib": 98.533203125,
+          "peak_reserved_mib": 2326.0,
+          "kv_cache_mib": 25.453125,
+          "estimated_kv_cache_mib": 25.5
+        },
+        {
+          "ttft_ms": 72.50521600053617,
+          "time_per_output_token_ms": 55.815015548374035,
+          "end_to_end_latency_ms": 1802.7706980001312,
+          "generated_tokens_per_request": 32,
+          "total_output_tokens": 128,
+          "output_tokens_per_second": 71.00181966680195,
+          "requests_per_second": 2.218806864587561,
+          "model_allocated_mib": 2083.7587890625,
+          "peak_allocated_mib": 2083.7587890625,
+          "incremental_peak_mib": 0.0,
+          "peak_reserved_mib": 2326.0,
+          "kv_cache_mib": 25.453125,
+          "estimated_kv_cache_mib": 25.5
+        }
+      ],
+      "latency_ms": {
+        "ttft": {
+          "mean": 70.48440300004586,
+          "p50": 70.05868699980056,
+          "p95": 72.1907260003718,
+          "p99": 72.44231800050329,
+          "min": 68.95419500051503,
+          "max": 72.50521600053617
+        },
+        "per_output_token": {
+          "mean": 55.133981116130364,
+          "p50": 55.19051209678089,
+          "p95": 55.69641654837464,
+          "p99": 55.791295748374154,
+          "min": 54.330932483876936,
+          "max": 55.815015548374035
+        },
+        "end_to_end": {
+          "mean": 1779.6378176000871,
+          "p50": 1780.877025999871,
+          "p95": 1798.604823200003,
+          "p99": 1801.9375230401056,
+          "min": 1753.2131020007,
+          "max": 1802.7706980001312
+        }
+      },
+      "throughput": {
+        "mean_output_tokens_per_second": 71.93039711751126,
+        "mean_requests_per_second": 2.247824909922227
+      },
+      "memory": {
+        "model_allocated_mib": 2083.7587890625,
+        "peak_allocated_mib": 2156.8388671875,
+        "incremental_peak_mib": 98.533203125,
+        "peak_reserved_mib": 2326.0,
+        "kv_cache_mib": 25.453125,
+        "estimated_kv_cache_mib": 25.5
+      }
+    }
+  ]
+}
