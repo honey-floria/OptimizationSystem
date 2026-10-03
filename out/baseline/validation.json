@@ -1,0 +1,41 @@
+{
+  "evidence": "/content/drive/MyDrive/OptimizationSystem/out/baseline/baseline_evidence.json",
+  "complete": true,
+  "checks": [
+    {
+      "name": "fp16_or_bf16_baseline_service",
+      "status": "pass",
+      "detail": "Baseline model is loaded in FP16/BF16."
+    },
+    {
+      "name": "unified_prompt_and_generation",
+      "status": "pass",
+      "detail": "Prompt template and generation parameters are versioned."
+    },
+    {
+      "name": "single_request_inference",
+      "status": "pass",
+      "detail": "Single-request inference succeeded."
+    },
+    {
+      "name": "batch_inference",
+      "status": "pass",
+      "detail": "Batch inference returned at least two results."
+    },
+    {
+      "name": "deterministic_seed_configuration",
+      "status": "pass",
+      "detail": "Fixed seed replay produced identical output."
+    },
+    {
+      "name": "request_level_performance_logs",
+      "status": "pass",
+      "detail": "Request-level token and latency logs are complete."
+    },
+    {
+      "name": "model_and_environment_metadata",
+      "status": "pass",
+      "detail": "Model version and runtime environment are recorded."
+    }
+  ]
+}
