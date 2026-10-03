@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "target": "ascend",
+  "status": "pending_real_hardware",
+  "profile_id": null,
+  "runtime": {
+    "python": null,
+    "container_runtime": null,
+    "container_version": null
+  },
+  "hardware": {
+    "npu": null,
+    "count": null,
+    "memory_mib": null,
+    "driver": null,
+    "firmware": null
+  },
+  "software": {
+    "cann": null
+  },
+  "frameworks": {
+    "torch_npu": null,
+    "mindie": null,
+    "atb": null
+  },
+  "inference": {
+    "framework": null,
+    "dtype": null,
+    "device": null
+  },
+  "required_evidence": [
+    "real Ascend hardware manifest",
+    "CANN, driver, and firmware versions",
+    "installed inference framework versions",
+    "built container image digest"
+  ]
+}
