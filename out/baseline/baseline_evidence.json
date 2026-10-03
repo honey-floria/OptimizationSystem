@@ -1,0 +1,59 @@
+{
+  "model_loaded": true,
+  "config": {
+    "schema_version": 1,
+    "scenario_id": "financial_report_numeric_qa",
+    "prompt_template": "finqa-v1",
+    "dtype": "float16",
+    "device": "cuda:0",
+    "seed": 42,
+    "deterministic": true,
+    "max_input_tokens": 4096,
+    "generation": {
+      "max_new_tokens": 32,
+      "do_sample": false,
+      "num_beams": 1
+    }
+  },
+  "single_request": {
+    "success": true,
+    "request_id": "baseline-single-0001",
+    "output_text": "The average payment volume per transaction for American Express is 5.0 billion dollars. This can be found in the \"total transactions\" column under the row labeled"
+  },
+  "batch_request": {
+    "success": true,
+    "result_count": 2,
+    "request_ids": [
+      "baseline-batch-0001",
+      "baseline-batch-0002"
+    ]
+  },
+  "deterministic_replay_match": true,
+  "request_logs": {
+    "path": "/content/drive/MyDrive/OptimizationSystem/out/baseline/request_logs.jsonl",
+    "record_count": 4,
+    "all_success": true,
+    "required_fields_present": true
+  },
+  "model_metadata": {
+    "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+    "version": "Qwen2.5-0.5B-Instruct",
+    "commit": "7ae557604adf67be50417f59c2c2f167def9a775",
+    "weight_files": [
+      "model.safetensors"
+    ]
+  },
+  "environment": {
+    "captured_at": "2026-10-03T03:08:13.068536+00:00",
+    "python": "3.13.15",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cu130",
+    "transformers": "5.18.0",
+    "cuda": "13.0",
+    "gpu": "Tesla T4",
+    "device": "cuda:0",
+    "dtype": "float16",
+    "seed": 42,
+    "deterministic": true
+  }
+}
