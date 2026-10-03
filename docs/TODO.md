@@ -49,17 +49,22 @@
 
 ### 4.1 模型输入
 
-校验工具已实现，使用方式见 [`docs/MODEL_INPUTS.md`](MODEL_INPUTS.md)。以下状态必须以真实
-模型 manifest 和运行时报告为准；当前仓库未包含基础模型资产，因此暂不勾选。
+校验工具使用方式见 [`docs/MODEL_INPUTS.md`](MODEL_INPUTS.md)。真实模型验收使用
+`Qwen/Qwen2.5-0.5B-Instruct`，验收依据为
+[`out/model_input_real/model_manifest.json`](../out/model_input_real/model_manifest.json) 和
+[`out/model_input_real/reports/runtime.json`](../out/model_input_real/reports/runtime.json)。
 
-- [ ] 收到基础模型权重
-- [ ] 收到模型配置和 Tokenizer
-- [ ] 确认模型许可证和内部使用范围
-- [ ] 记录模型版本、提交号和权重哈希
-- [ ] 验证 FP16/BF16 模型能够正常加载
-- [ ] 验证基础模型在目标推理框架中可以运行
+- [x] 收到基础模型权重
+- [x] 收到模型配置和 Tokenizer
+- [x] 确认模型许可证和内部使用范围
+- [x] 记录模型版本、提交号和权重哈希
+- [x] 验证 FP16/BF16 模型能够正常加载
+- [x] 验证基础模型在目标推理框架中可以运行
 
 ### 4.2 评测资产输入
+
+校验工具已实现，使用方式见 [`docs/DATASET_INPUTS.md`](DATASET_INPUTS.md)。完成状态以真实
+数据 manifest 和 `out/dataset_input/validation.json` 为准，在报告拉回前暂不勾选。
 
 - [ ] 收到 `dataset_manifest.json` 或等价清单
 - [ ] 收到校准集路径和版本
