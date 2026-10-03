@@ -75,6 +75,19 @@ class Stage5AcceptanceTest(unittest.TestCase):
                     },
                 },
             ),
+            self.write(
+                "quality-report.json",
+                {
+                    "environment": {
+                        "torch": "2.11",
+                        "transformers": "5.18",
+                        "cuda": "13",
+                        "gpu": "T4",
+                        "device": "cuda:0",
+                        "dtype": "float16",
+                    }
+                },
+            ),
             environment,
             complete,
             complete,
