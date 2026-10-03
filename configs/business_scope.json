@@ -1,0 +1,144 @@
+{
+  "schema_version": 2,
+  "portfolio": {
+    "primary_scenario_id": "financial_report_numeric_qa",
+    "strategy_source": "README.md#4-金融场景风险分级",
+    "approval": {
+      "status": "confirmed_for_prototype",
+      "confirmed_at": "2026-10-02",
+      "authority": "project_owner"
+    }
+  },
+  "scenarios": [
+    {
+      "scenario_id": "internal_financial_faq",
+      "name": "内部金融 FAQ",
+      "status": "planned",
+      "business_goal": "回答内部低风险金融知识、流程和术语问题。",
+      "intended_users": ["内部员工", "运营支持团队"],
+      "risk_level": "L1",
+      "dataset_binding": {"status": "pending"},
+      "allowed_outputs": [
+        "内部知识范围内的事实型简短回答",
+        "可追溯到给定资料的操作说明",
+        "超出资料范围时拒答并建议查询正式制度"
+      ],
+      "human_review": {
+        "required": true,
+        "required_when": [
+          "回答将发送给外部客户",
+          "问题涉及账户、交易、授信或监管要求",
+          "来源资料缺失、冲突或可能已过期"
+        ]
+      },
+      "quality_gates": {
+        "primary_metric": "answer_accuracy",
+        "max_drop_from_fp16_percentage_points": 1.0,
+        "max_new_critical_errors": 0,
+        "require_input_context": true
+      },
+      "compression_policy": {
+        "allowed_quantization": ["INT4", "INT8", "FP16"],
+        "mixed_precision_required": false,
+        "aggressive_pruning_allowed": true
+      },
+      "out_of_scope": [
+        "客户个性化金融建议",
+        "账户操作、交易执行和业务审批",
+        "未提供正式来源的监管解释"
+      ]
+    },
+    {
+      "scenario_id": "financial_report_numeric_qa",
+      "name": "内部财报数值问答",
+      "status": "active",
+      "business_goal": "基于给定财报文本和表格回答数值问题，用于模型压缩质量与性能验证。",
+      "intended_users": ["模型优化团队", "内部金融分析人员"],
+      "risk_level": "L2",
+      "dataset_binding": {
+        "status": "ready",
+        "manifest": "out/dataset_input/dataset_manifest.json",
+        "validation": "out/dataset_input/validation.json"
+      },
+      "allowed_outputs": [
+        "从输入财报上下文直接提取的数值答案",
+        "基于输入表格执行比例、差值、增长率和合计计算",
+        "简短且可追溯到输入上下文的计算说明",
+        "信息不足或超出范围时拒答并请求人工复核"
+      ],
+      "human_review": {
+        "required": true,
+        "required_when": [
+          "输出将用于授信、定价、交易、合规或客户沟通",
+          "输入数据缺失、冲突、含义不明确或超出提供的财报上下文",
+          "模型无法解析金额、比例、日期或计算结果",
+          "FP16 基线正确但候选模型错误，或触发关键回归错误"
+        ]
+      },
+      "quality_gates": {
+        "primary_metric": "numeric_accuracy",
+        "max_drop_from_fp16_percentage_points": 0.5,
+        "minimum_numeric_parse_rate": 0.99,
+        "max_new_critical_errors": 0,
+        "require_input_context": true
+      },
+      "compression_policy": {
+        "allowed_quantization": ["INT4", "INT8", "FP16"],
+        "mixed_precision_required": true,
+        "aggressive_pruning_allowed": false
+      },
+      "out_of_scope": [
+        "自动授信、额度审批和风险决策",
+        "交易执行、投资推荐和个性化金融建议",
+        "客户身份、账户或其他真实敏感数据处理",
+        "未提供来源材料的政策、监管或产品条款问答"
+      ]
+    },
+    {
+      "scenario_id": "credit_policy_compliance_qa",
+      "name": "授信政策与监管制度辅助问答",
+      "status": "planned",
+      "business_goal": "在人工复核前提下辅助检索和解释授信政策、监管制度与反洗钱要求。",
+      "intended_users": ["风险管理人员", "合规人员", "授信审核人员"],
+      "risk_level": "L3",
+      "dataset_binding": {"status": "pending"},
+      "allowed_outputs": [
+        "带正式来源引用的政策或制度摘要",
+        "明确标注适用版本和生效日期的条款说明",
+        "信息不足、来源冲突或版本不明时强制拒答"
+      ],
+      "human_review": {
+        "required": true,
+        "required_when": [
+          "所有可能影响授信、合规或反洗钱判断的输出",
+          "政策版本、适用机构、客户类型或生效日期不明确",
+          "输出用于任何审批、拒绝、上报或客户告知"
+        ]
+      },
+      "quality_gates": {
+        "primary_metric": "policy_answer_accuracy",
+        "max_drop_from_fp16_percentage_points": 0.0,
+        "max_new_critical_errors": 0,
+        "require_input_context": true,
+        "require_citation": true
+      },
+      "compression_policy": {
+        "allowed_quantization": ["INT8", "FP16"],
+        "mixed_precision_required": false,
+        "aggressive_pruning_allowed": false
+      },
+      "out_of_scope": [
+        "自动审批、自动拒绝或自动风险定级",
+        "无人工复核的监管解释和客户告知",
+        "缺少正式来源、版本或生效日期的回答"
+      ]
+    }
+  ],
+  "global_out_of_scope": [
+    "自动授信、交易或风险决策",
+    "生产环境最终审批和合规认证",
+    "真实客户数据采集、脱敏和标注",
+    "知识库构建和业务规则制定",
+    "无人工复核的高风险客户输出"
+  ]
+}

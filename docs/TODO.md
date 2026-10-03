@@ -79,11 +79,13 @@
 
 ### 4.3 硬件环境输入
 
-采集与校验工具已实现，使用方式见 [`docs/HARDWARE_INPUTS.md`](HARDWARE_INPUTS.md)。Colab
-可完成 NVIDIA 环境采集；昇腾检查必须在真实昇腾机器运行，因此合并报告通过前暂不勾选。
+采集与校验工具使用方式见 [`docs/HARDWARE_INPUTS.md`](HARDWARE_INPUTS.md)。NVIDIA Colab
+环境已通过验收，依据为 [`out/hardware/nvidia_colab.json`](../out/hardware/nvidia_colab.json)
+和 [`out/hardware/nvidia_validation.json`](../out/hardware/nvidia_validation.json)。昇腾及双平台
+合并检查延后到真实昇腾机器执行。
 
-- [ ] 确认 NVIDIA GPU 型号、数量和显存
-- [ ] 确认 CUDA、驱动和容器版本
+- [x] 确认 NVIDIA GPU 型号、数量和显存
+- [x] 确认 CUDA、驱动和容器版本
 - [ ] 确认昇腾芯片型号、数量和显存
 - [ ] 确认 CANN、驱动和固件版本
 - [ ] 确认可用推理框架及版本
@@ -94,12 +96,16 @@
 
 ### 5.1 业务范围
 
-- [ ] 确认首个业务场景，例如信贷政策问答或金融文档抽取
-- [ ] 确认业务风险等级：L1、L2 或 L3
-- [ ] 确认允许的模型输出范围
-- [ ] 确认必须人工复核的高风险输出
-- [ ] 确认关键质量指标和最低门槛
-- [ ] 确认不纳入本项目的业务功能
+已按 L1/L2/L3 建立多场景组合，当前主场景为 L2 内部财报数值问答。范围配置见
+[`configs/business_scope.json`](../configs/business_scope.json)，验收依据见
+[`out/business_scope/validation.json`](../out/business_scope/validation.json)。
+
+- [x] 确认首个业务场景，例如信贷政策问答或金融文档抽取
+- [x] 确认业务风险等级：L1、L2 或 L3
+- [x] 确认允许的模型输出范围
+- [x] 确认必须人工复核的高风险输出
+- [x] 确认关键质量指标和最低门槛
+- [x] 确认不纳入本项目的业务功能
 
 ### 5.2 基线服务
 

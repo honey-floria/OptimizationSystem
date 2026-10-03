@@ -49,6 +49,9 @@
 
 数据集准备和 Google Colab 使用方式见 [`docs/DATASETS.md`](docs/DATASETS.md)，可直接运行的 Notebook 位于 [`notebooks/finqa_assets_colab.ipynb`](notebooks/finqa_assets_colab.ipynb)。
 
+原型按 L1/L2/L3 维护多场景组合，当前主场景为 L2 内部财报数值问答。各场景的输出边界、人工复核条件、质量门槛和压缩策略见
+[`configs/business_scope.json`](configs/business_scope.json) 与 [`docs/BUSINESS_SCOPE.md`](docs/BUSINESS_SCOPE.md)。
+
 ## 3. 上游输入接口
 
 项目依赖以下输入资产：
