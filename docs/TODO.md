@@ -184,6 +184,9 @@ NVIDIA/T4 阶段验收已完成，五项检查和五项交付物均通过，结�
 
 ### 6.1 量化框架接入
 
+统一量化配置、导出契约、日志契约和后端版本采集工具已实现，使用方式见
+[`docs/QUANTIZATION_FRAMEWORK.md`](QUANTIZATION_FRAMEWORK.md)。真实权重导出留到 6.2～6.4。
+
 - [ ] 接入 AWQ 流程
 - [ ] 接入 GPTQ 流程
 - [ ] 接入 SmoothQuant 或等价 INT8 流程
