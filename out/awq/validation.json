@@ -1,0 +1,26 @@
+{
+  "evidence": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq_evidence.json",
+  "complete": true,
+  "checks": [
+    {
+      "name": "awq_group_size_matrix",
+      "status": "pass",
+      "detail": "AWQ plans cover group sizes 32, 64, and 128."
+    },
+    {
+      "name": "awq_backend_recorded",
+      "status": "pass",
+      "detail": "AutoAWQ version is recorded."
+    },
+    {
+      "name": "awq_quantized_artifacts",
+      "status": "pass",
+      "detail": "Each plan has config, manifest, and JSONL event log."
+    },
+    {
+      "name": "awq_real_execution",
+      "status": "pass",
+      "detail": "All configured AWQ group sizes completed real export."
+    }
+  ]
+}

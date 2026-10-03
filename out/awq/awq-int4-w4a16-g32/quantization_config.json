@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "plan": {
+    "plan_id": "awq-int4-w4a16-g32",
+    "method": "awq",
+    "bits": 4,
+    "weight_bits": 4,
+    "activation_bits": 16,
+    "group_size": 32,
+    "quantization_granularity": "groupwise",
+    "backend_package": "autoawq"
+  },
+  "quant_config": {
+    "zero_point": true,
+    "q_group_size": 32,
+    "w_bit": 4,
+    "version": "GEMM"
+  },
+  "calibration": {
+    "size": 1024,
+    "max_seq_len": 512
+  }
+}

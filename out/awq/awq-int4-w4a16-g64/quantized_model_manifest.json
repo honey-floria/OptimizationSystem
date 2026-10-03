@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "format": "autoawq",
+  "plan": {
+    "plan_id": "awq-int4-w4a16-g64",
+    "method": "awq",
+    "bits": 4,
+    "weight_bits": 4,
+    "activation_bits": 16,
+    "group_size": 64,
+    "quantization_granularity": "groupwise",
+    "backend_package": "autoawq"
+  },
+  "model_path": "/content/drive/MyDrive/OptimizationSystem/out/awq/awq-int4-w4a16-g64",
+  "source_model_path": "/content/drive/MyDrive/banking_llm_project/model_input_real/qwen2.5-0.5b-instruct",
+  "required_files": [
+    "config.json",
+    "quantization_config.json"
+  ],
+  "backend_version": "0.2.9"
+}
