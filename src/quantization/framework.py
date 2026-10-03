@@ -143,6 +143,7 @@ def collect_framework_evidence(
         for package in (
             "autoawq",
             "auto-gptq",
+            "gptqmodel",
             "smoothquant",
             "torch",
             "transformers",
@@ -160,7 +161,10 @@ def collect_framework_evidence(
         "backend_packages": package_versions,
         "backend_available": {
             "awq": package_versions["autoawq"] is not None,
-            "gptq": package_versions["auto-gptq"] is not None,
+            "gptq": (
+                package_versions["gptqmodel"] is not None
+                or package_versions["auto-gptq"] is not None
+            ),
             "smoothquant": package_versions["smoothquant"] is not None,
         },
         "export_contract": {

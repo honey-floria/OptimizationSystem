@@ -6,6 +6,7 @@ from .awq import (
     collect_awq_evidence,
     load_awq_service,
     run_awq_plan,
+    summarize_awq_experiment,
     validate_awq_evidence,
 )
 
@@ -14,6 +15,14 @@ from .framework import (
     QuantizationFrameworkReport,
     build_quantization_config,
     validate_quantization_evidence,
+)
+from .gptq import (
+    GPTQPlan,
+    build_gptq_plans,
+    collect_gptq_evidence,
+    load_gptq_service,
+    run_gptq_plan,
+    validate_gptq_evidence,
 )
 
 __all__ = [
@@ -26,5 +35,12 @@ __all__ = [
     "collect_awq_evidence",
     "load_awq_service",
     "run_awq_plan",
+    "summarize_awq_experiment",
     "validate_awq_evidence",
+    "GPTQPlan",
+    "build_gptq_plans",
+    "collect_gptq_evidence",
+    "load_gptq_service",
+    "run_gptq_plan",
+    "validate_gptq_evidence",
 ]

@@ -187,7 +187,7 @@ NVIDIA/T4 阶段验收已完成，五项检查和五项交付物均通过，结�
 统一量化配置、导出契约、日志契约和后端版本采集工具已实现，使用方式见
 [`docs/QUANTIZATION_FRAMEWORK.md`](QUANTIZATION_FRAMEWORK.md)。真实权重导出留到 6.2～6.4。
 
-- [ ] 接入 AWQ 流程
+- [x] 接入 AWQ 流程
 - [ ] 接入 GPTQ 流程
 - [ ] 接入 SmoothQuant 或等价 INT8 流程
 - [x] 统一量化配置格式
@@ -201,18 +201,21 @@ AWQ 实验配置、三种 group size 矩阵和真实导出入口已实现，使�
 [`docs/AWQ_EXPERIMENT.md`](AWQ_EXPERIMENT.md)。导出后的质量、回归和性能评估入口见
 [`docs/AWQ_EVALUATION.md`](AWQ_EVALUATION.md)；真实评测证据需在 Colab 运行后再勾选。
 
-- [ ] 使用上游校准集运行 AWQ
-- [ ] 测试 INT4 W4A16
-- [ ] 测试 group size 32
-- [ ] 测试 group size 64
-- [ ] 测试 group size 128
-- [ ] 测试不同量化粒度
-- [ ] 保存量化权重和配置
-- [ ] 执行金融业务评估
-- [ ] 执行回归集测试
-- [ ] 执行推理性能测试
+- [x] 使用上游校准集运行 AWQ
+- [x] 测试 INT4 W4A16
+- [x] 测试 group size 32
+- [x] 测试 group size 64
+- [x] 测试 group size 128
+- [x] 测试不同量化粒度
+- [x] 保存量化权重和配置
+- [x] 执行金融业务评估
+- [x] 执行回归集测试
+- [x] 执行推理性能测试
 
 ### 6.3 GPTQ 实验
+
+GPTQ 导出与同硬件 AWQ 对比入口已实现，使用说明见
+[`docs/GPTQ_EXPERIMENT.md`](GPTQ_EXPERIMENT.md)。真实结果回传并验收后再勾选以下条目。
 
 - [ ] 使用相同校准集运行 GPTQ
 - [ ] 使用与 AWQ 相同的 bit 数对比
