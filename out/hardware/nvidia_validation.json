@@ -1,0 +1,42 @@
+{
+  "nvidia_manifest": "/content/drive/MyDrive/banking_llm_project/hardware/nvidia_colab.json",
+  "ascend_manifest": null,
+  "complete": false,
+  "checks": [
+    {
+      "name": "nvidia_gpu_model_count_and_memory_confirmed",
+      "status": "pass",
+      "detail": "NVIDIA GPU model, count, and memory are recorded."
+    },
+    {
+      "name": "cuda_driver_and_container_confirmed",
+      "status": "pass",
+      "detail": "CUDA, driver, and container runtime versions are recorded."
+    },
+    {
+      "name": "ascend_model_count_and_memory_confirmed",
+      "status": "not_run",
+      "detail": "Run collection on an Ascend host and provide its manifest."
+    },
+    {
+      "name": "cann_driver_and_firmware_confirmed",
+      "status": "not_run",
+      "detail": "Ascend software validation awaits an Ascend manifest."
+    },
+    {
+      "name": "inference_frameworks_and_versions_confirmed",
+      "status": "not_run",
+      "detail": "NVIDIA and Ascend inference framework versions are recorded."
+    },
+    {
+      "name": "multi_card_communication_and_network_confirmed",
+      "status": "not_run",
+      "detail": "Single-card mode or multi-card topology and network are recorded for both platforms."
+    },
+    {
+      "name": "versioned_environment_configs_saved",
+      "status": "not_run",
+      "detail": "Versioned NVIDIA and Ascend environment manifests are saved."
+    }
+  ]
+}
