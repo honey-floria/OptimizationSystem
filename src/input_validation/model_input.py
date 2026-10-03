@@ -261,7 +261,7 @@ def _runtime_checks(
             model_path,
             local_files_only=True,
             trust_remote_code=trust_remote_code,
-            torch_dtype=dtype,
+            dtype=dtype,
         )
         device = runtime.get("device", "cpu")
         model.to(device)
