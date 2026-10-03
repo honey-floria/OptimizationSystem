@@ -19,3 +19,5 @@ quantization_events.jsonl
 
 当前 Colab 单元只采集后端包版本和配置契约。没有安装后端包或没有导出真实权重时，报告会
 明确标记 `real_quantization_execution: not_run`，不会伪造量化完成状态。
+
+GPTQ 实验使用仍在活跃维护的 `gptqmodel`；`auto-gptq` 仅作为旧环境兼容版本继续采集。

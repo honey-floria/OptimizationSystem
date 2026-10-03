@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-03T22:30:53.853160+00:00",
+  "baseline": {
+    "quality": {
+      "total": 883,
+      "parsed": 883,
+      "correct": 8,
+      "parse_rate": 1.0,
+      "numeric_accuracy": 0.009060022650056626
+    },
+    "benchmark": {
+      "gpu": "Tesla T4",
+      "case_count": 12,
+      "mean_output_tokens_per_second": 56.29295656577667,
+      "mean_end_to_end_p50_ms": 971.6802760834374,
+      "max_model_allocated_mib": 1136.1826171875,
+      "max_peak_allocated_mib": 1331.74365234375
+    }
+  },
+  "candidates": [
+    {
+      "plan_id": "awq-int4-w4a16-g32",
+      "group_size": 32,
+      "quality": {
+        "total": 883,
+        "parsed": 883,
+        "correct": 10,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.011325028312570781
+      },
+      "regression": {
+        "total": 91,
+        "new_regressions": 0,
+        "critical_errors": 91
+      },
+      "benchmark": {
+        "gpu": "NVIDIA A100-SXM4-40GB",
+        "case_count": 12,
+        "mean_output_tokens_per_second": 42.607303417675695,
+        "mean_end_to_end_p50_ms": 1309.3080953332599,
+        "max_model_allocated_mib": 2083.7587890625,
+        "max_peak_allocated_mib": 2156.8388671875
+      }
+    },
+    {
+      "plan_id": "awq-int4-w4a16-g64",
+      "group_size": 64,
+      "quality": {
+        "total": 883,
+        "parsed": 881,
+        "correct": 5,
+        "parse_rate": 0.9977349943374858,
+        "numeric_accuracy": 0.0056625141562853904
+      },
+      "regression": {
+        "total": 91,
+        "new_regressions": 0,
+        "critical_errors": 91
+      },
+      "benchmark": {
+        "gpu": "NVIDIA A100-SXM4-40GB",
+        "case_count": 12,
+        "mean_output_tokens_per_second": 42.568615490694135,
+        "mean_end_to_end_p50_ms": 1310.8910786666759,
+        "max_model_allocated_mib": 2040.8916015625,
+        "max_peak_allocated_mib": 2139.8466796875
+      }
+    },
+    {
+      "plan_id": "awq-int4-w4a16-g128",
+      "group_size": 128,
+      "quality": {
+        "total": 883,
+        "parsed": 883,
+        "correct": 6,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.006795016987542469
+      },
+      "regression": {
+        "total": 91,
+        "new_regressions": 0,
+        "critical_errors": 91
+      },
+      "benchmark": {
+        "gpu": "NVIDIA A100-SXM4-40GB",
+        "case_count": 12,
+        "mean_output_tokens_per_second": 42.5208021692526,
+        "mean_end_to_end_p50_ms": 1313.3498175831544,
+        "max_model_allocated_mib": 2034.2587890625,
+        "max_peak_allocated_mib": 2132.7919921875
+      }
+    }
+  ],
+  "recommendation": {
+    "best_observed_quality_plan": "awq-int4-w4a16-g32",
+    "performance_comparison_valid": false,
+    "performance_comparison_note": "AWQ ran on A100 while FP16 baseline ran on T4; rerun the FP16 benchmark on A100 before claiming speed or memory gains.",
+    "regression_interpretation": "New regression count is zero because the FP16 baseline was not correct on any high-risk regression sample; critical errors must still be reviewed."
+  }
+}

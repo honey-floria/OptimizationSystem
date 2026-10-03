@@ -430,3 +430,95 @@ def validate_awq_evidence(evidence_file: str | Path) -> AWQValidationReport:
         ),
     ]
     return AWQValidationReport(str(evidence_path), checks)
+
+
+def summarize_awq_experiment(
+    awq_result_dir: str | Path,
+    baseline_quality_report_file: str | Path,
+    baseline_benchmark_report_file: str | Path,
+) -> dict[str, Any]:
+    """Summarize AWQ quality, regression, and benchmark evidence."""
+    result_path = Path(awq_result_dir).expanduser().resolve()
+    _, baseline_quality = _load_json(baseline_quality_report_file)
+    _, baseline_benchmark = _load_json(baseline_benchmark_report_file)
+
+    def benchmark_summary(report: dict[str, Any]) -> dict[str, Any]:
+        cases = report.get("cases", [])
+        return {
+            "gpu": report.get("environment", {}).get("gpu"),
+            "case_count": len(cases),
+            "mean_output_tokens_per_second": (
+                sum(
+                    case["throughput"]["mean_output_tokens_per_second"]
+                    for case in cases
+                )
+                / len(cases)
+                if cases
+                else None
+            ),
+            "mean_end_to_end_p50_ms": (
+                sum(case["latency_ms"]["end_to_end"]["p50"] for case in cases)
+                / len(cases)
+                if cases
+                else None
+            ),
+            "max_model_allocated_mib": max(
+                (case["memory"]["model_allocated_mib"] for case in cases),
+                default=None,
+            ),
+            "max_peak_allocated_mib": max(
+                (case["memory"]["peak_allocated_mib"] for case in cases),
+                default=None,
+            ),
+        }
+
+    candidates = []
+    for group_size in REQUIRED_GROUP_SIZES:
+        plan_id = f"awq-int4-w4a16-g{group_size}"
+        plan_path = result_path / plan_id
+        _, quality = _load_json(plan_path / "quality/baseline_quality_report.json")
+        _, regression = _load_json(plan_path / "regression.json")
+        _, benchmark = _load_json(plan_path / "benchmark_report.json")
+        candidates.append(
+            {
+                "plan_id": plan_id,
+                "group_size": group_size,
+                "quality": quality.get("metrics", {}),
+                "regression": {
+                    name: regression.get(name)
+                    for name in ("total", "new_regressions", "critical_errors")
+                },
+                "benchmark": benchmark_summary(benchmark),
+            }
+        )
+    baseline_performance = benchmark_summary(baseline_benchmark)
+    candidate_gpus = {item["benchmark"]["gpu"] for item in candidates}
+    comparable = candidate_gpus == {baseline_performance["gpu"]}
+    best_quality = max(
+        candidates,
+        key=lambda item: item["quality"].get("numeric_accuracy", -1),
+    )
+    return {
+        "schema_version": 1,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "baseline": {
+            "quality": baseline_quality.get("metrics", {}),
+            "benchmark": baseline_performance,
+        },
+        "candidates": candidates,
+        "recommendation": {
+            "best_observed_quality_plan": best_quality["plan_id"],
+            "performance_comparison_valid": comparable,
+            "performance_comparison_note": (
+                "AWQ and FP16 benchmark hardware match."
+                if comparable
+                else "AWQ ran on A100 while FP16 baseline ran on T4; rerun the "
+                "FP16 benchmark on A100 before claiming speed or memory gains."
+            ),
+            "regression_interpretation": (
+                "New regression count is zero because the FP16 baseline was not "
+                "correct on any high-risk regression sample; critical errors must "
+                "still be reviewed."
+            ),
+        },
+    }

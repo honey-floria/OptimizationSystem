@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "plan_id": "gptq-int4-w4a16",
+  "method": "gptq",
+  "bits": 4,
+  "weight_bits": 4,
+  "activation_bits": 16,
+  "group_sizes": [32, 64, 128],
+  "quantization_granularity": "groupwise",
+  "backend_package": "gptqmodel",
+  "calibration_asset_role": "calibration",
+  "max_calibration_samples": 1024,
+  "max_calibration_seq_len": 512,
+  "model_input_root": "/content/drive/MyDrive/banking_llm_project/model_input_real",
+  "result_root": "/content/drive/MyDrive/OptimizationSystem/out/gptq",
+  "model_root": "/content/drive/MyDrive/banking_llm_project/gptq"
+}

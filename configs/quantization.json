@@ -23,7 +23,7 @@
       "weight_bits": 4,
       "activation_bits": 16,
       "group_size": 128,
-      "backend_package": "auto-gptq"
+      "backend_package": "gptqmodel"
     },
     {
       "plan_id": "smoothquant-int8-w8a8",
