@@ -76,6 +76,11 @@ def run_baseline_quality(
     started = time.perf_counter()
     predictions = []
     references = []
+    prompt_suffix = str(quality_config.get("prompt_suffix", ""))
+    original_generation = service.config.get("generation", {})
+    if isinstance(quality_config.get("generation"), dict):
+        service.config["generation"] = quality_config["generation"]
+    effective_generation = service.config.get("generation", {})
     with predictions_path.open("a", encoding="utf-8") as stream:
         for start in range(0, len(dataset), batch_size):
             stop = min(start + batch_size, len(dataset))
@@ -86,7 +91,7 @@ def run_baseline_quality(
                 )
                 for offset, row in enumerate(rows)
             ]
-            results = service.generate_batch(requests)
+            results = service.generate_batch(requests, prompt_suffix=prompt_suffix)
             for index, (row, result) in enumerate(
                 zip(rows, results), start=start
             ):
@@ -110,6 +115,7 @@ def run_baseline_quality(
                 predictions.append(prediction)
                 references.append(reference)
             print(f"Quality evaluation: {stop}/{len(dataset)}", flush=True)
+    service.config["generation"] = original_generation
     metrics = evaluate_numeric_answers(
         predictions,
         references,
@@ -128,7 +134,8 @@ def run_baseline_quality(
         "duration_seconds": time.perf_counter() - started,
         "model_metadata": service.model_metadata,
         "environment": service.environment_metadata(),
-        "generation": service.config.get("generation", {}),
+        "generation": effective_generation,
+        "prompt_suffix": prompt_suffix,
         "dataset": {
             "role": quality_config["dataset_role"],
             "version": dataset_asset.get("version"),

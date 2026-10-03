@@ -202,15 +202,17 @@ class BaselineService:
             "deterministic": self.config["deterministic"],
         }
 
-    def generate_one(self, request: InferenceRequest) -> dict[str, Any]:
-        return self.generate_batch([request])[0]
+    def generate_one(
+        self, request: InferenceRequest, prompt_suffix: str = ""
+    ) -> dict[str, Any]:
+        return self.generate_batch([request], prompt_suffix=prompt_suffix)[0]
 
     def generate_batch(
-        self, requests: list[InferenceRequest]
+        self, requests: list[InferenceRequest], prompt_suffix: str = ""
     ) -> list[dict[str, Any]]:
         if not requests:
             raise ValueError("At least one request is required.")
-        prompts = [request.render_prompt() for request in requests]
+        prompts = [request.render_prompt() + prompt_suffix for request in requests]
         encoded = self.tokenizer(
             prompts,
             return_tensors="pt",
