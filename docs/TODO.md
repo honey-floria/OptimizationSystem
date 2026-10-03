@@ -110,17 +110,21 @@
 ### 5.2 基线服务
 
 基线服务与验收工具已实现，使用方式见 [`docs/BASELINE_SERVICE.md`](BASELINE_SERVICE.md)。
-完成状态以 T4 上的真实推理证据和 `out/baseline/validation.json` 为准，报告拉回前暂不勾选。
+已在 Tesla T4 上完成真实 FP16 推理验收，七项检查结果见
+[`out/baseline/validation.json`](../out/baseline/validation.json)。
 
-- [ ] 使用 FP16/BF16 建立基线推理服务
-- [ ] 统一输入模板和生成参数
-- [ ] 支持单请求推理
-- [ ] 支持批量推理
-- [ ] 支持固定随机种子或确定性配置
-- [ ] 输出请求级性能日志
-- [ ] 输出模型版本和运行环境信息
+- [x] 使用 FP16/BF16 建立基线推理服务
+- [x] 统一输入模板和生成参数
+- [x] 支持单请求推理
+- [x] 支持批量推理
+- [x] 支持固定随机种子或确定性配置
+- [x] 输出请求级性能日志
+- [x] 输出模型版本和运行环境信息
 
 ### 5.3 Benchmark
+
+统一 Benchmark 与验收工具已实现，使用方式见 [`docs/BENCHMARK.md`](BENCHMARK.md)。
+完成状态以 T4 上的真实测试报告和 `out/benchmark/validation.json` 为准，报告拉回前暂不勾选。
 
 - [ ] 实现统一 benchmark 命令
 - [ ] 测量 TTFT
