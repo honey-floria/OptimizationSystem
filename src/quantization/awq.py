@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from src.input_validation.model_input import FAIL, NOT_RUN, PASS, CheckResult
+from src.baseline.service import BaselineService
 
 
 REQUIRED_GROUP_SIZES = (32, 64, 128)
@@ -269,6 +270,60 @@ def run_awq_plan(
     }
 
 
+def load_awq_service(
+    baseline_config_file: str | Path,
+    quantized_manifest_file: str | Path,
+    source_model_manifest_file: str | Path,
+    log_file: str | Path,
+) -> BaselineService:
+    """Load one exported AWQ model through the shared inference service."""
+    _, baseline_config = _load_json(baseline_config_file)
+    quantized_manifest_path, quantized_manifest = _load_json(
+        quantized_manifest_file
+    )
+    _, source_manifest = _load_json(source_model_manifest_file)
+    model_path_value = quantized_manifest.get("model_path")
+    if not isinstance(model_path_value, str) or not model_path_value.strip():
+        raise ValueError("Quantized manifest must define model_path.")
+    model_path = Path(model_path_value).expanduser().resolve()
+    if not model_path.is_dir():
+        raise FileNotFoundError(f"AWQ model directory does not exist: {model_path}")
+    try:
+        import torch
+        from awq import AutoAWQForCausalLM
+        from transformers import AutoTokenizer
+    except ImportError as exc:
+        raise RuntimeError("Install autoawq, torch, and transformers for AWQ evaluation.") from exc
+    tokenizer = AutoTokenizer.from_pretrained(str(model_path), local_files_only=True)
+    load_kwargs = _supported_kwargs(
+        AutoAWQForCausalLM.from_quantized,
+        {
+            "safetensors": True,
+            "device_map": "auto",
+            "fuse_layers": False,
+            "trust_remote_code": False,
+        },
+    )
+    model = AutoAWQForCausalLM.from_quantized(str(model_path), **load_kwargs)
+    model.eval()
+    metadata = {
+        "model_id": source_manifest.get("model_id"),
+        "version": source_manifest.get("version"),
+        "commit": source_manifest.get("commit"),
+        "weight_files": quantized_manifest.get("required_files", []),
+        "quantization": quantized_manifest.get("plan", {}),
+        "quantized_manifest": str(quantized_manifest_path),
+    }
+    return BaselineService(
+        model=model,
+        tokenizer=tokenizer,
+        torch_module=torch,
+        config=baseline_config,
+        model_metadata=metadata,
+        log_file=log_file,
+    )
+
+
 def collect_awq_evidence(
     config_file: str | Path,
     calibration_manifest_file: str | Path,
@@ -323,12 +378,32 @@ def collect_awq_evidence(
 
 def validate_awq_evidence(evidence_file: str | Path) -> AWQValidationReport:
     evidence_path, evidence = _load_json(evidence_file)
+
+    def localize(path_value: str) -> Path:
+        path = Path(path_value).expanduser()
+        if path.is_file():
+            return path
+        parts = path.parts
+        try:
+            out_index = parts.index("out")
+            if out_index + 1 < len(parts) and parts[out_index + 1] == "awq":
+                relative = Path(*parts[out_index + 2 :])
+                candidate = evidence_path.parent / relative
+                if candidate.is_file():
+                    return candidate
+        except ValueError:
+            pass
+        return path
+
     plans = evidence.get("plans", [])
     groups = {item.get("plan", {}).get("group_size") for item in plans}
     matrix_ready = groups == set(REQUIRED_GROUP_SIZES)
     artifact_ready = all(
         item.get("status") == "pass"
-        and all(Path(path).is_file() for path in item.get("artifacts", {}).values())
+        and all(
+            localize(path).is_file()
+            for path in item.get("artifacts", {}).values()
+        )
         for item in plans
     )
     backend_ready = evidence.get("backend_version") is not None
