@@ -1,6 +1,6 @@
 {
   "scope": "nvidia_t4_baseline",
-  "complete": true,
+  "complete": false,
   "checks": [
     {
       "name": "fp16_or_bf16_model_stable",
@@ -14,8 +14,8 @@
     },
     {
       "name": "baseline_business_quality_confirmed",
-      "status": "pass",
-      "detail": "The complete FinQA development baseline passed quality validation."
+      "status": "fail",
+      "detail": "The complete FinQA development baseline passed quality validation in the same runtime as the benchmark."
     },
     {
       "name": "baseline_performance_confirmed",
