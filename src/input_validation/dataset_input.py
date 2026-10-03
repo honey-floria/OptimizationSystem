@@ -146,6 +146,8 @@ def validate_dataset_input(manifest_file: str | Path) -> DatasetValidationReport
     )
 
     isolation_ready = False
+    calibration_overlap_count = 0
+    regression_overlap_count = 0
     if all(role in loaded for role in ASSET_ROLES):
         try:
             calibration_questions = {_question_key(row) for row in loaded["calibration"]}
@@ -158,9 +160,12 @@ def validate_dataset_input(manifest_file: str | Path) -> DatasetValidationReport
                 _question_key(row) for row in loaded["high_risk_regression"]
             }
             test_questions = {_question_key(row) for row in loaded["evaluation_test"]}
+            calibration_overlap_count = len(
+                calibration_questions & evaluation_questions
+            )
+            regression_overlap_count = len(regression_questions & test_questions)
             isolation_ready = (
-                calibration_questions.isdisjoint(evaluation_questions)
-                and regression_questions.isdisjoint(test_questions)
+                calibration_overlap_count == 0 and regression_overlap_count == 0
             )
         except KeyError:
             isolation_ready = False
@@ -168,7 +173,9 @@ def validate_dataset_input(manifest_file: str | Path) -> DatasetValidationReport
         CheckResult(
             "calibration_and_evaluation_isolated",
             PASS if isolation_ready else FAIL,
-            "Calibration is disjoint from evaluation; regression is disjoint from final test.",
+            "Calibration/evaluation overlap: "
+            f"{calibration_overlap_count}; regression/final-test overlap: "
+            f"{regression_overlap_count}.",
         )
     )
 
