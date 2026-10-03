@@ -197,6 +197,10 @@ NVIDIA/T4 阶段验收已完成，五项检查和五项交付物均通过，结�
 
 ### 6.2 AWQ 实验
 
+AWQ 实验配置、三种 group size 矩阵和真实导出入口已实现，使用说明见
+[`docs/AWQ_EXPERIMENT.md`](AWQ_EXPERIMENT.md)；真实权重、质量、回归和性能证据需在 Colab
+运行 `notebooks/awq_experiment_colab.ipynb` 后再勾选。
+
 - [ ] 使用上游校准集运行 AWQ
 - [ ] 测试 INT4 W4A16
 - [ ] 测试 group size 32
