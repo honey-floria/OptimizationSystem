@@ -130,12 +130,19 @@ def run_awq_plan(
     model_manifest_file: str | Path,
     calibration_prompts: Iterable[str],
     output_dir: str | Path,
+    model_output_dir: str | Path | None = None,
     max_calibration_samples: int = 1024,
     max_calibration_seq_len: int = 512,
 ) -> dict[str, Any]:
     """Run one real AutoAWQ plan and write the common export contract."""
     output_path = Path(output_dir).expanduser().resolve()
+    model_path_output = (
+        Path(model_output_dir).expanduser().resolve()
+        if model_output_dir is not None
+        else output_path
+    )
     output_path.mkdir(parents=True, exist_ok=True)
+    model_path_output.mkdir(parents=True, exist_ok=True)
     event_log = output_path / "quantization_events.jsonl"
     started = datetime.now(timezone.utc).isoformat()
     base_event = {
@@ -187,19 +194,24 @@ def run_awq_plan(
             },
         )
         model.quantize(tokenizer, quant_config=quant_config, **quantize_kwargs)
-        model.save_quantized(str(output_path), safetensors=True)
-        tokenizer.save_pretrained(str(output_path))
+        model.save_quantized(str(model_path_output), safetensors=True)
+        tokenizer.save_pretrained(str(model_path_output))
+        quantization_config = {
+            "schema_version": 1,
+            "plan": plan.to_dict(),
+            "quant_config": quant_config,
+            "calibration": {
+                "size": len(prompts),
+                "max_seq_len": max_calibration_seq_len,
+            },
+        }
+        (model_path_output / "quantization_config.json").write_text(
+            json.dumps(quantization_config, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
         (output_path / "quantization_config.json").write_text(
             json.dumps(
-                {
-                    "schema_version": 1,
-                    "plan": plan.to_dict(),
-                    "quant_config": quant_config,
-                    "calibration": {
-                        "size": len(prompts),
-                        "max_seq_len": max_calibration_seq_len,
-                    },
-                },
+                quantization_config,
                 ensure_ascii=False,
                 indent=2,
             )
@@ -210,13 +222,23 @@ def run_awq_plan(
             "schema_version": 1,
             "format": "autoawq",
             "plan": plan.to_dict(),
-            "model_path": str(output_path),
+            "model_path": str(model_path_output),
             "source_model_path": str(model_path),
             "required_files": ["config.json", "quantization_config.json"],
+            "analysis_artifacts": {
+                "config": str(output_path / "quantization_config.json"),
+                "manifest": str(output_path / "quantized_model_manifest.json"),
+                "events": str(event_log),
+            },
             "backend_version": _package_version("autoawq"),
         }
+        manifest_text = json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
+        (model_path_output / "quantized_model_manifest.json").write_text(
+            manifest_text,
+            encoding="utf-8",
+        )
         (output_path / "quantized_model_manifest.json").write_text(
-            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+            manifest_text,
             encoding="utf-8",
         )
     except Exception as exc:
@@ -242,6 +264,7 @@ def run_awq_plan(
         "plan": plan.to_dict(),
         "status": "pass",
         "output_dir": str(output_path),
+        "model_output_dir": str(model_path_output),
         "backend_version": _package_version("autoawq"),
     }
 
