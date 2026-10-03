@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "benchmark_name": "finqa-fp16-baseline-v1",
+  "warmup_runs": 1,
+  "measured_runs": 5,
+  "use_cache": true,
+  "matrix": {
+    "batch_sizes": [1, 2, 4],
+    "input_lengths": [128, 512],
+    "output_lengths": [16, 32]
+  }
+}
