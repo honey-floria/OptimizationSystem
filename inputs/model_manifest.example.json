@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "model_id": "organization/model-name",
+  "model_path": "../models/base-model",
+  "version": "1.0.0",
+  "commit": "replace-with-model-commit",
+  "weight_files": [
+    "model-00001-of-00002.safetensors",
+    "model-00002-of-00002.safetensors"
+  ],
+  "config_file": "config.json",
+  "tokenizer_files": [
+    "tokenizer.json",
+    "tokenizer_config.json"
+  ],
+  "expected_sha256": {},
+  "license": {
+    "name": "replace-with-license-name",
+    "file": "LICENSE",
+    "internal_use_approved": false,
+    "usage_scope": "replace-with-approved-internal-usage-scope"
+  },
+  "runtime": {
+    "framework": "transformers",
+    "model_class": "causal_lm",
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "trust_remote_code": false,
+    "smoke_test_prompt": "Hello"
+  }
+}
