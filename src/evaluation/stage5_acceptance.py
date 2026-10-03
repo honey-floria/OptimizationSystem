@@ -70,6 +70,13 @@ def validate_stage5(
         and len(benchmark.get("cases", [])) >= 2
     )
     quality_ready = quality.get("complete") is True
+    quality_environment = quality.get("environment", {})
+    benchmark_environment = benchmark.get("environment", {})
+    quality_environment_matches = all(
+        quality_environment.get(field) == benchmark_environment.get(field)
+        for field in ("torch", "transformers", "cuda", "gpu", "device", "dtype")
+    )
+    quality_ready = quality_ready and quality_environment_matches
     performance_ready = benchmark_validation.get("complete") is True
     required_environment_checks = {
         "nvidia_environment_file_created",
@@ -93,7 +100,7 @@ def validate_stage5(
     checks = [
         CheckResult("fp16_or_bf16_model_stable", PASS if stable_ready else FAIL, "Model loading and repeated baseline inference passed."),
         CheckResult("benchmark_repeatable", PASS if repeatable_ready else FAIL, "The versioned benchmark contains repeated measurements."),
-        CheckResult("baseline_business_quality_confirmed", PASS if quality_ready else FAIL, "The complete FinQA development baseline passed quality validation."),
+        CheckResult("baseline_business_quality_confirmed", PASS if quality_ready else FAIL, "The complete FinQA development baseline passed quality validation in the same runtime as the benchmark."),
         CheckResult("baseline_performance_confirmed", PASS if performance_ready else FAIL, "The FP16 latency, throughput, and memory report passed validation."),
         CheckResult("nvidia_inputs_and_environment_versioned", PASS if versions_ready else FAIL, "NVIDIA-stage inputs and environment versions are registered."),
     ]

@@ -24,7 +24,18 @@ class Stage5AcceptanceTest(unittest.TestCase):
         complete = self.write("complete.json", {"complete": True})
         benchmark = self.write(
             "benchmark.json",
-            {"benchmark_config": {"measured_runs": 5}, "cases": [{}, {}]},
+            {
+                "benchmark_config": {"measured_runs": 5},
+                "cases": [{}, {}],
+                "environment": {
+                    "torch": "2.11",
+                    "transformers": "5.18",
+                    "cuda": "13",
+                    "gpu": "T4",
+                    "device": "cuda:0",
+                    "dtype": "float16",
+                },
+            },
         )
         environment = self.write(
             "environment.json",
@@ -50,7 +61,20 @@ class Stage5AcceptanceTest(unittest.TestCase):
             complete,
             complete,
             benchmark,
-            complete,
+            self.write(
+                "quality.json",
+                {
+                    "complete": True,
+                    "environment": {
+                        "torch": "2.11",
+                        "transformers": "5.18",
+                        "cuda": "13",
+                        "gpu": "T4",
+                        "device": "cuda:0",
+                        "dtype": "float16",
+                    },
+                },
+            ),
             environment,
             complete,
             complete,
