@@ -1,0 +1,1 @@
+{"event": "quantization", "plan_id": "gptq-int4-w4a16-g32", "method": "gptq", "timestamp": "2026-10-03T22:44:08.224596+00:00", "status": "not_run", "error": "ModuleNotFoundError(\"Could not import module 'AutoModelForCausalLM'. Are this object's requirements defined correctly?\")"}
