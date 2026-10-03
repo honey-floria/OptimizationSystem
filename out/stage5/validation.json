@@ -1,0 +1,38 @@
+{
+  "scope": "nvidia_t4_baseline",
+  "complete": true,
+  "checks": [
+    {
+      "name": "fp16_or_bf16_model_stable",
+      "status": "pass",
+      "detail": "Model loading and repeated baseline inference passed."
+    },
+    {
+      "name": "benchmark_repeatable",
+      "status": "pass",
+      "detail": "The versioned benchmark contains repeated measurements."
+    },
+    {
+      "name": "baseline_business_quality_confirmed",
+      "status": "pass",
+      "detail": "The complete FinQA development baseline passed quality validation."
+    },
+    {
+      "name": "baseline_performance_confirmed",
+      "status": "pass",
+      "detail": "The FP16 latency, throughput, and memory report passed validation."
+    },
+    {
+      "name": "nvidia_inputs_and_environment_versioned",
+      "status": "pass",
+      "detail": "NVIDIA-stage inputs and environment versions are registered."
+    }
+  ],
+  "deliverables": {
+    "baseline_model_run_instructions": true,
+    "baseline_quality_report": true,
+    "baseline_performance_report": true,
+    "input_interface_document": true,
+    "environment_lock_file": true
+  }
+}
