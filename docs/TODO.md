@@ -161,6 +161,11 @@ NVIDIA 基线阶段验收工具已实现，范围与证据说明见
 [`docs/STAGE5_ACCEPTANCE.md`](STAGE5_ACCEPTANCE.md)。完成状态以完整 FinQA dev 质量报告和
 `out/stage5/validation.json` 为准，报告拉回前暂不勾选。
 
+当前质量报告已完成 883 条样本的全量评测，但未通过质量门禁：解析率为 `0.9468`，低于
+配置的 `0.99`，数值准确率为 `0.0057`。这表明当前 Qwen2.5-0.5B FP16 配置不能作为合格的
+业务质量基线；模型、数据和评测流程证据仍保留，5.5 暂不勾选。详见
+`out/baseline_quality/baseline_quality_report.json`。
+
 - [ ] FP16/BF16 模型可稳定运行
 - [ ] Benchmark 可重复执行
 - [ ] 基线业务质量结果已确认
