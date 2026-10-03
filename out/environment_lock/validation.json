@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "nvidia_lock": "C:\\Users\\u1c4pu\\OptimizationSystem\\out\\environment_lock\\nvidia_environment.json",
   "ascend_lock": "C:\\Users\\u1c4pu\\OptimizationSystem\\out\\environment_lock\\ascend_environment.pending.json",
   "dependency_lock": "C:\\Users\\u1c4pu\\OptimizationSystem\\out\\environment_lock\\requirements.freeze.txt",
+=======
+  "nvidia_lock": "/content/drive/MyDrive/OptimizationSystem/out/environment_lock/nvidia_environment.json",
+  "ascend_lock": "/content/drive/MyDrive/OptimizationSystem/out/environment_lock/ascend_environment.pending.json",
+  "dependency_lock": "/content/drive/MyDrive/OptimizationSystem/out/environment_lock/requirements.freeze.txt",
+>>>>>>> e60a148 (Add benchmark results)
   "container_evidence": null,
   "complete": false,
   "checks": [
