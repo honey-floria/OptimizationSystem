@@ -138,15 +138,27 @@ def prepare_assets(
         cache_dir=str(cache_dir),
     )
 
-    if calibration_size > len(finqa["train"]):
-        raise ValueError(
-            f"calibration_size={calibration_size} exceeds train size "
-            f"{len(finqa['train'])}."
-        )
-
-    calibration = finqa["train"].shuffle(seed=seed).select(range(calibration_size))
     quality_dev = finqa["validation"]
     quality_test = _remove_regression_overlap(finqa["test"], verified)
+    reserved_questions = {
+        normalize_question(_get_question(row))
+        for dataset in (quality_dev, quality_test, verified)
+        for row in dataset
+    }
+    calibration_candidates = finqa["train"].filter(
+        lambda row: normalize_question(_get_question(row))
+        not in reserved_questions
+    )
+
+    if calibration_size > len(calibration_candidates):
+        raise ValueError(
+            f"calibration_size={calibration_size} exceeds train size "
+            f"after isolation filtering ({len(calibration_candidates)})."
+        )
+
+    calibration = calibration_candidates.shuffle(seed=seed).select(
+        range(calibration_size)
+    )
     prompts = [render_finqa_prompt(row) for row in calibration]
 
     calibration_name = f"calibration_finqa_{calibration_size}"
