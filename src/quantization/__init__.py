@@ -1,5 +1,13 @@
 """Unified quantization integration layer."""
 
+from .awq import (
+    AWQPlan,
+    build_awq_plans,
+    collect_awq_evidence,
+    run_awq_plan,
+    validate_awq_evidence,
+)
+
 from .framework import (
     QuantizationConfig,
     QuantizationFrameworkReport,
@@ -12,4 +20,9 @@ __all__ = [
     "QuantizationFrameworkReport",
     "build_quantization_config",
     "validate_quantization_evidence",
+    "AWQPlan",
+    "build_awq_plans",
+    "collect_awq_evidence",
+    "run_awq_plan",
+    "validate_awq_evidence",
 ]
