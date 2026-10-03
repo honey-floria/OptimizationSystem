@@ -62,7 +62,7 @@ def render_finqa_prompt(row: dict[str, Any]) -> str:
     )
 
 
-def _dataset_hash(rows: list[dict[str, Any]]) -> str:
+def dataset_hash(rows: list[dict[str, Any]]) -> str:
     payload = json.dumps(rows, ensure_ascii=False, sort_keys=True, default=str)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -149,11 +149,22 @@ def prepare_assets(
     quality_test = _remove_regression_overlap(finqa["test"], verified)
     prompts = [render_finqa_prompt(row) for row in calibration]
 
-    calibration_dir = output_path / f"calibration_finqa_{calibration_size}"
+    calibration_name = f"calibration_finqa_{calibration_size}"
+    quality_dev_name = "quality_dev_finqa"
+    quality_test_name = "quality_test_finqa"
+    regression_name = "regression_finqa_verified"
+    calibration_dir = output_path / calibration_name
     calibration.save_to_disk(str(calibration_dir))
-    quality_dev.save_to_disk(str(output_path / "quality_dev_finqa"))
-    quality_test.save_to_disk(str(output_path / "quality_test_finqa"))
-    verified.save_to_disk(str(output_path / "regression_finqa_verified"))
+    quality_dev.save_to_disk(str(output_path / quality_dev_name))
+    quality_test.save_to_disk(str(output_path / quality_test_name))
+    verified.save_to_disk(str(output_path / regression_name))
+
+    hashes = {
+        "calibration": dataset_hash(list(calibration)),
+        "quality_dev": dataset_hash(list(quality_dev)),
+        "quality_test": dataset_hash(list(quality_test)),
+        "high_risk_regression": dataset_hash(list(verified)),
+    }
 
     manifest = {
         "finqa_dataset": FINQA_DATASET,
@@ -168,12 +179,50 @@ def prepare_assets(
             "quality_test": len(quality_test),
             "high_risk_regression": len(verified),
         },
-        "hashes": {
-            "calibration": _dataset_hash(list(calibration)),
-            "quality_dev": _dataset_hash(list(quality_dev)),
-            "quality_test": _dataset_hash(list(quality_test)),
-            "high_risk_regression": _dataset_hash(list(verified)),
+        "schema_version": 1,
+        "assets": {
+            "calibration": {
+                "path": calibration_name,
+                "version": source_revision,
+                "size": len(calibration),
+                "sha256": hashes["calibration"],
+                "required_fields": ["pre_text", "post_text", "table", "qa.question"],
+            },
+            "evaluation_dev": {
+                "path": quality_dev_name,
+                "version": source_revision,
+                "size": len(quality_dev),
+                "sha256": hashes["quality_dev"],
+                "required_fields": ["pre_text", "post_text", "table", "qa.question"],
+            },
+            "evaluation_test": {
+                "path": quality_test_name,
+                "version": source_revision,
+                "size": len(quality_test),
+                "sha256": hashes["quality_test"],
+                "required_fields": ["pre_text", "post_text", "table", "qa.question"],
+            },
+            "high_risk_regression": {
+                "path": regression_name,
+                "version": verified_revision or "~parquet",
+                "size": len(verified),
+                "sha256": hashes["high_risk_regression"],
+                "required_fields": ["question", "answer"],
+            },
         },
+        "metric_interface": {
+            "callable": "src.evaluation.finqa_metrics:evaluate_numeric_answers",
+            "primary_metric": "numeric_accuracy",
+        },
+        "regression_policy": {
+            "callable": "src.evaluation.finqa_metrics:classify_numeric_regression",
+            "critical_error_types": [
+                "numeric_answer_mismatch",
+                "unparseable_numeric_output",
+            ],
+            "new_regression_definition": "baseline_correct_and_candidate_incorrect",
+        },
+        "hashes": hashes,
     }
     (output_path / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),
@@ -196,13 +245,24 @@ def load_assets(output_dir: str | Path) -> FinQAAssets:
     _, load_from_disk = _require_datasets()
     output_path = Path(output_dir)
     manifest = json.loads((output_path / "manifest.json").read_text(encoding="utf-8"))
+    assets = manifest.get("assets", {})
     calibration_size = manifest["sizes"]["calibration"]
-    calibration = load_from_disk(
-        str(output_path / f"calibration_finqa_{calibration_size}")
+    calibration_path = assets.get("calibration", {}).get(
+        "path", f"calibration_finqa_{calibration_size}"
     )
-    quality_dev = load_from_disk(str(output_path / "quality_dev_finqa"))
-    quality_test = load_from_disk(str(output_path / "quality_test_finqa"))
-    verified = load_from_disk(str(output_path / "regression_finqa_verified"))
+    quality_dev_path = assets.get("evaluation_dev", {}).get(
+        "path", "quality_dev_finqa"
+    )
+    quality_test_path = assets.get("evaluation_test", {}).get(
+        "path", "quality_test_finqa"
+    )
+    regression_path = assets.get("high_risk_regression", {}).get(
+        "path", "regression_finqa_verified"
+    )
+    calibration = load_from_disk(str(output_path / calibration_path))
+    quality_dev = load_from_disk(str(output_path / quality_dev_path))
+    quality_test = load_from_disk(str(output_path / quality_test_path))
+    verified = load_from_disk(str(output_path / regression_path))
     prompts = [render_finqa_prompt(row) for row in calibration]
     return FinQAAssets(
         calibration=calibration,
