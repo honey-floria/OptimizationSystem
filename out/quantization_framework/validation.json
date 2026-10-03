@@ -1,0 +1,31 @@
+{
+  "evidence": "/content/drive/MyDrive/OptimizationSystem/out/quantization_framework/framework_evidence.json",
+  "complete": false,
+  "checks": [
+    {
+      "name": "awq_gptq_smoothquant_configs",
+      "status": "pass",
+      "detail": "AWQ, GPTQ, and SmoothQuant share one validated configuration contract."
+    },
+    {
+      "name": "unified_export_contract",
+      "status": "pass",
+      "detail": "Quantized artifacts use one manifest and config naming contract."
+    },
+    {
+      "name": "unified_quantization_logging",
+      "status": "pass",
+      "detail": "All adapters declare the same JSONL event-log fields."
+    },
+    {
+      "name": "quantization_tool_versions_recorded",
+      "status": "pass",
+      "detail": "Core PyTorch and Transformers versions are recorded."
+    },
+    {
+      "name": "real_quantization_execution",
+      "status": "not_run",
+      "detail": "Actual backend execution and exported weights are deferred to 6.2-6.4."
+    }
+  ]
+}
