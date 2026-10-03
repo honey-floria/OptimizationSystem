@@ -109,6 +109,9 @@
 
 ### 5.2 基线服务
 
+基线服务与验收工具已实现，使用方式见 [`docs/BASELINE_SERVICE.md`](BASELINE_SERVICE.md)。
+完成状态以 T4 上的真实推理证据和 `out/baseline/validation.json` 为准，报告拉回前暂不勾选。
+
 - [ ] 使用 FP16/BF16 建立基线推理服务
 - [ ] 统一输入模板和生成参数
 - [ ] 支持单请求推理
