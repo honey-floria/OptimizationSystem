@@ -1,0 +1,41 @@
+{
+  "manifest": "/content/drive/MyDrive/banking_llm_project/model_input_test/model_manifest.synthetic.json",
+  "model_id": "local/synthetic-tiny-gpt2",
+  "validation_passed": true,
+  "complete": true,
+  "checks": [
+    {
+      "name": "base_model_weights_received",
+      "status": "pass",
+      "detail": "Validated 1 non-empty weight file(s)."
+    },
+    {
+      "name": "config_and_tokenizer_received",
+      "status": "pass",
+      "detail": "Config and tokenizer files are present and non-empty."
+    },
+    {
+      "name": "license_and_internal_scope_confirmed",
+      "status": "pass",
+      "detail": "License file, approval, and internal usage scope are recorded."
+    },
+    {
+      "name": "version_commit_and_weight_hash_recorded",
+      "status": "pass",
+      "detail": "Recorded identity and 1 SHA-256 hash(es)."
+    },
+    {
+      "name": "fp16_or_bf16_model_load",
+      "status": "pass",
+      "detail": "Loaded float16 model on cuda:0."
+    },
+    {
+      "name": "target_framework_inference",
+      "status": "pass",
+      "detail": "Generated one token with the configured Transformers backend."
+    }
+  ],
+  "weight_sha256": {
+    "model.safetensors": "c038f68c14e645ac7c5444e26a02eda35a8b175f481328df457951b0779cf155"
+  }
+}

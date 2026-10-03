@@ -1,0 +1,81 @@
+{
+  "finqa_dataset": "czyssrs/FinQA",
+  "verified_dataset": "Aiera/finqa-verified",
+  "finqa_revision": "main",
+  "verified_revision": "default",
+  "seed": 42,
+  "calibration_size": 1024,
+  "sizes": {
+    "calibration": 1024,
+    "quality_dev": 883,
+    "quality_test": 1064,
+    "high_risk_regression": 91
+  },
+  "schema_version": 1,
+  "assets": {
+    "calibration": {
+      "path": "calibration_finqa_1024",
+      "version": "main",
+      "size": 1024,
+      "sha256": "89dbd2dcd40a790cc5cb94a3728de2f9b0c070ab9b8a7f9eeae42c3ced851e9a",
+      "required_fields": [
+        "pre_text",
+        "post_text",
+        "table",
+        "qa.question"
+      ]
+    },
+    "evaluation_dev": {
+      "path": "quality_dev_finqa",
+      "version": "main",
+      "size": 883,
+      "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
+      "required_fields": [
+        "pre_text",
+        "post_text",
+        "table",
+        "qa.question"
+      ]
+    },
+    "evaluation_test": {
+      "path": "quality_test_finqa",
+      "version": "main",
+      "size": 1064,
+      "sha256": "0a89c300bd7e6007f5f210933d115f4757b9a54c20aeba7520bb5d1ad2f03d97",
+      "required_fields": [
+        "pre_text",
+        "post_text",
+        "table",
+        "qa.question"
+      ]
+    },
+    "high_risk_regression": {
+      "path": "regression_finqa_verified",
+      "version": "~parquet",
+      "size": 91,
+      "sha256": "81a6ba140d9806e36d6be5b8f4362a506ff710c853e8f3448889190942a31626",
+      "required_fields": [
+        "question",
+        "answer"
+      ]
+    }
+  },
+  "metric_interface": {
+    "callable": "src.evaluation.finqa_metrics:evaluate_numeric_answers",
+    "primary_metric": "numeric_accuracy"
+  },
+  "regression_policy": {
+    "callable": "src.evaluation.finqa_metrics:classify_numeric_regression",
+    "critical_error_types": [
+      "numeric_answer_mismatch",
+      "unparseable_numeric_output"
+    ],
+    "new_regression_definition": "baseline_correct_and_candidate_incorrect"
+  },
+  "hashes": {
+    "calibration": "89dbd2dcd40a790cc5cb94a3728de2f9b0c070ab9b8a7f9eeae42c3ced851e9a",
+    "quality_dev": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
+    "quality_test": "0a89c300bd7e6007f5f210933d115f4757b9a54c20aeba7520bb5d1ad2f03d97",
+    "high_risk_regression": "81a6ba140d9806e36d6be5b8f4362a506ff710c853e8f3448889190942a31626"
+  }
+}

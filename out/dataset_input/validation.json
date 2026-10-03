@@ -1,0 +1,63 @@
+{
+  "manifest": "/content/drive/MyDrive/banking_llm_project/datasets/manifest.json",
+  "complete": false,
+  "checks": [
+    {
+      "name": "dataset_manifest_received",
+      "status": "pass",
+      "detail": "Dataset manifest schema and four asset roles are present."
+    },
+    {
+      "name": "calibration_path_and_version_received",
+      "status": "pass",
+      "detail": "Calibration asset is loadable and versioned."
+    },
+    {
+      "name": "evaluation_paths_and_versions_received",
+      "status": "pass",
+      "detail": "Development and final evaluation assets are loadable and versioned."
+    },
+    {
+      "name": "regression_path_and_version_received",
+      "status": "pass",
+      "detail": "High-risk regression asset is loadable and versioned."
+    },
+    {
+      "name": "calibration_and_evaluation_isolated",
+      "status": "fail",
+      "detail": "Calibration is disjoint from evaluation; regression is disjoint from final test."
+    },
+    {
+      "name": "sample_schema_and_fields_confirmed",
+      "status": "pass",
+      "detail": "All samples contain the declared required fields."
+    },
+    {
+      "name": "business_metric_interface_confirmed",
+      "status": "pass",
+      "detail": "Business metric callable is importable."
+    },
+    {
+      "name": "high_risk_and_critical_error_policy_confirmed",
+      "status": "pass",
+      "detail": "High-risk regression set and critical error policy are executable."
+    },
+    {
+      "name": "asset_versions_and_hashes_recorded",
+      "status": "pass",
+      "detail": "All asset sizes and SHA-256 hashes match the manifest."
+    }
+  ],
+  "actual_sizes": {
+    "calibration": 1024,
+    "evaluation_dev": 883,
+    "evaluation_test": 1064,
+    "high_risk_regression": 91
+  },
+  "actual_sha256": {
+    "calibration": "89dbd2dcd40a790cc5cb94a3728de2f9b0c070ab9b8a7f9eeae42c3ced851e9a",
+    "evaluation_dev": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
+    "evaluation_test": "0a89c300bd7e6007f5f210933d115f4757b9a54c20aeba7520bb5d1ad2f03d97",
+    "high_risk_regression": "81a6ba140d9806e36d6be5b8f4362a506ff710c853e8f3448889190942a31626"
+  }
+}
