@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+  "model_path": "/content/drive/MyDrive/OptimizationSystem/out/model_input_real/qwen2.5-0.5b-instruct",
+  "version": "Qwen2.5-0.5B-Instruct",
+  "commit": "7ae557604adf67be50417f59c2c2f167def9a775",
+  "weight_files": [
+    "model.safetensors"
+  ],
+  "config_file": "config.json",
+  "tokenizer_files": [
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.json",
+    "merges.txt"
+  ],
+  "expected_sha256": {},
+  "license": {
+    "name": "apache-2.0",
+    "file": "LICENSE",
+    "internal_use_approved": true,
+    "usage_scope": "Internal research, evaluation, and model optimization only"
+  },
+  "runtime": {
+    "framework": "transformers",
+    "model_class": "causal_lm",
+    "dtype": "float16",
+    "device": "cuda:0",
+    "trust_remote_code": false,
+    "smoke_test_prompt": "请用一句话说明什么是贷款利率。"
+  }
+}
