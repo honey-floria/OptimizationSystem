@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "evaluation_name": "finqa-dev-fp16-baseline-v1",
+  "scenario_id": "financial_report_numeric_qa",
+  "dataset_role": "evaluation_dev",
+  "batch_size": 4,
+  "minimum_parse_rate": 0.99,
+  "tolerance": 0.0001
+}
