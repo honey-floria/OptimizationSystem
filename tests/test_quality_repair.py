@@ -3,6 +3,7 @@ import unittest
 from decimal import Decimal
 
 from src.evaluation.quality_repair import (
+    add_stable_table_ids,
     build_few_shot_suffix,
     parse_evidence_operation_output,
     extract_final_numeric,
@@ -11,6 +12,7 @@ from src.evaluation.quality_repair import (
     repair_with_calculator,
     repair_with_evidence_operation,
     safe_calculate,
+    validate_evidence_operation,
     _select_evaluation_rows,
 )
 
@@ -65,6 +67,31 @@ class QualityRepairTest(unittest.TestCase):
         )
         repaired = repair_with_evidence_operation(parsed)
         self.assertEqual(repaired["normalized_value"], "0.25")
+
+    def test_evidence_operation_validates_stable_cell_ids(self):
+        row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}
+        enriched = add_stable_table_ids(row)
+        self.assertIn("[cell_id=r0c1] 303.1", enriched["table"][0][1])
+        parsed = parse_evidence_operation_output(
+            '{"evidence":[{"cell_id":"r0c1","value":"303.1"},'
+            '{"cell_id":"r1c1","value":"290.6"}],'
+            '"operands":[290.6,303.1],"operation":"subtract","unit":"million"}'
+        )
+        self.assertIsNone(validate_evidence_operation(parsed, row))
+
+    def test_evidence_operation_rejects_wrong_cell_value_and_arity(self):
+        row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}
+        wrong_value = parse_evidence_operation_output(
+            '{"evidence":[{"cell_id":"r0c1","value":"999"},'
+            '{"cell_id":"r1c1","value":"290.6"}],'
+            '"operands":[999,290.6],"operation":"subtract","unit":"million"}'
+        )
+        self.assertIn("does not match", validate_evidence_operation(wrong_value, row))
+        wrong_arity = parse_evidence_operation_output(
+            '{"evidence":[{"cell_id":"r0c1","value":"303.1"}],'
+            '"operands":[303.1],"operation":"subtract","unit":"million"}'
+        )
+        self.assertIn("exactly two", validate_evidence_operation(wrong_arity, row))
 
     def test_few_shot_uses_only_passed_examples(self):
         suffix = build_few_shot_suffix([{"question": "q", "answer": "1"}])

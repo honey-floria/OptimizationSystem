@@ -121,7 +121,11 @@ def main() -> int:
     if not (model_path / "config.json").is_file():
         raise FileNotFoundError(f"模型目录缺少 config.json：{model_path}")
     if not (dataset_dir / "manifest.json").is_file():
-        raise FileNotFoundError(f"数据目录缺少 manifest.json：{dataset_dir}")
+        raise FileNotFoundError(
+            f"数据目录缺少 manifest.json：{dataset_dir}。"
+            "请传入由 prepare_assets() 生成的完整 FinQA assets 目录，"
+            "而不是原始 JSON 文件或其父目录。"
+        )
     if args.batch_size <= 0:
         raise ValueError("--batch-size 必须大于 0")
 
