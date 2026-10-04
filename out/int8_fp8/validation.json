@@ -1,0 +1,31 @@
+{
+  "evidence": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/int8_fp8_evidence.json",
+  "complete": false,
+  "checks": [
+    {
+      "name": "smoothquant_int8_config",
+      "status": "pass",
+      "detail": "SmoothQuant W8A8 configuration and calibration are recorded."
+    },
+    {
+      "name": "smoothquant_export_contract",
+      "status": "pass",
+      "detail": "INT8 export and event-log names are fixed."
+    },
+    {
+      "name": "nvidia_fp8_capability",
+      "status": "pass",
+      "detail": "NVIDIA CUDA exposes a supported PyTorch FP8 dtype."
+    },
+    {
+      "name": "ascend_fp8_capability",
+      "status": "not_run",
+      "detail": "Ascend NPU and FP8 dtype support are detected."
+    },
+    {
+      "name": "smoothquant_real_execution",
+      "status": "not_run",
+      "detail": "SmoothQuant INT8 weights were exported."
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-04T01:28:33.421869+00:00",
+  "python": "3.13.15 (main, Aug  6 2026, 11:06:22) [GCC 13.3.0]",
+  "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+  "config_file": "/content/drive/MyDrive/OptimizationSystem/configs/int8_fp8.json",
+  "calibration_manifest": "/content/drive/MyDrive/OptimizationSystem/out/dataset_input/dataset_manifest.json",
+  "calibration_asset": {
+    "path": "calibration_finqa_1024",
+    "version": "main",
+    "size": 1024,
+    "sha256": "34af0e443492d4fdc831712c67cd6f12168e923b187b0175817ed9457bd6adfd",
+    "required_fields": [
+      "pre_text",
+      "post_text",
+      "table",
+      "qa.question"
+    ]
+  },
+  "plans": [
+    {
+      "plan_id": "smoothquant-int8-w8a8",
+      "method": "smoothquant",
+      "weight_bits": 8,
+      "activation_bits": 8,
+      "alpha": 0.5,
+      "granularity": "per_channel_weight_per_tensor_activation",
+      "export_contract": {
+        "config_file": "quantization_config.json",
+        "manifest_file": "quantized_model_manifest.json",
+        "event_log_file": "quantization_events.jsonl"
+      }
+    }
+  ],
+  "backend_versions": {
+    "smoothquant": "0.0.1.dev0",
+    "torch": "2.11.0+cu130",
+    "transformers": "5.18.0"
+  },
+  "hardware_capabilities": {
+    "torch": "2.11.0+cu130",
+    "cuda": true,
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "nvidia_fp8": true,
+    "fp8_dtypes": [
+      "float8_e4m3fn",
+      "float8_e5m2"
+    ],
+    "ascend_npu": false,
+    "ascend_fp8": false
+  },
+  "status": "framework_ready_not_quantized"
+}
