@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "captured_at": "2026-10-04T01:28:33.421869+00:00",
+  "schema_version": 2,
+  "captured_at": "2026-10-04T02:42:51.322563+00:00",
   "python": "3.13.15 (main, Aug  6 2026, 11:06:22) [GCC 13.3.0]",
   "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
   "config_file": "/content/drive/MyDrive/OptimizationSystem/configs/int8_fp8.json",
@@ -24,7 +24,15 @@
       "weight_bits": 8,
       "activation_bits": 8,
       "alpha": 0.5,
-      "granularity": "per_channel_weight_per_tensor_activation",
+      "quantization_granularity": "per_channel_weight_per_tensor_activation",
+      "backend_package": "nvidia-modelopt",
+      "output_dir": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/smoothquant-int8-w8a8",
+      "artifacts": {
+        "manifest": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/smoothquant-int8-w8a8/quantized_model_manifest.json",
+        "config": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/smoothquant-int8-w8a8/quantization_config.json",
+        "events": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/smoothquant-int8-w8a8/quantization_events.jsonl"
+      },
+      "status": "pass",
       "export_contract": {
         "config_file": "quantization_config.json",
         "manifest_file": "quantized_model_manifest.json",
@@ -33,7 +41,7 @@
     }
   ],
   "backend_versions": {
-    "smoothquant": "0.0.1.dev0",
+    "nvidia-modelopt": "0.47.0",
     "torch": "2.11.0+cu130",
     "transformers": "5.18.0"
   },
@@ -41,13 +49,27 @@
     "torch": "2.11.0+cu130",
     "cuda": true,
     "gpu": "NVIDIA A100-SXM4-40GB",
-    "nvidia_fp8": true,
-    "fp8_dtypes": [
-      "float8_e4m3fn",
-      "float8_e5m2"
+    "cuda_compute_capability": [
+      8,
+      0
     ],
+    "nvidia_fp8": false,
+    "nvidia_fp8_probe": {
+      "available": false,
+      "dtypes": [
+        "float8_e4m3fn",
+        "float8_e5m2"
+      ],
+      "detail": "FP8 matrix multiplication failed: NotImplementedError: \"addmm_cuda\" not implemented for 'Float8_e4m3fn'"
+    },
     "ascend_npu": false,
-    "ascend_fp8": false
+    "ascend_device": null,
+    "ascend_fp8": false,
+    "ascend_fp8_probe": {
+      "available": false,
+      "dtypes": [],
+      "detail": "Ascend NPU is unavailable."
+    }
   },
-  "status": "framework_ready_not_quantized"
+  "status": "completed"
 }

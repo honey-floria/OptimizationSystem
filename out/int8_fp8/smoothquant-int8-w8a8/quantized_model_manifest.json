@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "format": "nvidia-modelopt-smoothquant",
+  "plan": {
+    "plan_id": "smoothquant-int8-w8a8",
+    "method": "smoothquant",
+    "weight_bits": 8,
+    "activation_bits": 8,
+    "alpha": 0.5,
+    "quantization_granularity": "per_channel_weight_per_tensor_activation",
+    "backend_package": "nvidia-modelopt"
+  },
+  "model_path": "/content/drive/MyDrive/banking_llm_project/int8_fp8/smoothquant-int8-w8a8",
+  "source_model_path": "/content/drive/MyDrive/banking_llm_project/model_input_real/qwen2.5-0.5b-instruct",
+  "modelopt_state": "/content/drive/MyDrive/banking_llm_project/int8_fp8/smoothquant-int8-w8a8/modelopt_state.pth",
+  "required_files": [
+    "modelopt_state.pth",
+    "quantization_config.json"
+  ],
+  "analysis_artifacts": {
+    "config": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/smoothquant-int8-w8a8/quantization_config.json",
+    "manifest": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/smoothquant-int8-w8a8/quantized_model_manifest.json",
+    "events": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/smoothquant-int8-w8a8/quantization_events.jsonl"
+  }
+}
