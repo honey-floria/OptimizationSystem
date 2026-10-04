@@ -1,0 +1,48 @@
+{
+  "scope": "customized_quantization",
+  "complete": true,
+  "checks": [
+    {
+      "name": "at_least_two_quantization_methods_exported",
+      "status": "pass",
+      "detail": "Real exports completed for: awq, gptq, int8."
+    },
+    {
+      "name": "at_least_one_quantized_model_technically_stable",
+      "status": "pass",
+      "detail": "Technical stability means model loading plus a complete repeated 16-case benchmark; it does not claim production business readiness."
+    },
+    {
+      "name": "complete_business_regression_executed",
+      "status": "pass",
+      "detail": "Full 883-row quality evaluation and 91-row high-risk regression completed for 6 INT4 plans."
+    },
+    {
+      "name": "quantized_performance_reproducible",
+      "status": "pass",
+      "detail": "7/7 applicable plans have repeated, comparable 16-case benchmarks."
+    },
+    {
+      "name": "quantization_recommendation_draft_completed",
+      "status": "pass",
+      "detail": "The draft records a no-deployment decision and the quality-first and performance-first research candidates."
+    }
+  ],
+  "deliverables": {
+    "awq_gptq_int8_quantized_models": true,
+    "quantization_configs": true,
+    "quantization_scripts": true,
+    "quantization_quality_report": true,
+    "quantization_performance_report": true
+  },
+  "technical_deployment_candidates": [
+    "awq-int4-w4a16-g32",
+    "awq-int4-w4a16-g64",
+    "awq-int4-w4a16-g128",
+    "gptq-int4-w4a16-g32",
+    "gptq-int4-w4a16-g64",
+    "gptq-int4-w4a16-g128",
+    "smoothquant-int8-w8a8"
+  ],
+  "production_recommendation": "暂不部署：FP16 基线业务质量不足，且当前量化方案没有性能收益。"
+}
