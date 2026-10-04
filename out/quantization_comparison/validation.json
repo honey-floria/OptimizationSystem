@@ -1,0 +1,41 @@
+{
+  "report": "/Users/ys/PycharmProjects/OptimizationSystem/out/quantization_comparison/comparison_report.json",
+  "complete": false,
+  "checks": [
+    {
+      "name": "fp16_int8_int4_fp8_comparison_table",
+      "status": "pass",
+      "detail": "FP16, INT8, INT4, and FP8 rows are present."
+    },
+    {
+      "name": "quality_changes_recorded",
+      "status": "pass",
+      "detail": "Every candidate has measured quality."
+    },
+    {
+      "name": "memory_changes_recorded",
+      "status": "not_run",
+      "detail": "Every candidate has measured memory."
+    },
+    {
+      "name": "latency_changes_recorded",
+      "status": "not_run",
+      "detail": "Every candidate has measured latency."
+    },
+    {
+      "name": "throughput_changes_recorded",
+      "status": "not_run",
+      "detail": "Every candidate has measured throughput."
+    },
+    {
+      "name": "unit_token_cost_recorded",
+      "status": "not_run",
+      "detail": "Every measured candidate has an approved monetary cost."
+    },
+    {
+      "name": "high_risk_unsuitable_plans_marked",
+      "status": "pass",
+      "detail": "Every candidate has an L2/L3 risk assessment."
+    }
+  ]
+}

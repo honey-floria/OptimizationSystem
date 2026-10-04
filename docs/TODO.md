@@ -251,13 +251,20 @@ A100 的真实 FP8 矩阵运算探测失败，因此 NVIDIA FP8 保持未完成�
 
 ### 6.5 量化结果整理
 
-- [ ] 建立 FP16、INT8、INT4、FP8 对比表
-- [ ] 记录每种方案的质量下降
+统一对比生成器和使用说明见
+[`docs/QUANTIZATION_COMPARISON.md`](QUANTIZATION_COMPARISON.md)，当前报告见
+[`out/quantization_comparison/comparison_report.md`](../out/quantization_comparison/comparison_report.md)。
+对比表、适用方案的质量变化和风险标记已完成；FP8 已依据 A100 实测结果标记为不适用。
+由于 FP16/INT4 硬件及测试矩阵不同、INT8 尚无统一 Benchmark且 GPU 单价未确认，其余四项
+保持未完成。
+
+- [x] 建立 FP16、INT8、INT4、FP8 对比表
+- [x] 记录每种方案的质量下降
 - [ ] 记录每种方案的显存收益
 - [ ] 记录每种方案的延迟变化
 - [ ] 记录每种方案的吞吐变化
 - [ ] 记录每种方案的单位 token 成本
-- [ ] 标记不适合高风险业务的方案
+- [x] 标记不适合高风险业务的方案
 
 ### 6.6 阶段验收
 
