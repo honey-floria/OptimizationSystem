@@ -1062,3 +1062,7 @@ Notebook 会在每个模型结束后释放显存，并输出解析率、结构�
 使用 `banking_llm_project/model_input_real/qwen2.5-1.5b-instruct` 与
 `qwen2.5-3b-instruct`；如果 Google Drive 中目录名不同，只需修改 Notebook 的
 `MODEL_CANDIDATES`，不需要重新运行 0.5B。
+
+模型下载说明：新 Notebook 会调用 `huggingface_hub.snapshot_download`，将公开的
+`Qwen/Qwen2.5-1.5B-Instruct` 和 `Qwen/Qwen2.5-3B-Instruct` 保存到上述 Google Drive 目录。
+目录中已有 `config.json` 时会自动跳过下载；因此第一次运行需要等待下载，之后重跑不会重复下载。
