@@ -1071,7 +1071,8 @@ Notebook 会在每个模型结束后释放显存，并输出解析率、结构�
 
 新增本地入口 `scripts/run_quality_repair_4080.py`，不依赖 Google Colab 或 Google Drive，模型和数据均从
 服务器本地路径读取。默认配置为单卡安全模式：`batch_size=1`、`max_new_tokens=256`、固定 80 条 pilot、
-只运行 `structured_json`。
+只运行新的 `evidence_operation` 两阶段方案；需要对照时可传入
+`--variants structured_json,evidence_operation`。
 
 服务器环境可先安装 `requirements-server.txt`：
 
