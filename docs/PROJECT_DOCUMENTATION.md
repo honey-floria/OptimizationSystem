@@ -1066,3 +1066,98 @@ Notebook 会在每个模型结束后释放显存，并输出解析率、结构�
 模型下载说明：新 Notebook 会调用 `huggingface_hub.snapshot_download`，将公开的
 `Qwen/Qwen2.5-1.5B-Instruct` 和 `Qwen/Qwen2.5-3B-Instruct` 保存到上述 Google Drive 目录。
 目录中已有 `config.json` 时会自动跳过下载；因此第一次运行需要等待下载，之后重跑不会重复下载。
+
+## 4080 本地服务器入口与 Notebook 整理（2026-10-05）
+
+新增本地入口 `scripts/run_quality_repair_4080.py`，不依赖 Google Colab 或 Google Drive，模型和数据均从
+服务器本地路径读取。默认配置为单卡安全模式：`batch_size=1`、`max_new_tokens=256`、固定 80 条 pilot、
+只运行 `structured_json`。
+
+服务器环境可先安装 `requirements-server.txt`：
+
+```bash
+python3 -m pip install -r requirements-server.txt
+```
+
+Pilot 命令示例：
+
+```bash
+python3 scripts/run_quality_repair_4080.py \
+  --model-path /data/models/Qwen2.5-3B-Instruct \
+  --model-id Qwen/Qwen2.5-3B-Instruct \
+  --dataset-dir /data/finqa_assets \
+  --output-dir out/quality_repair_3b_4080
+```
+
+确认 pilot 有效后，增加 `--full` 执行完整 883 条 dev：
+
+```bash
+python3 scripts/run_quality_repair_4080.py \
+  --model-path /data/models/Qwen2.5-3B-Instruct \
+  --model-id Qwen/Qwen2.5-3B-Instruct \
+  --dataset-dir /data/finqa_assets \
+  --output-dir out/quality_repair_3b_4080_full \
+  --full
+```
+
+如果显存稳定，可以将 `--batch-size` 从 1 调到 2；4080 只有 16GB 显存时不建议一开始使用更大 batch。
+入口会保存有效配置、模型 manifest、请求日志、逐条预测和 `comparison_report.json`。
+
+原有 10 个 Colab Notebook 已按 TODO 顺序合并为
+`notebooks/optimization_system_all_colab.ipynb`，包含 115 个单元。旧的分散 Notebook 已删除；
+本地 4080 运行应优先使用上述 Python 入口。
+
+## 数值准确率低的原因与优化优先级（2026-10-05）
+
+当前低准确率不是单一解析问题，而是“表格定位、公式选择、数值计算、输出格式”连续链路中的多处错误叠加：
+
+1. 模型需要先从长文本和表格中找到正确行列，再判断题目要求的年份或分母，最后完成一到多步计算；
+   `0.5B` 模型容量不足，3B 虽有改善但百分比、平均和多步题仍明显薄弱。
+2. 结构化 Prompt 只能约束输出形式，不能保证 evidence 对应正确表格单元格，也不能保证 formula 选择正确；
+   因此 3B 的 `structured_json` 已达到 95% 解析率，但 pilot 数值准确率仍只有 13.75%。
+3. 直接让模型生成精确小数、百分比和负数会放大计算错误；格式重试只能修复 JSON，不能修复业务答案。
+4. `structured_json_compact` 在不同模型上不稳定，说明继续压缩格式约束不是主要解决方向。
+
+建议按以下顺序优化：
+
+1. 以 3B + 原始 `structured_json` 作为新 FP16 主基线，先完成完整 883 条评测。
+2. 改为两阶段推理：第一阶段只输出带行列/年份的证据和纯数字操作数，第二阶段由安全 Decimal 计算器执行公式；
+   模型不再直接承担最终小数运算。
+3. 将表格序列化为带唯一 ID 的单元格或行列标记，要求 evidence 只能引用这些 ID，并做 evidence—formula—value
+   一致性校验；校验失败进入人工复核或重试。
+4. 使用 FinQA train 做 LoRA/监督微调，目标格式固定为“证据、操作数、公式、计算结果、单位”；严禁使用 dev/test
+   答案训练，并对百分比、平均、总和和多步样本过采样。
+5. 在完整评测前继续用固定 80 条 pilot 做回归；只有解析率和数值正确数同时改善，才扩展到 883 条。
+6. 如果 3B 完整评测仍低于 20%，再比较 7B 或 4-bit 7B，而不是继续堆叠 Prompt 变体。
+
+## 6.7.3 模型规模 pilot 结果分析（2026-10-05）
+
+1.5B 和 3B 均使用与 0.5B 完全相同的 80 条样本，样本种子均为 `20261004`，索引哈希均为
+`cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61`。
+
+| 模型 | 方案 | 解析率 | 数值准确率 | 正确数 | 重试次数 | 用时 |
+|---|---|---:|---:|---:|---:|---:|
+| 0.5B | `structured_json` | 86.25% | 0% | 0/80 | 30 | 4.1 分钟 |
+| 1.5B | `structured_json` | 91.25% | 11.25% | 9/80 | 56 | 8.8 分钟 |
+| 3B | `structured_json` | **95.00%** | **13.75%** | **11/80** | 22 | 7.1 分钟 |
+| 1.5B | `structured_json_compact` | **96.25%** | 1.25% | 1/80 | 7 | 2.7 分钟 |
+| 3B | `structured_json_compact` | 6.25% | 0% | 0/80 | 79 | 9.6 分钟 |
+
+### 结果解释
+
+1. 原始 `structured_json` 随模型规模明显改善：0.5B 为 0/80，1.5B 为 9/80，3B 为 11/80。说明当前
+   主要瓶颈确实包含模型的表格定位和数值推理能力，而不只是输出格式。
+2. 3B 是当前最佳候选：解析率达到 95%，数值准确率达到 13.75%，并且比 1.5B 少 34 次格式重试。
+   但 80 条结果仍不能代表完整 dev，也尚未达到第 6.7.5 节的 20% 准确率门槛。
+3. `structured_json_compact` 不具备跨模型稳定性。它在 1.5B 上解析率较高但只答对 1 条，在 3B 上
+   解析率降至 6.25%，79/80 条触发重试，说明更严格、更短的契约反而使 3B 模型大量输出解释或重复提示词。
+4. 题型上，3B 在总和类答对 3/6、查找类 4/20、变化类 2/17；百分比/比例类只有 1/30，平均类 1/7。
+   百分比、平均和多步计算仍是主要薄弱点，不能只靠增大模型解决。
+5. Zero-shot 不是可靠接口：1.5B 仅 1/80 正确且解析率 8.75%，3B 为 0/80 且解析率 0%；后续模型比较应以
+   原始 `structured_json` 作为主方案。
+
+### 阶段结论
+
+保留 0.5B 结果作为历史控制组，不需要重跑。下一步优先用 3B 的原始 `structured_json` 在完整 883 条 dev
+上运行一次；不再把 `structured_json_compact` 作为主方案。完整评测后再判断 3B 是否达到质量门槛，以及是否需要
+对百分比、平均和多步计算样本进行专门 Prompt 或微调。
