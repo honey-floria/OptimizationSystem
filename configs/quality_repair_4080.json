@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-4080",
+  "dataset_role": "evaluation_dev",
+  "calibration_role": "calibration",
+  "minimum_parse_rate": 0.99,
+  "tolerance": 0.0001,
+  "batch_size": 1,
+  "show_progress": true,
+  "progress_every_batches": 10,
+  "generation": {
+    "max_new_tokens": 256,
+    "do_sample": false,
+    "num_beams": 1
+  },
+  "variants": [
+    {
+      "name": "structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "format_retry": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|\"}. Preserve the table column, row, year, and unit in evidence. The value must be the final answer."
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": ["evidence", "formula", "value", "unit"],
+    "properties": {
+      "evidence": {"type": "array", "items": {"type": "string"}},
+      "formula": {"type": "string"},
+      "value": {"type": "number"},
+      "unit": {"type": "string"}
+    },
+    "additionalProperties": false
+  }
+}
