@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import math
 import operator
 import random
 import re
@@ -290,10 +291,27 @@ def run_quality_repair_experiment(
         raise ValueError("quality repair batch_size must be positive")
     results = []
     original_generation = service.config.get("generation")
+    show_progress = bool(config.get("show_progress", True))
+    total_variants = len(variants)
+    total_rows = len(evaluation_rows)
+    total_batches = math.ceil(total_rows / batch_size) if total_rows else 0
+    configured_progress_interval = int(config.get("progress_every_batches", 0))
+    progress_interval = (
+        configured_progress_interval
+        if configured_progress_interval > 0
+        else max(1, math.ceil(total_batches / 10))
+    )
     if isinstance(config.get("generation"), dict):
         service.config["generation"] = config["generation"]
-    for variant in variants:
+    for variant_number, variant in enumerate(variants, start=1):
         started = time.perf_counter()
+        if show_progress:
+            print(
+                f"[6.7.2] 方案 {variant_number}/{total_variants} "
+                f"{variant.name} 开始，总进度 "
+                f"{(variant_number - 1) / total_variants * 100:.1f}%",
+                flush=True,
+            )
         variant_dir = output_path / variant.name
         variant_dir.mkdir(parents=True, exist_ok=True)
         predictions_path = variant_dir / "predictions.jsonl"
@@ -307,7 +325,9 @@ def run_quality_repair_experiment(
             few_shot = build_few_shot_suffix(calibration_rows)
             prompt_suffix = f"{few_shot}\n\n{prompt_suffix}" if few_shot else prompt_suffix
         with predictions_path.open("w", encoding="utf-8") as stream:
-            for start in range(0, len(evaluation_rows), batch_size):
+            for batch_number, start in enumerate(
+                range(0, len(evaluation_rows), batch_size), start=1
+            ):
                 rows = [
                     evaluation_rows[index]
                     for index in range(start, min(start + batch_size, len(evaluation_rows)))
@@ -375,6 +395,24 @@ def run_quality_repair_experiment(
                     stream.write(json.dumps(record, ensure_ascii=False) + "\n")
                     predictions.append(extracted if extracted is not None else "")
                     references.append(reference)
+                completed_rows = min(start + len(rows), total_rows)
+                if show_progress and (
+                    batch_number % progress_interval == 0
+                    or completed_rows == total_rows
+                ):
+                    variant_percent = completed_rows / total_rows * 100 if total_rows else 100.0
+                    overall_percent = (
+                        (variant_number - 1 + completed_rows / total_rows)
+                        / total_variants
+                        * 100
+                        if total_rows
+                        else variant_number / total_variants * 100
+                    )
+                    print(
+                        f"[6.7.2] {variant.name}: {completed_rows}/{total_rows} "
+                        f"({variant_percent:.1f}%), 总进度 {overall_percent:.1f}%",
+                        flush=True,
+                    )
         metrics = evaluate_numeric_answers(
             predictions,
             references,
@@ -395,6 +433,13 @@ def run_quality_repair_experiment(
                 "predictions_sha256": _sha256(predictions_path),
             }
         )
+        if show_progress:
+            print(
+                f"[6.7.2] 方案 {variant_number}/{total_variants} "
+                f"{variant.name} 完成，总进度 "
+                f"{variant_number / total_variants * 100:.1f}%",
+                flush=True,
+            )
     service.config["generation"] = original_generation
     report = {
         "schema_version": 1,
