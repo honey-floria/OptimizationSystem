@@ -9,7 +9,8 @@ from pathlib import Path
 
 
 DEFAULT_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct"
-DEFAULT_OUTPUT_DIR = Path("/data/models/Qwen2.5-3B-Instruct")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "models" / "Qwen2.5-3B-Instruct"
 
 
 def parse_args() -> argparse.Namespace:
