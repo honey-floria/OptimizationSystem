@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "quality_gates": {
+    "max_quality_drop_percentage_points": 0.5,
+    "minimum_parse_rate": 0.99
+  },
+  "method_disposition": {
+    "fp8": "unsupported_on_target_a100"
+  },
+  "hourly_gpu_cost_usd": {
+    "Tesla T4": null,
+    "NVIDIA A100-SXM4-40GB": null
+  }
+}
