@@ -1,5 +1,5 @@
 {
-  "report": "/Users/ys/PycharmProjects/OptimizationSystem/out/quantization_comparison/comparison_report.json",
+  "report": "/content/drive/MyDrive/OptimizationSystem/out/quantization_comparison/comparison_report.json",
   "complete": false,
   "checks": [
     {
@@ -14,17 +14,17 @@
     },
     {
       "name": "memory_changes_recorded",
-      "status": "not_run",
+      "status": "pass",
       "detail": "Every candidate has measured memory."
     },
     {
       "name": "latency_changes_recorded",
-      "status": "not_run",
+      "status": "pass",
       "detail": "Every candidate has measured latency."
     },
     {
       "name": "throughput_changes_recorded",
-      "status": "not_run",
+      "status": "pass",
       "detail": "Every candidate has measured throughput."
     },
     {
