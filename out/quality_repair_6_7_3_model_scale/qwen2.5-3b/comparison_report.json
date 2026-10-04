@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-v1",
+  "created_at": "2026-10-04T21:46:51.887822+00:00",
+  "dataset": {
+    "role": "evaluation_dev",
+    "size": 80,
+    "source_size": 883,
+    "version": "main",
+    "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
+    "sample": {
+      "seed": 20261004,
+      "indices": [
+        18,
+        22,
+        31,
+        55,
+        57,
+        62,
+        75,
+        96,
+        120,
+        129,
+        134,
+        148,
+        151,
+        158,
+        178,
+        183,
+        191,
+        194,
+        195,
+        213,
+        214,
+        219,
+        223,
+        225,
+        234,
+        253,
+        254,
+        260,
+        267,
+        273,
+        281,
+        285,
+        287,
+        297,
+        310,
+        335,
+        341,
+        364,
+        368,
+        377,
+        378,
+        383,
+        396,
+        402,
+        407,
+        430,
+        437,
+        440,
+        455,
+        487,
+        535,
+        556,
+        566,
+        605,
+        610,
+        611,
+        623,
+        625,
+        628,
+        656,
+        657,
+        687,
+        693,
+        708,
+        711,
+        722,
+        728,
+        729,
+        744,
+        761,
+        772,
+        788,
+        824,
+        827,
+        846,
+        847,
+        852,
+        864,
+        873,
+        881
+      ],
+      "indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61"
+    }
+  },
+  "variants": [
+    {
+      "variant": "zero_shot_final_answer",
+      "output_mode": "numeric_text",
+      "calculator_enabled": false,
+      "prompt_suffix": "\nReturn only the final numeric answer with its unit. Do not explain the calculation.",
+      "metrics": {
+        "total": 80,
+        "parsed": 0,
+        "correct": 0,
+        "parse_rate": 0.0,
+        "numeric_accuracy": 0.0
+      },
+      "structured_output_rate": 0.0,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 0,
+      "duration_seconds": 145.61018232100014,
+      "predictions_file": "zero_shot_final_answer/predictions.jsonl",
+      "predictions_sha256": "4dedec04dc3c5129bc0828bc6b9507e259845123ddd5877dd2b1a0f3eae157c9"
+    },
+    {
+      "variant": "structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|\"}. Preserve the table column, row, year, and unit in evidence. The value must be the final answer.",
+      "metrics": {
+        "total": 80,
+        "parsed": 76,
+        "correct": 11,
+        "parse_rate": 0.95,
+        "numeric_accuracy": 0.1375
+      },
+      "structured_output_rate": 0.95,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 22,
+      "duration_seconds": 423.47761092200017,
+      "predictions_file": "structured_json/predictions.jsonl",
+      "predictions_sha256": "eaa86347c2390b76fe3f2bac418c5b55cb9ea3569e72bedc0a345969585b58cd"
+    },
+    {
+      "variant": "structured_json_compact",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "prompt_suffix": "\nReturn exactly one JSON object, no markdown and no explanation. Use only these keys: evidence, formula, value, unit. evidence must be a one-element array containing one short string naming the exact table row, column, and year. formula must contain only numeric arithmetic with +, -, *, /, and parentheses. value must be the final numeric answer. unit must be one of million, percent, dollars, shares, or empty string.",
+      "metrics": {
+        "total": 80,
+        "parsed": 5,
+        "correct": 0,
+        "parse_rate": 0.0625,
+        "numeric_accuracy": 0.0
+      },
+      "structured_output_rate": 0.0625,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 79,
+      "duration_seconds": 575.55297905,
+      "predictions_file": "structured_json_compact/predictions.jsonl",
+      "predictions_sha256": "83f27518a17d2f340c4534e6bf449261ae0437c658404074a7cf631c44d1817e"
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "formula",
+      "value",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "formula": {
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "generation": {
+    "max_new_tokens": 256,
+    "do_sample": false,
+    "num_beams": 1
+  },
+  "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
+  "model": {
+    "key": "qwen2.5-3b",
+    "model_id": "Qwen/Qwen2.5-3B-Instruct",
+    "model_path": "/content/drive/MyDrive/banking_llm_project/model_input_real/qwen2.5-3b-instruct"
+  }
+}

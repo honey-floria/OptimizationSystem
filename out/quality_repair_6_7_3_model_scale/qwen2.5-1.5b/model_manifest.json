@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "model_path": "/content/drive/MyDrive/banking_llm_project/model_input_real/qwen2.5-1.5b-instruct",
+  "version": "Qwen/Qwen2.5-1.5B-Instruct",
+  "commit": "colab-local",
+  "weight_files": [],
+  "config_file": "config.json",
+  "tokenizer_files": [],
+  "expected_sha256": {},
+  "runtime": {
+    "framework": "transformers",
+    "model_class": "causal_lm",
+    "dtype": "float16",
+    "device": "cuda:0",
+    "trust_remote_code": false
+  }
+}
