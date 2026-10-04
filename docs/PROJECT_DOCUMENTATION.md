@@ -1081,7 +1081,8 @@ python3 -m pip install -r requirements-server.txt
 ```
 
 如果服务器还没有模型，可使用 `scripts/download_model_4080.py` 将
-`Qwen/Qwen2.5-3B-Instruct` 下载到默认目录 `/data/models/Qwen2.5-3B-Instruct`：
+`Qwen/Qwen2.5-3B-Instruct` 下载到项目下的默认目录
+`models/Qwen2.5-3B-Instruct`：
 
 ```bash
 python3 scripts/download_model_4080.py
@@ -1094,7 +1095,7 @@ Pilot 命令示例：
 
 ```bash
 python3 scripts/run_quality_repair_4080.py \
-  --model-path /data/models/Qwen2.5-3B-Instruct \
+  --model-path models/Qwen2.5-3B-Instruct \
   --model-id Qwen/Qwen2.5-3B-Instruct \
   --dataset-dir /data/finqa_assets \
   --output-dir out/quality_repair_3b_4080 \
@@ -1105,7 +1106,7 @@ python3 scripts/run_quality_repair_4080.py \
 
 ```bash
 python3 scripts/run_quality_repair_4080.py \
-  --model-path /data/models/Qwen2.5-3B-Instruct \
+  --model-path models/Qwen2.5-3B-Instruct \
   --model-id Qwen/Qwen2.5-3B-Instruct \
   --dataset-dir /data/finqa_assets \
   --output-dir out/quality_repair_3b_4080_full \
