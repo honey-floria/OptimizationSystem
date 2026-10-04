@@ -1,4 +1,148 @@
 {
-  "status": "not_run",
-  "detail": "No real SmoothQuant INT8 manifest found. Run int8_fp8_experiment_colab.ipynb first."
+  "schema_version": 2,
+  "status": "completed",
+  "numeric": {
+    "total": 883,
+    "parsed": 848,
+    "correct": 6,
+    "parse_rate": 0.9603624009060022,
+    "numeric_accuracy": 0.006795016987542469
+  },
+  "numeric_comparison": {
+    "baseline_numeric_accuracy": 0.009060022650056626,
+    "int8_numeric_accuracy": 0.006795016987542469,
+    "absolute_change": -0.002265005662514157
+  },
+  "long_context": {
+    "total": 3,
+    "passed": 0,
+    "pass_rate": 0.0,
+    "cases": [
+      {
+        "index": 0,
+        "input_characters": 9219,
+        "baseline_passed": false,
+        "passed": false
+      },
+      {
+        "index": 1,
+        "input_characters": 9205,
+        "baseline_passed": false,
+        "passed": false
+      },
+      {
+        "index": 2,
+        "input_characters": 9198,
+        "baseline_passed": false,
+        "passed": false
+      }
+    ]
+  },
+  "structured_output": {
+    "total": 10,
+    "passed": 0,
+    "pass_rate": 0.0,
+    "cases": [
+      {
+        "index": 0,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 1,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 2,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 3,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 4,
+        "baseline_passed": true,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 5,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 6,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 7,
+        "baseline_passed": true,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 8,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      },
+      {
+        "index": 9,
+        "baseline_passed": false,
+        "passed": false,
+        "valid_json": false,
+        "missing_fields": [
+          "answer",
+          "unit"
+        ]
+      }
+    ]
+  }
 }

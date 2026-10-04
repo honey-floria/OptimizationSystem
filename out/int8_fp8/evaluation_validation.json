@@ -1,0 +1,21 @@
+{
+  "evidence": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8/evaluation.json",
+  "complete": true,
+  "checks": [
+    {
+      "name": "int8_numeric_accuracy_compared",
+      "status": "pass",
+      "detail": "INT8 numeric accuracy is compared with FP16."
+    },
+    {
+      "name": "int8_long_context_compared",
+      "status": "pass",
+      "detail": "INT8 long-context cases are compared with FP16."
+    },
+    {
+      "name": "int8_structured_output_compared",
+      "status": "pass",
+      "detail": "INT8 structured-output cases are compared with FP16."
+    }
+  ]
+}
