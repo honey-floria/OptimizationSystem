@@ -33,8 +33,8 @@ python -m src.quantization.comparison --project-root .
 完成剩余 6.5 验收前，需要将 AWQ/GPTQ 重跑到 A100 80GB，或将 FP16/INT8 重跑到 A100
 40GB，并填写经项目确认的 GPU 小时单价。
 
-同硬件 Benchmark 可直接运行 `notebooks/quantization_comparison_benchmark_colab.ipynb`。
-Notebook 会依次生成：
+补跑可直接运行 `notebooks/quantization_comparison_benchmark_colab.ipynb`。Notebook 会锁定
+A100-SXM4-40GB、校验并复用已有六份 AWQ/GPTQ 报告，只重新运行 FP16 和 INT8，然后生成：
 
 - `out/quantization_comparison/fp16_a100_benchmark_report.json`
 - `out/int8_fp8/benchmark_report.json`
