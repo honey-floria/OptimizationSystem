@@ -13,14 +13,24 @@
       "detail": "INT8 export and event-log names are fixed."
     },
     {
+      "name": "smoothquant_backend_recorded",
+      "status": "not_run",
+      "detail": "NVIDIA ModelOpt version is recorded."
+    },
+    {
+      "name": "smoothquant_quantized_artifacts",
+      "status": "not_run",
+      "detail": "SmoothQuant config, manifest, and event log exist."
+    },
+    {
       "name": "nvidia_fp8_capability",
-      "status": "pass",
-      "detail": "NVIDIA CUDA exposes a supported PyTorch FP8 dtype."
+      "status": "not_run",
+      "detail": "Legacy evidence only recorded the FP8 dtype; rerun the real matrix-operation probe."
     },
     {
       "name": "ascend_fp8_capability",
       "status": "not_run",
-      "detail": "Ascend NPU and FP8 dtype support are detected."
+      "detail": "A real FP8 matrix multiplication completed on Ascend NPU."
     },
     {
       "name": "smoothquant_real_execution",
