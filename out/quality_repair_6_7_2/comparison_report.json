@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "experiment_name": "finqa-fp16-quality-repair-v1",
-  "created_at": "2026-10-04T17:23:10.995428+00:00",
+  "created_at": "2026-10-04T20:16:55.614906+00:00",
   "dataset": {
     "role": "evaluation_dev",
     "size": 883,
@@ -16,17 +16,17 @@
       "prompt_suffix": "\nReturn only the final numeric answer with its unit. Do not explain the calculation.",
       "metrics": {
         "total": 883,
-        "parsed": 24,
-        "correct": 2,
-        "parse_rate": 0.027180067950169876,
-        "numeric_accuracy": 0.0022650056625141564
+        "parsed": 105,
+        "correct": 5,
+        "parse_rate": 0.11891279728199321,
+        "numeric_accuracy": 0.0056625141562853904
       },
       "structured_output_rate": 0.0,
       "calculator_use_rate": 0.0,
       "format_retry_count": 0,
-      "duration_seconds": 81.27123097499998,
+      "duration_seconds": 1044.9654283440002,
       "predictions_file": "zero_shot_final_answer/predictions.jsonl",
-      "predictions_sha256": "65761a1858b4f2db63461080f6f80494c17e51ab8d2885f987f2407eb6c16a03"
+      "predictions_sha256": "8bfbd666877750ace7ea0f7bfefb810bf15739a68c24058fc1100e97a6433245"
     },
     {
       "variant": "structured_json",
@@ -35,17 +35,17 @@
       "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|\"}. Preserve the table column, row, year, and unit in evidence. The value must be the final answer.",
       "metrics": {
         "total": 883,
-        "parsed": 52,
-        "correct": 1,
-        "parse_rate": 0.05889014722536806,
-        "numeric_accuracy": 0.0011325028312570782
+        "parsed": 695,
+        "correct": 17,
+        "parse_rate": 0.7870894677236693,
+        "numeric_accuracy": 0.01925254813137033
       },
-      "structured_output_rate": 0.057757644394110984,
+      "structured_output_rate": 0.7870894677236693,
       "calculator_use_rate": 0.0,
-      "format_retry_count": 879,
-      "duration_seconds": 310.60819839199985,
+      "format_retry_count": 370,
+      "duration_seconds": 2050.705745622,
       "predictions_file": "structured_json/predictions.jsonl",
-      "predictions_sha256": "1de10f539b54d274e0320e3b2e6187a9d1ced68dbb3bf17b4acb3f66e396836e"
+      "predictions_sha256": "c4fd529d3ca2783e96914e391a088aed00e6b58820dc9076ff88af62deec2f2e"
     },
     {
       "variant": "few_shot_structured_json",
@@ -54,17 +54,17 @@
       "prompt_suffix": "Example question: what were average net sales from 2011 to 2013 for mst in millions?\nExample final answer: 7288\n\nExample question: in 2016 what was the percent of the total operating leases that was due including terms greater than 12 months\nExample final answer: 15%\n\n\nUse the provided training examples as format guidance only. Return exactly one JSON object with evidence, formula, value, and unit; do not include any other text.",
       "metrics": {
         "total": 883,
-        "parsed": 0,
-        "correct": 0,
-        "parse_rate": 0.0,
-        "numeric_accuracy": 0.0
+        "parsed": 287,
+        "correct": 1,
+        "parse_rate": 0.3250283125707814,
+        "numeric_accuracy": 0.0011325028312570782
       },
-      "structured_output_rate": 0.0,
+      "structured_output_rate": 0.2797281993204983,
       "calculator_use_rate": 0.0,
-      "format_retry_count": 883,
-      "duration_seconds": 315.430862658,
+      "format_retry_count": 738,
+      "duration_seconds": 3809.371644498001,
       "predictions_file": "few_shot_structured_json/predictions.jsonl",
-      "predictions_sha256": "5458731012be6b1f946c89064bc1614b541cccfd8b76e12b74ac5cb4280a4c2c"
+      "predictions_sha256": "a53b8f38e627c24907eeb08c44584a0831aac40d2662796e10d7e9fa61770586"
     },
     {
       "variant": "structured_json_calculator",
@@ -73,17 +73,17 @@
       "prompt_suffix": "\nReturn exactly one JSON object with evidence, formula, value, and unit. Write formula using only numeric arithmetic (+, -, *, /, parentheses). The formula will be checked by a deterministic calculator; do not put prose or years into the formula.",
       "metrics": {
         "total": 883,
-        "parsed": 2,
-        "correct": 0,
-        "parse_rate": 0.0022650056625141564,
-        "numeric_accuracy": 0.0
+        "parsed": 102,
+        "correct": 3,
+        "parse_rate": 0.11551528878822197,
+        "numeric_accuracy": 0.0033975084937712344
       },
-      "structured_output_rate": 0.0,
-      "calculator_use_rate": 0.0,
-      "format_retry_count": 883,
-      "duration_seconds": 311.9808137619998,
+      "structured_output_rate": 0.1087202718006795,
+      "calculator_use_rate": 0.035107587768969425,
+      "format_retry_count": 788,
+      "duration_seconds": 2940.142939915,
       "predictions_file": "structured_json_calculator/predictions.jsonl",
-      "predictions_sha256": "5dd889cdbbcd8e74a17c8a8d8bcaa0433010dfe4ae1876c3fcba375398bf6227"
+      "predictions_sha256": "44650c4a6a0edaa6b602195e40e37d24e03805386d32a7ae9a19d24eed6d6204"
     }
   ],
   "schema": {
@@ -112,6 +112,11 @@
       }
     },
     "additionalProperties": false
+  },
+  "generation": {
+    "max_new_tokens": 128,
+    "do_sample": false,
+    "num_beams": 1
   },
   "note": "Few-shot examples must come from calibration/train, never evaluation dev/test."
 }
