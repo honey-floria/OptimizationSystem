@@ -5,6 +5,8 @@
   "calibration_role": "calibration",
   "evaluation_size": 80,
   "evaluation_seed": 20261004,
+  "show_progress": true,
+  "progress_every_batches": 1,
   "pilot_variants": [
     "zero_shot_final_answer",
     "structured_json",

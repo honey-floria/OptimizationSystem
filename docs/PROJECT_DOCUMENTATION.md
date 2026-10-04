@@ -1009,3 +1009,7 @@ JSON 变体在首次输出不符合契约时执行一次确定性格式重试；
 实现位于 `src/evaluation/quality_repair.py`，会将 pilot 记录写入同一个
 `out/quality_repair_6_7_2/comparison_report.json`。Colab 重新同步代码和配置后，直接运行原 Notebook
 即可；回传的 80 条结果应继续追加到本文档。
+
+本轮配置同时启用 `show_progress=true` 和 `progress_every_batches=1`。Colab 输出会显示当前方案的
+完成数、方案内百分比和所有方案总百分比；完整评测时若不希望逐批输出，可将
+`progress_every_batches` 改为 `0`，自动按约 10 个进度节点显示。
