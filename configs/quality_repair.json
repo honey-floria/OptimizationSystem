@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-v1",
+  "dataset_role": "evaluation_dev",
+  "calibration_role": "calibration",
+  "minimum_parse_rate": 0.99,
+  "tolerance": 0.0001,
+  "variants": [
+    {
+      "name": "zero_shot_final_answer",
+      "output_mode": "numeric_text",
+      "calculator_enabled": false,
+      "format_retry": false,
+      "prompt_suffix": "\nReturn only the final numeric answer with its unit. Do not explain the calculation."
+    },
+    {
+      "name": "structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "format_retry": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|\"}. Preserve the table column, row, year, and unit in evidence. The value must be the final answer."
+    },
+    {
+      "name": "few_shot_structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "format_retry": true,
+      "prompt_suffix": "\nUse the provided training examples as format guidance only. Return exactly one JSON object with evidence, formula, value, and unit; do not include any other text."
+    },
+    {
+      "name": "structured_json_calculator",
+      "output_mode": "json",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "prompt_suffix": "\nReturn exactly one JSON object with evidence, formula, value, and unit. Write formula using only numeric arithmetic (+, -, *, /, parentheses). The formula will be checked by a deterministic calculator; do not put prose or years into the formula."
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": ["evidence", "formula", "value", "unit"],
+    "additionalProperties": false
+  }
+}

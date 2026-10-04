@@ -1,0 +1,1633 @@
+[
+  {
+    "index": 210,
+    "request_id": "quality-dev-000211",
+    "question": "what was the change in millions of weighted average common shares outstanding for diluted computations from 2016 to 2017?",
+    "prediction": "290.6 - 303.1 = -12.5\n\nFinal answer: -12.5 million\n\nThe weighted average common shares outstanding for diluted computations decreased by 12.5 million in 2017 compared to 2016. This represents a reduction of 2.5 million shares, indicating a slight decrease in the total number of shares outstanding for diluted earnings per common share calculations. The negative value indicates a decrease in the weighted average number of shares outstanding for diluted computations. \n\nNote: The question asks for the change in millions of weighted average common shares outstanding for",
+    "reference": "-12.5",
+    "parsed": true,
+    "correct": false,
+    "question_type": "average",
+    "analysis_dimensions": [
+      "multi_step",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "290.6",
+      "303.1",
+      "-12.5",
+      "-12.5",
+      "12.5",
+      "2017",
+      "2016",
+      "2.5"
+    ],
+    "parsed_first_number": "290.6",
+    "normalized_reference": "-12.5",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "最终答案 -12.5 与标准答案一致，但评分器取了第一个数字 290.6。"
+    }
+  },
+  {
+    "index": 105,
+    "request_id": "quality-dev-000106",
+    "question": "what is the change in inventories net in millions between 2002 and 2003?",
+    "prediction": "To find the change in inventories net between 2002 and 2003, we need to subtract the 2002 value from the 2003 value:\n\nChange = 2003 Inventories Net - 2002 Inventories Net\n= $ 527.7 - $ 257.6\n= $ 270.1\n\nTherefore, the change in inventories net between 2002 and 2003 is $ 270.1 million. \n\nNote: The question asks for the change in \"",
+    "reference": "270.1",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2002",
+      "2003",
+      "2002",
+      "2003",
+      "2003",
+      "2002",
+      "527.7",
+      "257.6",
+      "270.1",
+      "2002",
+      "2003",
+      "270.1"
+    ],
+    "parsed_first_number": "2002",
+    "normalized_reference": "270.1",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "计算结果 270.1 与标准答案一致，评分器取了年份 2002。"
+    }
+  },
+  {
+    "index": 151,
+    "request_id": "quality-dev-000152",
+    "question": "in millions in 2014 , 2013 , and 2012 , what was the greatest amount of hedged borrowings and bank deposits?",
+    "prediction": "In 2014, 2013, and 2012, the greatest amount of hedged borrowings and bank deposits was $6999 million.\nThe answer is $6999.00 million. \n\nNote: The question asks for the greatest amount among the three years mentioned, so we should select the highest number from each year's data provided. However, since there isn't a single maximum value given, we can conclude that the greatest amount among the three years is $6999 million. If you need the exact numerical answer without units, it would be $6",
+    "reference": "6999",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2014",
+      "2013",
+      "2012",
+      "6999",
+      "6999.00",
+      "6999",
+      "6"
+    ],
+    "parsed_first_number": "2014",
+    "normalized_reference": "6999",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "最终给出 6999，与标准答案一致，评分器取了年份 2014。"
+    }
+  },
+  {
+    "index": 25,
+    "request_id": "quality-dev-000026",
+    "question": "share of total securities rated bbb/baa or below changed by how many percentage point between 2008 and 2009?",
+    "prediction": "The percentage change in the share of total securities rated BBB/BAA or below between 2008 and 2009 is -1 percentage point. \n\nNote: This answer does not take into consideration the impact of the consolidation process, where the total number of securities might have increased or decreased depending on the specific holdings of each entity. However, it still represents the change in the percentage of BB&As or BAs rated securities. \n\nThe percentage change in the share of total securities rated BBB/BAA or below between 2008 and 2009 is -1 percentage point. \n\nFinal Answer:",
+    "reference": "-1",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "single_step",
+      "percentage",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2008",
+      "2009",
+      "-1",
+      "2008",
+      "2009",
+      "-1"
+    ],
+    "parsed_first_number": "2008",
+    "normalized_reference": "-1",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "最终给出 -1，与标准答案一致，评分器取了年份 2008。"
+    }
+  },
+  {
+    "index": 254,
+    "request_id": "quality-dev-000255",
+    "question": "what is the total amount of parent company guarantees combined for 2007 and 2008 , in millions?",
+    "prediction": "The total amount of parent company guarantees combined for 2007 and 2008, in millions, is $327.1 million. \n\nExplanation: \nThe question asks for the combined total of all guarantees from 2007 and 2008. This can be calculated by adding the guaranteed amounts for each year:\n\n2007: $255.7 million\n2008: $327.1 million\n\n$255.7 + $327.1 = $582.8 million\n\nTherefore, the total amount of parent",
+    "reference": "582.8",
+    "parsed": true,
+    "correct": false,
+    "question_type": "total_or_sum",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2007",
+      "2008",
+      "327.1",
+      "2007",
+      "2008",
+      "2007",
+      "255.7",
+      "2008",
+      "327.1",
+      "255.7",
+      "327.1",
+      "582.8"
+    ],
+    "parsed_first_number": "2007",
+    "normalized_reference": "582.8",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "正文先给出单年值，但明确计算 255.7 + 327.1 = 582.8，最终目标答案正确。"
+    }
+  },
+  {
+    "index": 0,
+    "request_id": "quality-dev-000001",
+    "question": "what is the average payment volume per transaction for american express?",
+    "prediction": "The average payment volume per transaction for American Express is 1.6 billion dollars. This can be calculated by dividing the total volume of transactions by the number of transactions, which is 5.0 / 5 = 1.0. Then multiplying this result by the number of million dollars, which is 1.6 * 10^6 = 1.6 billion. So the average payment volume per transaction for American Express is 1.6 billion dollars. \n\nNote: The figure excludes Visa Europe. For competitor figures, see \"Company\" section above. For additional context, please refer to the provided financial tables",
+    "reference": "127.40",
+    "parsed": true,
+    "correct": false,
+    "question_type": "average",
+    "analysis_dimensions": [
+      "multi_step"
+    ],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "1.6",
+      "5.0",
+      "5",
+      "1.0",
+      "1.6",
+      "10",
+      "6",
+      "1.6",
+      "1.6"
+    ],
+    "parsed_first_number": "1.6",
+    "normalized_reference": "127.40",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "把平均支付额的单位和分母理解错误，得到 1.6 而不是 127.40。"
+    }
+  },
+  {
+    "index": 3,
+    "request_id": "quality-dev-000004",
+    "question": "in 2010 what was the net change in net revenue in millions",
+    "prediction": "$-1.6\nTo calculate the net change in net revenue, we need to subtract the net revenue from 2009:\n\nNet Revenue in 2010 = Net Revenue in 2009 + Volume/weather Variance\nNet Revenue in 2010 = $555.3 + 1046 / 100\nNet Revenue in 2010 = $555.3 + 10.46\nNet Revenue in 2010 = $565.76\n\nChange in Net Revenue = Net Revenue in",
+    "reference": "18.6",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step"
+    ],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "-1.6",
+      "2009",
+      "2010",
+      "2009",
+      "2010",
+      "555.3",
+      "1046",
+      "100",
+      "2010",
+      "555.3",
+      "10.46",
+      "2010",
+      "565.76"
+    ],
+    "parsed_first_number": "-1.6",
+    "normalized_reference": "18.6",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "没有计算出标准答案 18.6，先输出 -1.6，后续计算也不一致。"
+    }
+  },
+  {
+    "index": 93,
+    "request_id": "quality-dev-000094",
+    "question": "what is the fair value of hologic common stock used to acquire suros?",
+    "prediction": "The fair value of Hologic's common stock used to acquire Suros Surgical Systems, Inc. was $106500. This amount is based on the EITF Issue No. 99-12, which determines the measurement date for the market price of acquirers' securities issued in a purchase business combination. The fair value of the shares issued in connection with the acquisition was calculated using this method. Please note that the actual fair value may vary depending on the specific circumstances of the transaction. For more detailed information, please refer to the Financial Table provided. If you need any further assistance, feel free to",
+    "reference": "46.3",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "106500",
+      "99",
+      "-12"
+    ],
+    "parsed_first_number": "106500",
+    "normalized_reference": "46.3",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "回答了错误的收购金额/股票价值，未定位到标准答案 46.3。"
+    }
+  },
+  {
+    "index": 4,
+    "request_id": "quality-dev-000005",
+    "question": "what are the deferred fuel cost revisions as a percentage of the increase in fuel cost recovery revenues?",
+    "prediction": "Fuel Cost Recovery Revenues: $ 98,000,000\nDeferred Fuel Cost Revisions: 59.1%\n\nPercentage: 59.1% (rounded) or 0.591 * 100 = 59.1% (decimal)\n\nTherefore, the deferred fuel cost revisions as a percentage of the increase in fuel cost recovery revenues is 59.1%. Round this to two decimal places if necessary. If you need it rounded to one decimal place, then it would be 59.1%. However, since we're asked to return only",
+    "reference": "60.3%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "single_step",
+      "percentage"
+    ],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "98000000",
+      "0.591",
+      "0.591",
+      "0.591",
+      "100",
+      "0.591",
+      "0.591",
+      "0.591"
+    ],
+    "parsed_first_number": "98000000",
+    "normalized_reference": "0.603",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "给出 59.1%，与标准答案 60.3% 不一致。"
+    }
+  },
+  {
+    "index": 97,
+    "request_id": "quality-dev-000098",
+    "question": "what portion of total assets acquired is composed of goodwill?",
+    "prediction": "Goodwill: 13,536 thousand dollars\n\n13,536 / 1,000 = 13.536 thousand dollars per thousand dollars of total assets acquired. Round to the nearest whole number. The answer should be 14 thousand dollars per thousand dollars of total assets acquired. However, since the question asks for the numerical answer without rounding, it would be:\n\n13.536 * 1000 = 13,536 thousand dollars\n\nTherefore, the portion of total assets acquired that is composed of goodwill is 13,5",
+    "reference": "69.7%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "total_or_sum",
+    "analysis_dimensions": [
+      "single_step"
+    ],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "13536",
+      "13536",
+      "1000",
+      "13.536",
+      "14",
+      "13.536",
+      "1000",
+      "13536",
+      "13",
+      "5"
+    ],
+    "parsed_first_number": "13536",
+    "normalized_reference": "0.697",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "把 goodwill 金额当作比例，缺少总资产分母，答案不是 69.7%。"
+    }
+  },
+  {
+    "index": 5,
+    "request_id": "quality-dev-000006",
+    "question": "what was the change in millions of operating income from 2016 to 2017?",
+    "prediction": "Operating income: 688\nChange: -688\n\nFinal answer: -688 million\n\nThe operating income decreased by 688 million dollars from 2016 to 2017. This can be calculated by subtracting the 2017 value from the 2016 value, which gives us -688 million. The negative sign indicates a decrease in operating income. To provide more context, it's worth noting that the question asks specifically about the change in operating income from 2016 to 2017, so the negative value",
+    "reference": "688",
+    "parsed": true,
+    "correct": true,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "correct",
+    "numeric_candidates": [
+      "688",
+      "-688",
+      "-688",
+      "688",
+      "2016",
+      "2017",
+      "2017",
+      "2016",
+      "-688",
+      "2016",
+      "2017"
+    ],
+    "parsed_first_number": "688",
+    "normalized_reference": "688",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "answer_extraction_false_positive",
+      "notes": "自动评分器取到前面的 688，但模型最终答案为 -688，与标准答案 688 不一致。"
+    }
+  },
+  {
+    "index": 278,
+    "request_id": "quality-dev-000279",
+    "question": "what was highest net rental expense in millions?",
+    "prediction": "The highest net rental expense was $267 million. It occurred in 2008. \n\nExplanation: The question asks for the highest net rental expense, but the data shows two different years for the same company: 2008 and 2007. Since the question specifically asks about the highest net rental expense, and there's no mention of any year being higher than the previous year, the highest net rental expense is $267 million, occurring in 2008. However, if you're looking for the highest net rental expense among the given options, then the correct answer would be",
+    "reference": "267",
+    "parsed": true,
+    "correct": true,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "correct",
+    "numeric_candidates": [
+      "267",
+      "2008",
+      "2008",
+      "2007",
+      "267",
+      "2008"
+    ],
+    "parsed_first_number": "267",
+    "normalized_reference": "267",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "correct",
+      "notes": "最终答案 267 与标准答案一致。"
+    }
+  },
+  {
+    "index": 831,
+    "request_id": "quality-dev-000832",
+    "question": "what percentage of total number of shares purchased were purchased in october ?",
+    "prediction": "Percentage: 10.0% To calculate the percentage of total number of shares purchased in October, you can use the formula:\n\n\\[ \\text{Percentage} = \\left( \\frac{\\text{Number of Shares Purchased in October}}{\\text{Total Number of Shares Purchased}} \\right) \\times 100 \\]\n\nGiven:\n- Total number of shares purchased in October: 37,948,800\n- Total number of shares purchased: 39,157,950\n\nPlugging in the values:\n\n\\[ \\text{Percentage} = \\",
+    "reference": "10%",
+    "parsed": true,
+    "correct": true,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "single_step",
+      "percentage"
+    ],
+    "suggested_error_type": "correct",
+    "numeric_candidates": [
+      "0.1",
+      "100",
+      "37948800",
+      "39157950"
+    ],
+    "parsed_first_number": "0.1",
+    "normalized_reference": "0.1",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "correct",
+      "notes": "最终答案 10.0% 与标准答案 10% 等价。"
+    }
+  },
+  {
+    "index": 74,
+    "request_id": "quality-dev-000075",
+    "question": "based on a 365 day year and the average sales price per barrel listed above , what was the total refined product sales revenue for 2006?",
+    "prediction": "The total refined product sales revenue for 2006 was $ 1,400 million. \n\nNote: This answer assumes that the sales volume data provided in the financial table corresponds to the 365-day year used for calculating the total revenue. If the sales volume data does not correspond to a 365-day year, then the total revenue may differ. In such cases, additional information about the sales volume data would be required to accurately calculate the total revenue. However, based solely on the given information, the total revenue can still be calculated using the provided average sales price per barrel. \n\nThe question asks",
+    "reference": "$ 40444920\\n",
+    "parsed": true,
+    "correct": false,
+    "question_type": "average",
+    "analysis_dimensions": [
+      "multi_step"
+    ],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "2006",
+      "1400",
+      "365",
+      "365"
+    ],
+    "parsed_first_number": "2006",
+    "normalized_reference": "40444920",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "给出 1400，未完成销售量乘以单价和天数的计算，标准答案为 40444920。"
+    }
+  },
+  {
+    "index": 14,
+    "request_id": "quality-dev-000015",
+    "question": "if current development costs increased in 2008 as much as in 2007 , what would the 2008 total be , in millions?",
+    "prediction": "To determine the increase in current development costs from 2007 to 2008, we need to subtract the 2007 value from the 2008 value:\n\nIncrease = 2008 value - 2007 value\n= $1251 million - $1342 million\n= -$91 million\n\nTherefore, if current development costs increased by $91 million from 2007 to 2008, the 2008 total would be $1251 million. The negative sign indicates an increase. If you",
+    "reference": "2057",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "2007",
+      "2008",
+      "2007",
+      "2008",
+      "2008",
+      "2007",
+      "1251",
+      "1342",
+      "91",
+      "91",
+      "2007",
+      "2008",
+      "2008",
+      "1251"
+    ],
+    "parsed_first_number": "2007",
+    "normalized_reference": "2057",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "计算逻辑和结论不一致，未得到标准答案 2057。"
+    }
+  },
+  {
+    "index": 19,
+    "request_id": "quality-dev-000020",
+    "question": "what is the applied 2019s net sales in 2018 , ( in billions ) ?",
+    "prediction": "To calculate Applied's net sales in 2018:\n\n1. Identify the relevant year: 2018\n2. Find the \"Net Sales\" row in the Financial Table\n3. Locate the \"Amount\" column for 2018\n4. The value in the \"Amount\" column represents Net Sales\n\nApplied's net sales in 2018 were approximately **$1.1 billion**. \n\nNote: This answer assumes that the provided table includes all necessary data, as there appears to be no additional information beyond the given table. If you need more detailed calculations or additional data points,",
+    "reference": "7.22",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "2018",
+      "1",
+      "2018",
+      "2",
+      "3",
+      "2018",
+      "4",
+      "2018",
+      "1.1"
+    ],
+    "parsed_first_number": "2018",
+    "normalized_reference": "7.22",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "读取了错误的 2018 净销售额，给出 1.1 而不是 7.22。"
+    }
+  },
+  {
+    "index": 1,
+    "request_id": "quality-dev-000002",
+    "question": "what was the percentage cumulative total return for the five year period ended 31-dec-2017 of citi common stock?",
+    "prediction": "The cumulative total return for Citigroup Common Stock (Citi) from December 31, 2012 to December 31, 2017 is approximately 133.5%. This can be calculated using the formula:\n\nCumulative Total Return = (Final Value / Initial Value) - 1\n\nWhere:\n- Final Value = 208.1\n- Initial Value = 100.0\n\nSo, the cumulative total return for Citi from December 31, 2012 to December 31, 2017 is approximately 13",
+    "reference": "93.5%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "multi_step",
+      "percentage",
+      "time_series"
+    ],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "31",
+      "2012",
+      "31",
+      "2017",
+      "1.335",
+      "1",
+      "208.1",
+      "100.0",
+      "31",
+      "2012",
+      "31",
+      "2017",
+      "13"
+    ],
+    "parsed_first_number": "31",
+    "normalized_reference": "0.935",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "计算出的累计收益 133.5% 不符合标准答案 93.5%。"
+    }
+  },
+  {
+    "index": 72,
+    "request_id": "quality-dev-000073",
+    "question": "based on the investment in solexa on november 12 , 2006 what was the price per share in the transaction in dollars",
+    "prediction": "To determine the price per share in the transaction, we need to follow these steps:\n\n1. Identify the total investment made by Illumina Inc.\n2. Determine the number of shares held by Illumina Inc.\n3. Calculate the price per share using the total investment divided by the number of shares.\n\nFrom the information provided:\n\n1. The total investment in Solexa was $50 million.\n2. Illumina Inc. held approximately 515,463,900 new shares of Solexa common stock.\n3. The price per share was calculated as follows: Total Investment / Number of Shares = $",
+    "reference": "9.7",
+    "parsed": true,
+    "correct": false,
+    "question_type": "rate_or_unit",
+    "analysis_dimensions": [],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "1",
+      "2",
+      "3",
+      "1",
+      "50",
+      "2",
+      "515463900",
+      "3"
+    ],
+    "parsed_first_number": "1",
+    "normalized_reference": "9.7",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "未完成价格除以股数的计算，答案不等于 9.7。"
+    }
+  },
+  {
+    "index": 13,
+    "request_id": "quality-dev-000014",
+    "question": "in 2011 what was the amount of tax related to the unrealized losses reclassifications totaled $ 303 million , or $ 189 million after-tax,",
+    "prediction": "The answer is $ 303 million . The answer is $ 189 million . To determine the tax-related portion of the unrealized losses related to reclassifications, I'll subtract the before-tax net unrealized loss from the after-tax net unrealized loss:\n\n$ -113 million (after-tax) - $ 189 million (before-tax) = -$ 62 million\n\nThis negative value represents the tax impact of the reclassification expenses. However, since this is a tax expense, it's typically reported as a negative amount rather than a positive one. Therefore, the correct answer should reflect the",
+    "reference": "114",
+    "parsed": true,
+    "correct": false,
+    "question_type": "total_or_sum",
+    "analysis_dimensions": [
+      "single_step"
+    ],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "303",
+      "189",
+      "-113",
+      "189",
+      "62"
+    ],
+    "parsed_first_number": "303",
+    "normalized_reference": "114",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "混淆税前、税后金额，未得到标准答案 114。"
+    }
+  },
+  {
+    "index": 12,
+    "request_id": "quality-dev-000013",
+    "question": "what was the change in the weighted average common shares outstanding for diluted computations from 2012 to 2013 , in millions?",
+    "prediction": "The weighted average common shares outstanding for diluted computations increased from 328.4 million to 339.9 million over the period from 2012 to 2013.\nFinal answer: 5.5\nThe weighted average common shares outstanding for diluted computations increased from 328.4 million to 339.9 million over the period from 2012 to 2013, resulting in an increase of 5.5 million shares. This represents a slight increase in the company's stock price due to the higher number of shares outstanding. However, it's",
+    "reference": "-1.9",
+    "parsed": true,
+    "correct": false,
+    "question_type": "average",
+    "analysis_dimensions": [
+      "multi_step",
+      "time_series"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "328.4",
+      "339.9",
+      "2012",
+      "2013",
+      "5.5",
+      "328.4",
+      "339.9",
+      "2012",
+      "2013",
+      "5.5"
+    ],
+    "parsed_first_number": "328.4",
+    "normalized_reference": "-1.9",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "2012 到 2013 的变化计算错误，给出 5.5 而标准答案为 -1.9。"
+    }
+  },
+  {
+    "index": 39,
+    "request_id": "quality-dev-000040",
+    "question": "what was the change in amount of long term debt between 2014 and 2012?",
+    "prediction": "The change in long-term debt from 2014 to 2012 was -1698 million dollars. This means that the long-term debt decreased by 1698 million dollars from 2014 to 2012. \n\nNote: The negative value indicates a decrease in long-term debt, which is expected given the nature of the data provided. However, it's important to note that this is just a hypothetical example and does not reflect actual changes in long-term debt levels. In reality, the exact figures would need to be verified against the latest available financial statements or data sources.",
+    "reference": "28987",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "2014",
+      "2012",
+      "-1698",
+      "1698",
+      "2014",
+      "2012"
+    ],
+    "parsed_first_number": "2014",
+    "normalized_reference": "28987",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "给出 -1698，未得到标准答案 28987。"
+    }
+  },
+  {
+    "index": 10,
+    "request_id": "quality-dev-000011",
+    "question": "what was the gross margin decline in fiscal 2004 from 2003?",
+    "prediction": "The gross margin declined from 27.5% (27.5%) of net sales in 2003 to 27.3% (27.3%) of net sales in 2004.\n27.3%\n(27.3%)\n\nThe final numeric answer is: 27.3%\n(27.3%) units.",
+    "reference": ".2",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "0.275",
+      "0.275",
+      "2003",
+      "0.273",
+      "0.273",
+      "2004",
+      "0.273",
+      "0.273",
+      "0.273",
+      "0.273"
+    ],
+    "parsed_first_number": "0.275",
+    "normalized_reference": "2",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "回答了 27.3% 的水平值，而问题询问下降幅度 0.2。"
+    }
+  },
+  {
+    "index": 2,
+    "request_id": "quality-dev-000003",
+    "question": "what percentage of the total oil and gas mmboe comes from canada?",
+    "prediction": "92% of the total oil and gas mmboe comes from Canada. \n\nNote: The question asks about the percentage, so it's important to provide the numerical answer without units. In this case, the answer is already in decimal form, but if you need it in a different format, please let me know!",
+    "reference": "24.69%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "single_step",
+      "percentage"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "0.92"
+    ],
+    "parsed_first_number": "0.92",
+    "normalized_reference": "0.2469",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "读取了错误的加拿大占比，92% 不等于标准答案 24.69%。"
+    }
+  },
+  {
+    "index": 231,
+    "request_id": "quality-dev-000232",
+    "question": "what was the spread between the high and low henry hub natural gas ( dollars per mcf ) in 2009?",
+    "prediction": "The spread between the high and low Henry Hub Natural Gas (dollars per MCF) in 2009 was $3.99 - $9.04 = -$5.05. The negative value indicates that the highest price was $9.04 while the lowest price was $3.99. Therefore, the answer is -5.05 dollars per MCF.",
+    "reference": "45.38",
+    "parsed": true,
+    "correct": false,
+    "question_type": "rate_or_unit",
+    "analysis_dimensions": [],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "2009",
+      "3.99",
+      "9.04",
+      "5.05",
+      "9.04",
+      "3.99",
+      "-5.05"
+    ],
+    "parsed_first_number": "2009",
+    "normalized_reference": "45.38",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "将 high-low 计算成负差值，未得到标准答案 45.38。"
+    }
+  },
+  {
+    "index": 9,
+    "request_id": "quality-dev-000010",
+    "question": "in millions what was total residential mortgages balance for 2013 and 2012?",
+    "prediction": "The total residential mortgages balance for 2013 was 1,356 million and for 2012 it was 2,220 million. \n\nFinal Answer: 1,356 million and 2,220 million.",
+    "reference": "3576",
+    "parsed": true,
+    "correct": false,
+    "question_type": "total_or_sum",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "2013",
+      "1356",
+      "2012",
+      "2220",
+      "1356",
+      "2220"
+    ],
+    "parsed_first_number": "2013",
+    "normalized_reference": "3576",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "列出了两个年度值但没有完成求和，标准答案为 3576。"
+    }
+  },
+  {
+    "index": 646,
+    "request_id": "quality-dev-000647",
+    "question": "what was the average net revenue from 2010 to 2011",
+    "prediction": "The average net revenue from 2010 to 2011 was $540.2 million.\nTo calculate the average, I'll add up the net revenues for both years and divide by two:\n\n$540.2 + $577.8 = $1,118.0\n$1,118.0 / 2 = $559.0\n\nTherefore, the average net revenue from 2010 to 2011 was $559.0 million. \n\nNote: This assumes that there were no changes in the data between",
+    "reference": "559",
+    "parsed": true,
+    "correct": false,
+    "question_type": "average",
+    "analysis_dimensions": [
+      "multi_step",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2010",
+      "2011",
+      "540.2",
+      "540.2",
+      "577.8",
+      "1118.0",
+      "1118.0",
+      "2",
+      "559.0",
+      "2010",
+      "2011",
+      "559.0"
+    ],
+    "parsed_first_number": "2010",
+    "normalized_reference": "559",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "后续明确计算出 559.0，与标准答案 559 一致，评分器先取了年份 2010。"
+    }
+  },
+  {
+    "index": 112,
+    "request_id": "quality-dev-000113",
+    "question": "what is the difference in payments between entergy arkansas and entergy louisiana , in millions?",
+    "prediction": "entergy arkansas: $2 million\n\nentergy louisiana: $6 million\n\n$4 million - $2 million = $2 million\n\nFinal answer: $2 million\n\nThe difference in payments between Entergy Arkansas and Entergy Louisiana, in millions, is $2 million. This can be calculated by subtracting the amount paid by Entergy Arkansas from the amount paid by Entergy Louisiana. The units used in the calculation remain consistent throughout the process. If you need any clarification on how to interpret the results or if there's anything else I can assist with, please let me know! Let me know if you have any",
+    "reference": "4",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "comparison"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2",
+      "6",
+      "4",
+      "2",
+      "2",
+      "2",
+      "2"
+    ],
+    "parsed_first_number": "2",
+    "normalized_reference": "4",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "实际差额应为 4，回答为 2。"
+    }
+  },
+  {
+    "index": 372,
+    "request_id": "quality-dev-000373",
+    "question": "how much was cost of good sold in 2009?",
+    "prediction": "Cost of goods sold (COGS) refers to the direct costs associated with the production of goods, such as raw materials, labor, and overhead expenses. In the context provided, COGS for the year 2009 can be calculated based on the information given:\n\nRevenues applicable to discontinued operations: $188 million\nPretax income from discontinued operations: $80 million\n\nTo find the COGS, subtract the Pretax Income from the Revenues:\n\n$188 million - $80 million = $108 million\n\nTherefore, the cost of goods sold for the year 200",
+    "reference": "$ 108 million",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2009",
+      "188",
+      "80",
+      "188",
+      "80",
+      "108",
+      "200"
+    ],
+    "parsed_first_number": "2009",
+    "normalized_reference": "108",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "后续明确计算 188 - 80 = 108，与标准答案一致，评分器先取了年份 2009。"
+    }
+  },
+  {
+    "index": 43,
+    "request_id": "quality-dev-000044",
+    "question": "what was the change in the percentage of sales to restaurants from 2018 to 2019?",
+    "prediction": "For example, \"35\" will not be accepted.\nTo calculate the percentage change in the sales to restaurants from 2018 to 2019:\n\nSales to restaurants in 2019 = 62%\nSales to restaurants in 2018 = 62%\n\nPercentage change = ((2019 Sales / 2018 Sales) - 1) * 100\n\n= ((62/62) - 1) * 100\n\n= (1 - 1) * 100\n\n= 0%\n\nTherefore,",
+    "reference": "0%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "single_step",
+      "percentage",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "35",
+      "2018",
+      "2019",
+      "2019",
+      "0.62",
+      "2018",
+      "0.62",
+      "2019",
+      "2018",
+      "1",
+      "100",
+      "62",
+      "62",
+      "1",
+      "100",
+      "1",
+      "1",
+      "100",
+      "0"
+    ],
+    "parsed_first_number": "35",
+    "normalized_reference": "0",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "后续明确计算并给出 0%，与标准答案一致，评分器先取了提示中的 35。"
+    }
+  },
+  {
+    "index": 8,
+    "request_id": "quality-dev-000009",
+    "question": "what was the increase in class a common stock issued and outstanding between years , in thousands?",
+    "prediction": "(1) 1000000 - 338240 = 661760 thousandths.\nThe answer is 661760.0. \n\nExplanation: The question asks about the increase in Class A Common Stock Issued and Outstanding, but it's important to note that this data pertains specifically to Class B Common Stock, not Class A Common Stock. Therefore, we need to calculate the difference between the Class B Issued and Outstanding values for both years to find the total increase in Class A Common Stock. Since there is no mention of Class A Common Stock in",
+    "reference": "995",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step"
+    ],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "1",
+      "1000000",
+      "338240",
+      "661760",
+      "661760.0"
+    ],
+    "parsed_first_number": "1",
+    "normalized_reference": "995",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "混用了 Class B 数据回答 Class A 问题，且结果 661760 不等于 995。"
+    }
+  },
+  {
+    "index": 149,
+    "request_id": "quality-dev-000150",
+    "question": "what portion of the company owned facilities are located in the rest of the world?",
+    "prediction": "For example, if you calculated \"10 + 20 = 30\", just state the final number without units.\n83% of the company's owned facilities are located in the rest of the world. \n\nExplanation: The question asks about the percentage of owned facilities located in the rest of the world, so I directly provided the numerical answer based on the given data. No further calculations were needed. The answer does not include the unit since no specific conversion factor was mentioned. If there had been one, it would have been included after the final numeric answer. However, since no conversion factor was specified, the answer remains as",
+    "reference": "31.3%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "10",
+      "20",
+      "30",
+      "0.83"
+    ],
+    "parsed_first_number": "10",
+    "normalized_reference": "0.313",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "给出 83%，与标准答案 31.3% 不一致。"
+    }
+  },
+  {
+    "index": 11,
+    "request_id": "quality-dev-000012",
+    "question": "what percentage of total purchase commitments are due after 2014?",
+    "prediction": "Percentage: 25% of total purchase commitments are due after 2014. Round your answer to two decimal places. For example, if you return 0.25, do not return 25%. To calculate the percentage of total purchase commitments due after 2014:\n\n1. Identify the number of purchases made after 2014: 2014 + 2015 = 4 purchases\n2. Divide the number of purchases after 2014 by the total number of purchases: 4 / 40 = 0.10\n3.",
+    "reference": "56%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "single_step",
+      "percentage"
+    ],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "0.25",
+      "2014",
+      "0.25",
+      "0.25",
+      "2014",
+      "1",
+      "2014",
+      "2014",
+      "2015",
+      "4",
+      "2",
+      "2014",
+      "4",
+      "40",
+      "0.10",
+      "3"
+    ],
+    "parsed_first_number": "0.25",
+    "normalized_reference": "0.56",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "计算过程得到 0.10/25%，与标准答案 56% 不一致。"
+    }
+  },
+  {
+    "index": 147,
+    "request_id": "quality-dev-000148",
+    "question": "what is the five year total return on ball stock?",
+    "prediction": "The five year total return on Ball Corporation's stock is 178.93%. This can be calculated as follows:\n\n(134.96 + 178.93) - 100 = 178.93% or 178.93 years. \n\nTherefore, the five year total return on Ball Corporation's stock is 178.93%. \n\nNote: The Dow Jones Container & Packaging Index, S&P Composite 500 Stock Index, and Copyright A9 Standard & Poor's 2019s A Division of the McG",
+    "reference": "34.96",
+    "parsed": true,
+    "correct": false,
+    "question_type": "total_or_sum",
+    "analysis_dimensions": [
+      "single_step"
+    ],
+    "suggested_error_type": "calculation_error",
+    "numeric_candidates": [
+      "1.7893",
+      "134.96",
+      "178.93",
+      "100",
+      "1.7893",
+      "178.93",
+      "1.7893",
+      "500",
+      "9",
+      "2019"
+    ],
+    "parsed_first_number": "1.7893",
+    "normalized_reference": "34.96",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "累计收益公式和结果错误，178.93% 不等于标准答案 34.96%。"
+    }
+  },
+  {
+    "index": 60,
+    "request_id": "quality-dev-000061",
+    "question": "what was change in millions for the estimated sensitivity to a one basis point increase in credit spreads on derivatives ( including hedges ) between 2017 and 2016?",
+    "prediction": "1.000000\nThe estimated sensitivity to a one basis point increase in credit spreads (counterparty and our own) on derivatives was a gain of $ 3 million and $ 2 million (including hedges) as of December 2017 and December 2016, respectively.\nThis can be calculated using the formula: Gain = Increase in Credit Spread * Number of Basis Points\nGain = 100 * 100 = $ 10000\nTherefore, the estimated sensitivity to a one basis point increase in credit spreads (counterparty and our own)",
+    "reference": "1",
+    "parsed": true,
+    "correct": true,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "correct",
+    "numeric_candidates": [
+      "1.000000",
+      "3",
+      "2",
+      "2017",
+      "2016",
+      "100",
+      "100",
+      "10000"
+    ],
+    "parsed_first_number": "1.000000",
+    "normalized_reference": "1",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "correct",
+      "notes": "首个数值 1.000000 与标准答案 1 一致。"
+    }
+  },
+  {
+    "index": 561,
+    "request_id": "quality-dev-000562",
+    "question": "what is the lowest segment operating income margin?",
+    "prediction": "The lowest segment operating income margin is 13.4%. It occurred in 2008. To find the lowest segment operating income margin:\n\n1. Identify all years mentioned: 2009, 2008, and 2007.\n2. Compare each year's operating income margin to the lowest value found so far.\n3. The lowest value among these three is 13.4%.\n\nTherefore, the lowest segment operating income margin is 13.4%, occurring in 2008. \n\nFinal answer: 13.4% (13.4%)",
+    "reference": "13.4%",
+    "parsed": true,
+    "correct": true,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "correct",
+    "numeric_candidates": [
+      "0.134",
+      "2008",
+      "1",
+      "2009",
+      "2008",
+      "2007",
+      "2",
+      "3",
+      "0.134",
+      "0.134",
+      "2008",
+      "0.134",
+      "0.134"
+    ],
+    "parsed_first_number": "0.134",
+    "normalized_reference": "0.134",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "correct",
+      "notes": "最终答案 13.4% 与标准答案一致。"
+    }
+  },
+  {
+    "index": 27,
+    "request_id": "quality-dev-000028",
+    "question": "what is the expected growth rate in amortization expense from 2016 to 2017?",
+    "prediction": "The expected growth rate in amortization expense from 2016 to 2017 is 2.5%. \n\nTo calculate the expected growth rate, we can use the following formula:\n\nExpected Growth Rate = (Final Value / Initial Value) - 1\n\nWhere:\n- Final Value = Amortization Expense for September 26, 2017\n- Initial Value = Amortization Expense for September 26, 2016\n\nLet's plug in the numbers:\n\nExpected Growth Rate = ($377.0 / $365.6) - 1\n=",
+    "reference": "-3.0%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "multi_step",
+      "time_series"
+    ],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "2016",
+      "2017",
+      "0.025",
+      "1",
+      "26",
+      "2017",
+      "26",
+      "2016",
+      "377.0",
+      "365.6",
+      "1"
+    ],
+    "parsed_first_number": "2016",
+    "normalized_reference": "-0.03",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "增长率计算方向或数据使用错误，给出 2.5% 而标准答案为 -3.0%。"
+    }
+  },
+  {
+    "index": 33,
+    "request_id": "quality-dev-000034",
+    "question": "from the data given , how many square feet have an expiry date in 2020?",
+    "prediction": "127,9000 square feet. \n\nExplanation: The property with an expiry date of 2020 has an occupied square footage of 127,9000 square feet. This is the only property listed with an expiry date in 2020. Therefore, the answer is 127,9000 square feet. \n\nNote: The question asks for \"square feet\" but the provided data shows square footage in square meters. To convert square feet to square meters, multiply by 0.092903. However, since the question specifically asked",
+    "reference": "778000",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "127900",
+      "0",
+      "2020",
+      "127900",
+      "0",
+      "2020",
+      "127900",
+      "0",
+      "0.092903"
+    ],
+    "parsed_first_number": "127900",
+    "normalized_reference": "778000",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "选择了错误的 2020 年物业面积，且数值格式 127,9000 也不正确。"
+    }
+  },
+  {
+    "index": 6,
+    "request_id": "quality-dev-000007",
+    "question": "what was jpmorgan chase & co's common equity tier 1 ( cet1 ) ratio in 2008?",
+    "prediction": "For example, \"12\" will be entered as 0.12. \nIf you enter a fraction of a percent, such as \"0.5%\", then the decimal answer will be entered.\nTo calculate JPMorgan Chase & Co.'s Common Equity Tier 1 (CET1) Ratio in 2008:\n\n1. Find the CET1 ratio for JPMorgan Chase & Co. in 2008 from the table provided.\n2. The CET1 ratio is listed under the row labeled \"Total Tier 1 Capital\" for the year 2008.\n3. Look",
+    "reference": "10.94%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "multi_step",
+      "percentage"
+    ],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "12",
+      "0.12",
+      "0.005",
+      "1",
+      "1",
+      "2008",
+      "1",
+      "1",
+      "2008",
+      "2",
+      "1",
+      "1",
+      "2008",
+      "3"
+    ],
+    "parsed_first_number": "12",
+    "normalized_reference": "0.1094",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "output_parse_error",
+      "notes": "没有给出实际 CET1 数值答案，输出主要是解题说明和提示。"
+    }
+  },
+  {
+    "index": 481,
+    "request_id": "quality-dev-000482",
+    "question": "what was the cost per car for the buyout of locomotives in 2012?",
+    "prediction": "The cost per car for the buyout of locomotives in 2012 was $ 99,000. \n\nExplanation: This is directly stated in the information given about the capital investment in 2014, where it mentions \"the early buyout of locomotives and freight cars under long-term operating leases\". The amount spent on this purchase was $99 million. To convert this into a cost per car, divide by the number of locomotives bought, which is 165. Therefore, the cost per car is calculated as follows:\n\n$99,000 /",
+    "reference": "454545",
+    "parsed": true,
+    "correct": false,
+    "question_type": "rate_or_unit",
+    "analysis_dimensions": [],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "2012",
+      "99000",
+      "2014",
+      "99",
+      "165",
+      "99000"
+    ],
+    "parsed_first_number": "2012",
+    "normalized_reference": "454545",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "把总金额直接当作每车成本，未得到标准答案 454545。"
+    }
+  },
+  {
+    "index": 23,
+    "request_id": "quality-dev-000024",
+    "question": "what is the total value of net operating loss carryforwards?",
+    "prediction": "The total value of net operating loss carryforwards is $2.2 billion. To calculate this:\n\n1. Identify the relevant information: \"net federal and state operating loss carryforwards available to reduce future taxable income of approximately $2.2 billion\"\n2. Extract the numerical value: $2.2 billion\n3. Note that there's no decimal point after the number, so we don't need to include it.\nTherefore, the total value of net operating loss carryforwards is $2.2 billion. \n\nThe final answer is $2.2 billion. \n\nNote: This assumes that the question asks for the",
+    "reference": "4575515",
+    "parsed": true,
+    "correct": false,
+    "question_type": "total_or_sum",
+    "analysis_dimensions": [
+      "single_step"
+    ],
+    "suggested_error_type": "formula_selection_error",
+    "numeric_candidates": [
+      "2.2",
+      "1",
+      "2.2",
+      "2",
+      "2.2",
+      "3",
+      "2.2",
+      "2.2"
+    ],
+    "parsed_first_number": "2.2",
+    "normalized_reference": "4575515",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "给出 2.2 billion，未按题目答案单位得到 4575515。"
+    }
+  },
+  {
+    "index": 20,
+    "request_id": "quality-dev-000021",
+    "question": "what is the average amortization amount , in millions , from 2015-2019?",
+    "prediction": "The average amortization amount from 2015 to 2019 is $45,000 million. \n\nNote: This answer assumes that the question refers to the provided table, which shows the amortization amounts for each year from 2015 to 2019. If you have additional information or data related to this table, please provide it so I can assist further. Otherwise, this answer is accurate based solely on the given information. Let me know if you need any clarification! # Financial Analysis Question\n\n---\n\n### Answer:\n\nThe average amortization amount from 2015 to",
+    "reference": "44.8",
+    "parsed": true,
+    "correct": false,
+    "question_type": "average",
+    "analysis_dimensions": [
+      "multi_step",
+      "time_series"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "2015",
+      "2019",
+      "45000",
+      "2015",
+      "2019",
+      "2015"
+    ],
+    "parsed_first_number": "2015",
+    "normalized_reference": "44.8",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "没有完成 2015-2019 平均值计算，给出 45000 而非 44.8。"
+    }
+  },
+  {
+    "index": 55,
+    "request_id": "quality-dev-000056",
+    "question": "what was the change in millions of total redeemable stock of subsidiaries from 2015 to 2016?",
+    "prediction": "The change in millions of total redeemable stock of subsidiaries from 2015 to 2016 was -12.8. This means that the total redeemable stock of subsidiaries decreased by 12.8 million dollars from 2015 to 2016. \n\nNote: The negative sign indicates a decrease in the number of redeemable shares. For example, if there were originally 100 million redeemable shares in 2015 and 12.8 million in 2016, the total would have decreased by 108.2 million.",
+    "reference": "244",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "time_series"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "2015",
+      "2016",
+      "-12.8",
+      "12.8",
+      "2015",
+      "2016",
+      "100",
+      "2015",
+      "12.8",
+      "2016",
+      "108.2"
+    ],
+    "parsed_first_number": "2015",
+    "normalized_reference": "244",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "给出 -12.8，未定位到标准答案 244。"
+    }
+  },
+  {
+    "index": 18,
+    "request_id": "quality-dev-000019",
+    "question": "what is the decline from current future minimum lease payments and the following years expected obligation?\\\\n",
+    "prediction": "The total future minimum lease payments for fiscal year ending March 31, 2006 were approximately $ 4819 . The total future minimum lease payments for fiscal year ending March 31, 2007 was approximately $ 4819 . The total future minimum lease payments for fiscal year ending March 31, 2008 was approximately $ 4819 . The total future minimum lease payments for fiscal year ending March 31, 2009 was approximately $ 4819 . The total future minimum lease payments for fiscal year ending March",
+    "reference": "25%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "31",
+      "2006",
+      "4819",
+      "31",
+      "2007",
+      "4819",
+      "31",
+      "2008",
+      "4819",
+      "31",
+      "2009",
+      "4819"
+    ],
+    "parsed_first_number": "31",
+    "normalized_reference": "0.25",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "没有完成当前付款与后续付款的下降比例计算，重复输出 4819。"
+    }
+  },
+  {
+    "index": 15,
+    "request_id": "quality-dev-000016",
+    "question": "what percentage of total aggregate contractual obligations is due to purchase obligationst?",
+    "prediction": "Purchase obligations account for 20% of the total aggregate contractual obligations.\nThe answer is 20%.",
+    "reference": "34%",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "single_step",
+      "percentage"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "0.2",
+      "0.2"
+    ],
+    "parsed_first_number": "0.2",
+    "normalized_reference": "0.34",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "formula_selection_error",
+      "notes": "给出 20%，与标准答案 34% 不一致。"
+    }
+  },
+  {
+    "index": 541,
+    "request_id": "quality-dev-000542",
+    "question": "for the mtn group acquisition , what was the cost per tower ? .",
+    "prediction": "The cost per tower for the Mtn Group acquisition was $ 1,000.00. \n\nExplanation: The question asks for the cost per tower, but the provided information does not include the specific cost details for each tower. It only mentions the total cost of acquiring towers in Uganda and the total purchase price. Without additional information about individual tower costs, we cannot provide a numerical answer. However, if you have any other questions or need further assistance, feel free to ask! # Financial Analysis Question\n\nPlease let me know if there's anything else I can assist you with regarding this financial statement. # Financial Analysis Answer",
+    "reference": "1798334",
+    "parsed": true,
+    "correct": false,
+    "question_type": "rate_or_unit",
+    "analysis_dimensions": [],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "1000.00"
+    ],
+    "parsed_first_number": "1000.00",
+    "normalized_reference": "1798334",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "table_or_context_selection_error",
+      "notes": "无法从上下文得到每塔成本，给出的 1000 与标准答案不符。"
+    }
+  },
+  {
+    "index": 47,
+    "request_id": "quality-dev-000048",
+    "question": "what was the total of euro notes issued in 2014 , in millions of dollars approximately?",
+    "prediction": "20,750.00 million\n\nThe total amount of Euro Notes issued in 2014 was 20,750.00 million dollars. This can be found by summing up all the values provided in the table under the \"face value (e)\" column for Euro Notes (a). The exact figure given is 20,750.00 million dollars. \n\nNote: I've kept it as a number rather than a percentage or decimal form since that would require more explanation about how it's derived. If you'd like me to break down the breakdown further,",
+    "reference": "3098",
+    "parsed": true,
+    "correct": false,
+    "question_type": "total_or_sum",
+    "analysis_dimensions": [
+      "single_step"
+    ],
+    "suggested_error_type": "table_or_context_selection_error",
+    "numeric_candidates": [
+      "20750.00",
+      "2014",
+      "20750.00",
+      "20750.00"
+    ],
+    "parsed_first_number": "20750.00",
+    "normalized_reference": "3098",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "合计 Euro Notes 的计算错误，20750 不等于标准答案 3098。"
+    }
+  },
+  {
+    "index": 698,
+    "request_id": "quality-dev-000699",
+    "question": "what was the change in weighted-average shares for diluted eps from 2016 to 2017 , in millions?",
+    "prediction": "1,000.00\nTo calculate the change in weighted-average shares for diluted EPS from 2016 to 2017:\n\n1. Identify the weighted-average shares for diluted EPS for both years:\n   - 2016: 1551 million\n   - 2017: 1553 million\n\n2. Calculate the difference between these two values:\n   1553 - 1551 = 2 million\n\nTherefore, the change in weighted-average shares for diluted EPS from 2016 to 2017",
+    "reference": "2",
+    "parsed": true,
+    "correct": false,
+    "question_type": "average",
+    "analysis_dimensions": [
+      "multi_step",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "1000.00",
+      "2016",
+      "2017",
+      "1",
+      "2016",
+      "1551",
+      "2017",
+      "1553",
+      "2",
+      "1553",
+      "1551",
+      "2",
+      "2016",
+      "2017"
+    ],
+    "parsed_first_number": "1000.00",
+    "normalized_reference": "2",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "后续明确计算 1553 - 1551 = 2，与标准答案一致，评分器先取了 1000。"
+    }
+  },
+  {
+    "index": 222,
+    "request_id": "quality-dev-000223",
+    "question": "what is the difference in payments between entergy arkansas and entergy new orleans , in millions?",
+    "prediction": "The difference in payments between Entergy Arkansas and Entergy New Orleans, in millions, is $1.7 million. This can be calculated by subtracting the amount paid by Entergy Arkansas from the amount paid by Entergy New Orleans: $68 - $2 = $66 million. However, since we need the difference in millions, we divide this result by 1,000,000: $66 / 1,000,000 = $0.00066 million. Therefore, the final numerical answer is $0.00066 million",
+    "reference": "66",
+    "parsed": true,
+    "correct": false,
+    "question_type": "change_or_difference",
+    "analysis_dimensions": [
+      "single_step",
+      "comparison"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "1.7",
+      "68",
+      "2",
+      "66",
+      "1000000",
+      "66",
+      "1000000",
+      "0.00066",
+      "0.00066"
+    ],
+    "parsed_first_number": "1.7",
+    "normalized_reference": "66",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": false,
+      "error_type": "calculation_error",
+      "notes": "中间得到 66，但最终又错误换算为 0.00066，最终答案不正确。"
+    }
+  },
+  {
+    "index": 444,
+    "request_id": "quality-dev-000445",
+    "question": "how much was cost of good sold in 2009?",
+    "prediction": "Cost of goods sold (COGS) refers to the direct costs associated with the production of goods, such as raw materials, labor, and overhead expenses. In the context provided, COGS for the year 2009 can be calculated based on the information given:\n\nRevenues applicable to discontinued operations: $188 million\nPretax income from discontinued operations: $80 million\n\nTo find the COGS, subtract the Pretax Income from the Revenues:\n\n$188 million - $80 million = $108 million\n\nTherefore, the cost of goods sold for the year 200",
+    "reference": "$ 108 million",
+    "parsed": true,
+    "correct": false,
+    "question_type": "lookup_or_other",
+    "analysis_dimensions": [],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2009",
+      "188",
+      "80",
+      "188",
+      "80",
+      "108",
+      "200"
+    ],
+    "parsed_first_number": "2009",
+    "normalized_reference": "108",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "后续明确计算 188 - 80 = 108，与标准答案一致，评分器先取了年份 2009。"
+    }
+  },
+  {
+    "index": 171,
+    "request_id": "quality-dev-000172",
+    "question": "what was the ratio of the 2017 total long term debt to 2016",
+    "prediction": "The ratio of the 2017 total long-term debt to 2016 is 1279 / 1278 = 1.0000000000000001. Round it off to two decimal places.\nThe ratio of the 2017 total long-term debt to 2016 is 1.00.",
+    "reference": "1",
+    "parsed": true,
+    "correct": false,
+    "question_type": "percentage_or_ratio",
+    "analysis_dimensions": [
+      "multi_step",
+      "percentage",
+      "time_series"
+    ],
+    "suggested_error_type": "answer_extraction_false_negative_candidate",
+    "numeric_candidates": [
+      "2017",
+      "2016",
+      "1279",
+      "1278",
+      "1.0000000000000001",
+      "2017",
+      "2016",
+      "1.00"
+    ],
+    "parsed_first_number": "2017",
+    "normalized_reference": "1",
+    "manual_review": {
+      "status": "completed",
+      "prediction_correct": true,
+      "error_type": "answer_extraction_false_negative",
+      "notes": "最终给出 1.00，与标准答案 1 等价，评分器先取了年份 2017。"
+    }
+  }
+]
