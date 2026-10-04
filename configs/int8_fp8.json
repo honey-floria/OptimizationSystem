@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "plan_id": "smoothquant-int8-w8a8",
+  "method": "smoothquant",
+  "bits": 8,
+  "weight_bits": 8,
+  "activation_bits": 8,
+  "alpha": 0.5,
+  "quantization_granularity": "per_channel_weight_per_tensor_activation",
+  "backend_package": "smoothquant",
+  "calibration_asset_role": "calibration",
+  "max_calibration_samples": 1024,
+  "max_calibration_seq_len": 512,
+  "fp8_dtypes": ["float8_e4m3fn", "float8_e5m2"],
+  "model_input_root": "/content/drive/MyDrive/banking_llm_project/model_input_real",
+  "result_root": "/content/drive/MyDrive/OptimizationSystem/out/int8_fp8",
+  "model_root": "/content/drive/MyDrive/banking_llm_project/int8_fp8"
+}

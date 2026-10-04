@@ -24,6 +24,10 @@ from .gptq import (
     run_gptq_plan,
     validate_gptq_evidence,
 )
+from .int8_fp8 import (
+    collect_int8_fp8_evidence,
+    validate_int8_fp8_evidence,
+)
 
 __all__ = [
     "QuantizationConfig",
@@ -43,4 +47,6 @@ __all__ = [
     "load_gptq_service",
     "run_gptq_plan",
     "validate_gptq_evidence",
+    "collect_int8_fp8_evidence",
+    "validate_int8_fp8_evidence",
 ]
