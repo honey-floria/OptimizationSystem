@@ -160,7 +160,7 @@ class BaselineService:
             trust_remote_code=model_manifest.get("runtime", {}).get(
                 "trust_remote_code", False
             ),
-            dtype=dtype,
+            torch_dtype=dtype,
         )
         model.to(config["device"])
         model.eval()

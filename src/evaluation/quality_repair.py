@@ -39,6 +39,20 @@ ALLOWED_UNITS = {
     "dollars",
     "shares",
 }
+ALLOWED_OPERATIONS = {
+    "add",
+    "sum",
+    "subtract",
+    "difference",
+    "absolute_difference",
+    "multiply",
+    "divide",
+    "average",
+    "ratio",
+    "percent",
+    "percentage",
+    "percent_change",
+}
 
 
 @dataclass(frozen=True)
@@ -143,6 +157,44 @@ def parse_structured_output(text: str) -> dict[str, Any] | None:
     return None
 
 
+def parse_evidence_operation_output(text: str) -> dict[str, Any] | None:
+    """Parse evidence and operands without trusting a model-generated final value."""
+
+    for payload in _json_candidates(text):
+        evidence = payload.get("evidence")
+        operands = payload.get("operands")
+        operation = str(payload.get("operation", "")).strip().lower()
+        unit = payload.get("unit", "")
+        if (
+            not isinstance(evidence, list)
+            or not evidence
+            or not isinstance(operands, list)
+            or not operands
+            or operation not in ALLOWED_OPERATIONS
+            or not isinstance(unit, str)
+            or unit.lower() not in ALLOWED_UNITS
+        ):
+            continue
+        numeric_operands = []
+        for operand in operands:
+            parsed_operand = parse_numeric_answer(operand)
+            if parsed_operand is None:
+                break
+            numeric_operands.append(parsed_operand)
+        else:
+            return {
+                "evidence": [
+                    item if isinstance(item, str) else json.dumps(item, ensure_ascii=False)
+                    for item in evidence
+                ],
+                "operands": [str(value) for value in numeric_operands],
+                "operation": operation,
+                "unit": unit,
+                "structured": True,
+            }
+    return None
+
+
 def extract_final_numeric(text: str) -> dict[str, Any]:
     """Prefer structured/final-answer values over the first number in prose."""
 
@@ -179,6 +231,62 @@ def repair_with_calculator(parsed: dict[str, Any]) -> dict[str, Any]:
     except CalculationError:
         return parsed
     return {**parsed, "normalized_value": str(calculated), "calculator_used": True}
+
+
+def repair_with_evidence_operation(parsed: dict[str, Any]) -> dict[str, Any]:
+    """Compute an extracted operation deterministically from numeric operands."""
+
+    operands = [Decimal(value) for value in parsed.get("operands", [])]
+    operation = parsed.get("operation")
+    if not operands or not isinstance(operation, str):
+        return parsed
+    try:
+        if operation in {"add", "sum"}:
+            result = sum(operands, Decimal("0"))
+            formula = " + ".join(str(value) for value in operands)
+        elif operation in {"subtract", "difference"}:
+            if len(operands) != 2:
+                return parsed
+            result = operands[0] - operands[1]
+            formula = f"{operands[0]} - {operands[1]}"
+        elif operation == "absolute_difference":
+            if len(operands) != 2:
+                return parsed
+            result = abs(operands[0] - operands[1])
+            formula = f"abs({operands[0]} - {operands[1]})"
+        elif operation == "multiply":
+            result = operands[0]
+            for operand in operands[1:]:
+                result *= operand
+            formula = " * ".join(str(value) for value in operands)
+        elif operation == "divide":
+            if len(operands) != 2:
+                return parsed
+            result = operands[0] / operands[1]
+            formula = f"{operands[0]} / {operands[1]}"
+        elif operation == "average":
+            result = sum(operands, Decimal("0")) / Decimal(len(operands))
+            formula = f"({ ' + '.join(str(value) for value in operands) }) / {len(operands)}"
+        elif operation in {"ratio", "percent", "percentage"}:
+            if len(operands) != 2:
+                return parsed
+            result = operands[0] / operands[1]
+            formula = f"{operands[0]} / {operands[1]}"
+        elif operation == "percent_change":
+            if len(operands) != 2:
+                return parsed
+            result = (operands[0] - operands[1]) / operands[1]
+            formula = f"({operands[0]} - {operands[1]}) / {operands[1]}"
+        else:
+            return parsed
+    except (ArithmeticError, InvalidOperation):
+        return parsed
+    return {
+        **parsed,
+        "formula": formula,
+        "normalized_value": str(result),
+        "calculator_used": True,
+    }
 
 
 def build_prompt_variants(config: dict[str, Any]) -> list[PromptVariant]:
@@ -221,6 +329,20 @@ def quality_repair_schema() -> dict[str, Any]:
             "evidence": {"type": "array", "items": {"type": "string"}},
             "formula": {"type": "string"},
             "value": {"type": "number"},
+            "unit": {"type": "string"},
+        },
+        "additionalProperties": False,
+    }
+
+
+def evidence_operation_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "required": ["evidence", "operands", "operation", "unit"],
+        "properties": {
+            "evidence": {"type": "array"},
+            "operands": {"type": "array", "items": {"type": "number"}},
+            "operation": {"type": "string", "enum": sorted(ALLOWED_OPERATIONS)},
             "unit": {"type": "string"},
         },
         "additionalProperties": False,
@@ -341,7 +463,10 @@ def run_quality_repair_experiment(
                 generated = service.generate_batch(requests, prompt_suffix=prompt_suffix)
                 for row, request, result in zip(rows, requests, generated):
                     raw_output = result["output_text"]
-                    parsed = parse_structured_output(raw_output)
+                    if variant.output_mode == "evidence_operation":
+                        parsed = parse_evidence_operation_output(raw_output)
+                    else:
+                        parsed = parse_structured_output(raw_output)
                     retry_used = False
                     if parsed is None and variant.format_retry and variant.output_mode == "json":
                         retry = service.generate_one(
@@ -355,11 +480,32 @@ def run_quality_repair_experiment(
                         parsed = parse_structured_output(raw_output)
                         format_retry_count += 1
                         retry_used = True
+                    elif (
+                        parsed is None
+                        and variant.format_retry
+                        and variant.output_mode == "evidence_operation"
+                    ):
+                        retry = service.generate_one(
+                            request,
+                            prompt_suffix=(
+                                f"{prompt_suffix}\nYour previous response did not match the required evidence-operation schema. "
+                                "Return one valid JSON object only, with no markdown or explanation."
+                            ),
+                        )
+                        raw_output = retry["output_text"]
+                        parsed = parse_evidence_operation_output(raw_output)
+                        format_retry_count += 1
+                        retry_used = True
                     if parsed is None:
                         parsed = extract_final_numeric(raw_output)
                     if parsed.get("structured"):
                         structured_count += 1
-                    if variant.calculator_enabled:
+                    if variant.output_mode == "evidence_operation":
+                        repaired = repair_with_evidence_operation(parsed)
+                        if repaired.get("calculator_used"):
+                            calculator_count += 1
+                        parsed = repaired
+                    elif variant.calculator_enabled:
                         repaired = repair_with_calculator(parsed)
                         if repaired.get("calculator_used"):
                             calculator_count += 1
@@ -391,6 +537,9 @@ def run_quality_repair_experiment(
                         "format_retry_used": retry_used,
                         "formula": parsed.get("formula"),
                         "evidence": parsed.get("evidence"),
+                        "operands": parsed.get("operands"),
+                        "operation": parsed.get("operation"),
+                        "unit": parsed.get("unit"),
                     }
                     stream.write(json.dumps(record, ensure_ascii=False) + "\n")
                     predictions.append(extracted if extracted is not None else "")
@@ -454,6 +603,7 @@ def run_quality_repair_experiment(
         },
         "variants": results,
         "schema": quality_repair_schema(),
+        "evidence_operation_schema": evidence_operation_schema(),
         "generation": config.get("generation", original_generation),
         "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
     }

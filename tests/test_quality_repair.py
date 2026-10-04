@@ -4,10 +4,12 @@ from decimal import Decimal
 
 from src.evaluation.quality_repair import (
     build_few_shot_suffix,
+    parse_evidence_operation_output,
     extract_final_numeric,
     parse_structured_output,
     quality_repair_schema,
     repair_with_calculator,
+    repair_with_evidence_operation,
     safe_calculate,
     _select_evaluation_rows,
 )
@@ -44,6 +46,25 @@ class QualityRepairTest(unittest.TestCase):
     def test_final_answer_marker_beats_first_number(self):
         parsed = extract_final_numeric("2016 value 303.1; 2017 value 290.6. Final answer: -12.5 million")
         self.assertEqual(parsed["normalized_value"], "-12.5")
+
+    def test_evidence_operation_uses_decimal_calculation(self):
+        parsed = parse_evidence_operation_output(
+            '{"evidence":[{"row":"shares","column":"2016","value": "303.1"}],'
+            '"operands":[290.6,303.1],"operation":"subtract","unit":"million"}'
+        )
+        repaired = repair_with_evidence_operation(parsed)
+        self.assertEqual(repaired["normalized_value"], "-12.5")
+        self.assertTrue(repaired["calculator_used"])
+        self.assertEqual(repaired["operands"], ["290.6", "303.1"])
+        self.assertEqual(repaired["operation"], "subtract")
+
+    def test_evidence_operation_percent_change_returns_fraction(self):
+        parsed = parse_evidence_operation_output(
+            '{"evidence":["new","old"],"operands":[125,100],'
+            '"operation":"percent_change","unit":"percent"}'
+        )
+        repaired = repair_with_evidence_operation(parsed)
+        self.assertEqual(repaired["normalized_value"], "0.25")
 
     def test_few_shot_uses_only_passed_examples(self):
         suffix = build_few_shot_suffix([{"question": "q", "answer": "1"}])
