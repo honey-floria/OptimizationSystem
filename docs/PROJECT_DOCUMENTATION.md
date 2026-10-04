@@ -1080,6 +1080,16 @@ Notebook 会在每个模型结束后释放显存，并输出解析率、结构�
 python3 -m pip install -r requirements-server.txt
 ```
 
+如果服务器还没有模型，可使用 `scripts/download_model_4080.py` 将
+`Qwen/Qwen2.5-3B-Instruct` 下载到默认目录 `/data/models/Qwen2.5-3B-Instruct`：
+
+```bash
+python3 scripts/download_model_4080.py
+```
+
+下载到其他目录时，将该目录同时传给评测入口的 `--model-path`；评测入口要求该目录直接包含
+`config.json` 和模型权重文件。私有仓库可先设置 `HF_TOKEN`，公开的 Qwen 模型不需要 Token。
+
 Pilot 命令示例：
 
 ```bash
@@ -1087,7 +1097,8 @@ python3 scripts/run_quality_repair_4080.py \
   --model-path /data/models/Qwen2.5-3B-Instruct \
   --model-id Qwen/Qwen2.5-3B-Instruct \
   --dataset-dir /data/finqa_assets \
-  --output-dir out/quality_repair_3b_4080
+  --output-dir out/quality_repair_3b_4080 \
+  --variants structured_json,evidence_operation
 ```
 
 确认 pilot 有效后，增加 `--full` 执行完整 883 条 dev：
