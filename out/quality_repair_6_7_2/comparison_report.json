@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-v1",
+  "created_at": "2026-10-04T17:23:10.995428+00:00",
+  "dataset": {
+    "role": "evaluation_dev",
+    "size": 883,
+    "version": "main",
+    "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8"
+  },
+  "variants": [
+    {
+      "variant": "zero_shot_final_answer",
+      "output_mode": "numeric_text",
+      "calculator_enabled": false,
+      "prompt_suffix": "\nReturn only the final numeric answer with its unit. Do not explain the calculation.",
+      "metrics": {
+        "total": 883,
+        "parsed": 24,
+        "correct": 2,
+        "parse_rate": 0.027180067950169876,
+        "numeric_accuracy": 0.0022650056625141564
+      },
+      "structured_output_rate": 0.0,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 0,
+      "duration_seconds": 81.27123097499998,
+      "predictions_file": "zero_shot_final_answer/predictions.jsonl",
+      "predictions_sha256": "65761a1858b4f2db63461080f6f80494c17e51ab8d2885f987f2407eb6c16a03"
+    },
+    {
+      "variant": "structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|\"}. Preserve the table column, row, year, and unit in evidence. The value must be the final answer.",
+      "metrics": {
+        "total": 883,
+        "parsed": 52,
+        "correct": 1,
+        "parse_rate": 0.05889014722536806,
+        "numeric_accuracy": 0.0011325028312570782
+      },
+      "structured_output_rate": 0.057757644394110984,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 879,
+      "duration_seconds": 310.60819839199985,
+      "predictions_file": "structured_json/predictions.jsonl",
+      "predictions_sha256": "1de10f539b54d274e0320e3b2e6187a9d1ced68dbb3bf17b4acb3f66e396836e"
+    },
+    {
+      "variant": "few_shot_structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "prompt_suffix": "Example question: what were average net sales from 2011 to 2013 for mst in millions?\nExample final answer: 7288\n\nExample question: in 2016 what was the percent of the total operating leases that was due including terms greater than 12 months\nExample final answer: 15%\n\n\nUse the provided training examples as format guidance only. Return exactly one JSON object with evidence, formula, value, and unit; do not include any other text.",
+      "metrics": {
+        "total": 883,
+        "parsed": 0,
+        "correct": 0,
+        "parse_rate": 0.0,
+        "numeric_accuracy": 0.0
+      },
+      "structured_output_rate": 0.0,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 883,
+      "duration_seconds": 315.430862658,
+      "predictions_file": "few_shot_structured_json/predictions.jsonl",
+      "predictions_sha256": "5458731012be6b1f946c89064bc1614b541cccfd8b76e12b74ac5cb4280a4c2c"
+    },
+    {
+      "variant": "structured_json_calculator",
+      "output_mode": "json",
+      "calculator_enabled": true,
+      "prompt_suffix": "\nReturn exactly one JSON object with evidence, formula, value, and unit. Write formula using only numeric arithmetic (+, -, *, /, parentheses). The formula will be checked by a deterministic calculator; do not put prose or years into the formula.",
+      "metrics": {
+        "total": 883,
+        "parsed": 2,
+        "correct": 0,
+        "parse_rate": 0.0022650056625141564,
+        "numeric_accuracy": 0.0
+      },
+      "structured_output_rate": 0.0,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 883,
+      "duration_seconds": 311.9808137619998,
+      "predictions_file": "structured_json_calculator/predictions.jsonl",
+      "predictions_sha256": "5dd889cdbbcd8e74a17c8a8d8bcaa0433010dfe4ae1876c3fcba375398bf6227"
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "formula",
+      "value",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "formula": {
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "note": "Few-shot examples must come from calibration/train, never evaluation dev/test."
+}
