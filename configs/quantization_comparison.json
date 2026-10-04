@@ -9,6 +9,7 @@
   },
   "hourly_gpu_cost_usd": {
     "Tesla T4": null,
-    "NVIDIA A100-SXM4-40GB": null
+    "NVIDIA A100-SXM4-40GB": null,
+    "NVIDIA A100-SXM4-80GB": null
   }
 }

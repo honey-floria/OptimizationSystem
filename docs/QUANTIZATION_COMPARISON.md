@@ -18,17 +18,20 @@ python -m src.quantization.comparison --project-root .
 
 ## 当前限制
 
-- FP16 Benchmark 在 Tesla T4 上运行，AWQ/GPTQ 在 A100 上运行，且矩阵分别为 12 和
-  16 个测试点，因此不能计算相对显存、延迟和吞吐收益。
-- SmoothQuant INT8 尚未运行统一 16 点 Benchmark。
+- FP16 和 SmoothQuant INT8 已在同一 A100-SXM4-80GB 上运行统一 16 点 Benchmark。
+- AWQ/GPTQ 历史结果来自 A100-SXM4-40GB。40GB 与 80GB 型号的显存带宽不同，因此仍不能
+  将 INT4 性能直接与当前 FP16 基线比较。
 - A100 不支持当前 FP8 实验，FP8 标记为 `unsupported_on_target_a100`，质量和性能记录为
   `N/A`，不阻塞适用方案的完整性检查。
 - `configs/quantization_comparison.json` 中 GPU 小时单价尚未批准，因此只计算每百万输出
   token 的 GPU 小时，不生成美元成本。
 
-完成剩余 6.5 验收前，需要在同一 A100 上使用 `configs/quantization_benchmark.json` 重跑
-FP16 和 INT8，并填写经项目确认的 GPU 小时单价。FP8 如果不属于目标 A100 的候选方案，需
-由项目负责人明确批准以“不适用”关闭，而不能伪造实验结果。
+同硬件有效结果显示，当前 SmoothQuant INT8 相对 FP16：模型显存增加约 5.5%，平均 P50
+延迟增加约 296.5%，平均吞吐下降约 74.4%，没有产生性能收益。该 ModelOpt 状态更接近
+量化仿真/校准模型，不能作为部署加速收益证据。
+
+完成剩余 6.5 验收前，需要将 AWQ/GPTQ 重跑到 A100 80GB，或将 FP16/INT8 重跑到 A100
+40GB，并填写经项目确认的 GPU 小时单价。
 
 同硬件 Benchmark 可直接运行 `notebooks/quantization_comparison_benchmark_colab.ipynb`。
 Notebook 会依次生成：

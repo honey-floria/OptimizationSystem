@@ -14,7 +14,7 @@
 
 ## Conclusion
 
-The FP16 baseline is not production-quality, INT8 performance is missing, FP8 is unavailable, and FP16/INT4 benchmarks use different hardware or matrices. No deployment winner can be selected.
+The FP16 reference accuracy is not production-quality. Some INT4 benchmarks use a different A100 memory variant from FP16. Approved hourly GPU prices are missing. No deployment winner can be selected.
 
 Performance deltas against FP16 are intentionally blank unless hardware and benchmark matrices match.
 Monetary cost remains `not_run` until approved hourly GPU prices are provided.

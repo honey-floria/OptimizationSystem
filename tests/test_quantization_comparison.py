@@ -26,12 +26,13 @@ class QuantizationComparisonTest(unittest.TestCase):
             ["awq", "fp16", "fp8", "gptq", "int8"],
         )
         self.assertEqual(self.report["coverage"]["quality_missing"], [])
-        self.assertIn(
-            "smoothquant-int8-w8a8",
-            self.report["coverage"]["performance_missing"],
+        self.assertEqual(self.report["coverage"]["performance_missing"], [])
+        self.assertEqual(
+            self.report["coverage"]["performance_comparable_to_fp16"],
+            ["smoothquant-int8-w8a8"],
         )
         self.assertEqual(
-            self.report["coverage"]["performance_comparable_to_fp16"], []
+            len(self.report["coverage"]["performance_incomparable"]), 6
         )
 
     def test_marks_int8_structured_regression_as_high_risk(self):
@@ -59,6 +60,13 @@ class QuantizationComparisonTest(unittest.TestCase):
     def test_markdown_calls_out_incomparable_performance(self):
         markdown = render_markdown(self.report)
         self.assertIn("Performance deltas against FP16 are intentionally blank", markdown)
+
+    def test_records_valid_int8_performance_regression(self):
+        finding = self.report["recommendation"]["validated_performance_findings"][0]
+        self.assertEqual(finding["plan_id"], "smoothquant-int8-w8a8")
+        self.assertGreater(finding["memory_change_percent"], 0)
+        self.assertGreater(finding["latency_change_percent"], 0)
+        self.assertLess(finding["throughput_change_percent"], 0)
 
 
 if __name__ == "__main__":
