@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "created_at": "2026-10-04T03:46:36.985401+00:00",
+  "created_at": "2026-10-04T04:00:49.254614+00:00",
   "cost_basis": {
     "resource_metric": "gpu_hours_per_million_output_tokens",
     "formula": "1000000 / mean_output_tokens_per_second / 3600",
@@ -24,8 +24,8 @@
     },
     "performance": {
       "status": "pass",
-      "gpu": "Tesla T4",
-      "case_count": 12,
+      "gpu": "NVIDIA A100-SXM4-80GB",
+      "case_count": 16,
       "matrix_signature": [
         [
           1,
@@ -48,26 +48,6 @@
           32
         ],
         [
-          2,
-          128,
-          16
-        ],
-        [
-          2,
-          128,
-          32
-        ],
-        [
-          2,
-          512,
-          16
-        ],
-        [
-          2,
-          512,
-          32
-        ],
-        [
           4,
           128,
           16
@@ -84,15 +64,55 @@
         ],
         [
           4,
+          512,
+          32
+        ],
+        [
+          8,
+          128,
+          16
+        ],
+        [
+          8,
+          128,
+          32
+        ],
+        [
+          8,
+          512,
+          16
+        ],
+        [
+          8,
+          512,
+          32
+        ],
+        [
+          16,
+          128,
+          16
+        ],
+        [
+          16,
+          128,
+          32
+        ],
+        [
+          16,
+          512,
+          16
+        ],
+        [
+          16,
           512,
           32
         ]
       ],
-      "mean_output_tokens_per_second": 56.29295656577667,
-      "mean_end_to_end_p50_ms": 971.6802760834374,
-      "max_model_allocated_mib": 1136.1826171875,
-      "max_peak_allocated_mib": 1331.74365234375,
-      "gpu_hours_per_million_output_tokens": 4.934503261579494,
+      "mean_output_tokens_per_second": 220.88003519330022,
+      "mean_end_to_end_p50_ms": 777.0771356875024,
+      "max_model_allocated_mib": 1676.7216796875,
+      "max_peak_allocated_mib": 2061.7158203125,
+      "gpu_hours_per_million_output_tokens": 1.257595678734315,
       "usd_per_million_output_tokens": null
     }
   },
@@ -201,11 +221,11 @@
             32
           ]
         ],
-        "mean_output_tokens_per_second": 131.6609855357124,
+        "mean_output_tokens_per_second": 131.66098553571237,
         "mean_end_to_end_p50_ms": 1311.5661629376518,
         "max_model_allocated_mib": 1679.998046875,
         "max_peak_allocated_mib": 2064.630859375,
-        "gpu_hours_per_million_output_tokens": 2.1097956744553756,
+        "gpu_hours_per_million_output_tokens": 2.109795674455376,
         "usd_per_million_output_tokens": null
       },
       "performance_comparable_to_fp16": false,
@@ -326,11 +346,11 @@
             32
           ]
         ],
-        "mean_output_tokens_per_second": 131.63436405286882,
+        "mean_output_tokens_per_second": 131.6343640528688,
         "mean_end_to_end_p50_ms": 1312.4543588753568,
         "max_model_allocated_mib": 1667.09130859375,
         "max_peak_allocated_mib": 2051.49462890625,
-        "gpu_hours_per_million_output_tokens": 2.1102223555105475,
+        "gpu_hours_per_million_output_tokens": 2.110222355510548,
         "usd_per_million_output_tokens": null
       },
       "performance_comparable_to_fp16": false,
@@ -2790,22 +2810,103 @@
       },
       "regression": null,
       "performance": {
-        "status": "not_run",
-        "gpu": null,
-        "case_count": 0,
-        "matrix_signature": [],
-        "mean_output_tokens_per_second": null,
-        "mean_end_to_end_p50_ms": null,
-        "max_model_allocated_mib": null,
-        "max_peak_allocated_mib": null,
-        "gpu_hours_per_million_output_tokens": null,
+        "status": "pass",
+        "gpu": "NVIDIA A100-SXM4-80GB",
+        "case_count": 16,
+        "matrix_signature": [
+          [
+            1,
+            128,
+            16
+          ],
+          [
+            1,
+            128,
+            32
+          ],
+          [
+            1,
+            512,
+            16
+          ],
+          [
+            1,
+            512,
+            32
+          ],
+          [
+            4,
+            128,
+            16
+          ],
+          [
+            4,
+            128,
+            32
+          ],
+          [
+            4,
+            512,
+            16
+          ],
+          [
+            4,
+            512,
+            32
+          ],
+          [
+            8,
+            128,
+            16
+          ],
+          [
+            8,
+            128,
+            32
+          ],
+          [
+            8,
+            512,
+            16
+          ],
+          [
+            8,
+            512,
+            32
+          ],
+          [
+            16,
+            128,
+            16
+          ],
+          [
+            16,
+            128,
+            32
+          ],
+          [
+            16,
+            512,
+            16
+          ],
+          [
+            16,
+            512,
+            32
+          ]
+        ],
+        "mean_output_tokens_per_second": 56.436270189228,
+        "mean_end_to_end_p50_ms": 3080.947787937511,
+        "max_model_allocated_mib": 1768.9130859375,
+        "max_peak_allocated_mib": 2153.91943359375,
+        "gpu_hours_per_million_output_tokens": 4.921972640048726,
         "usd_per_million_output_tokens": null
       },
-      "performance_comparable_to_fp16": false,
+      "performance_comparable_to_fp16": true,
       "performance_delta_from_fp16": {
-        "memory_change_mib": null,
-        "latency_change_ms": null,
-        "throughput_change_tokens_per_second": null
+        "memory_change_mib": 92.19140625,
+        "latency_change_ms": 2303.8706522500083,
+        "throughput_change_tokens_per_second": -164.44376500407222
       },
       "risk_assessment": {
         "l2_candidate": false,
@@ -2871,9 +2972,7 @@
     ],
     "comparison_table_complete": true,
     "quality_missing": [],
-    "performance_missing": [
-      "smoothquant-int8-w8a8"
-    ],
+    "performance_missing": [],
     "performance_incomparable": [
       "awq-int4-w4a16-g32",
       "awq-int4-w4a16-g64",
@@ -2889,9 +2988,12 @@
       "awq-int4-w4a16-g128",
       "gptq-int4-w4a16-g32",
       "gptq-int4-w4a16-g64",
-      "gptq-int4-w4a16-g128"
+      "gptq-int4-w4a16-g128",
+      "smoothquant-int8-w8a8"
     ],
-    "performance_comparable_to_fp16": []
+    "performance_comparable_to_fp16": [
+      "smoothquant-int8-w8a8"
+    ]
   },
   "recommendation": {
     "l2_candidates_by_current_gates": [
