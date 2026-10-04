@@ -5,12 +5,16 @@ from pathlib import Path
 
 from src.input_validation.model_input import NOT_RUN, PASS
 from src.quantization.int8_fp8 import (
+    check_structured_json,
     collect_int8_fp8_evidence,
     validate_int8_fp8_evidence,
 )
 
 
 class Int8Fp8Test(unittest.TestCase):
+    def test_structured_json_contract(self):
+        self.assertTrue(check_structured_json('{"answer": 1, "unit": "%"}', ["answer", "unit"])["passed"])
+        self.assertFalse(check_structured_json("not json", ["answer"])["passed"])
     def test_contract_and_capability_not_run(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
