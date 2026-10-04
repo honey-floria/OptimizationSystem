@@ -217,15 +217,22 @@ AWQ 实验配置、三种 group size 矩阵和真实导出入口已实现，使�
 GPTQ 导出与同硬件 AWQ 对比入口已实现，使用说明见
 [`docs/GPTQ_EXPERIMENT.md`](GPTQ_EXPERIMENT.md)。真实结果回传并验收后再勾选以下条目。
 
-- [ ] 使用相同校准集运行 GPTQ
-- [ ] 使用与 AWQ 相同的 bit 数对比
-- [ ] 使用可比的 group size 对比
-- [ ] 对比模型质量
-- [ ] 对比显存占用
-- [ ] 对比真实推理速度
-- [ ] 对比高并发性能
+- [x] 使用相同校准集运行 GPTQ
+- [x] 使用与 AWQ 相同的 bit 数对比
+- [x] 使用可比的 group size 对比
+- [x] 对比模型质量
+- [x] 对比显存占用
+- [x] 对比真实推理速度
+- [x] 对比高并发性能
+
+GPTQ 三个 group size 已完成真实导出，且均在 A100 上完成统一 Benchmark。质量结果中
+g32/g64 通过解析率门槛，g128 的解析率为 0.9887、未通过 0.99 门槛；三组高风险回归均为
+0 个新增回归，但 FP16 基线本身在该集合上未答对样本，因此不能将其解释为业务质量通过。
 
 ### 6.4 INT8/FP8 实验
+
+SmoothQuant INT8/FP8 配置、硬件能力采集和验收入口已实现，使用说明见
+[`docs/INT8_FP8_EXPERIMENT.md`](INT8_FP8_EXPERIMENT.md)。真实 INT8 导出和设备证据回传后再勾选。
 
 - [ ] 运行 SmoothQuant INT8
 - [ ] 验证权重和激活量化配置
