@@ -319,7 +319,9 @@ A100 的真实 FP8 矩阵运算探测失败，因此 NVIDIA FP8 保持未完成�
 工具、配置和 Colab 入口已实现，说明见
 [`docs/QUALITY_REPAIR_6_7_2.md`](QUALITY_REPAIR_6_7_2.md)，配置见
 [`configs/quality_repair.json`](../configs/quality_repair.json)。四组变体的真实 883 条 dev
-评测尚未在 Colab 执行，结果完成后再勾选实验性条目。
+评测已执行过一轮，但该轮使用旧的 `max_new_tokens=32` 且结构化 evidence 解析器不支持
+嵌套 JSON，结果不作为最终结论。当前配置已修正为 `128` tokens 并支持嵌套 JSON，需重新
+运行 Colab 后再勾选实验性条目。
 
 - [x] 保留表格行列标题、单位、年份和上下文层级
 - [x] 要求模型先输出引用字段和计算公式，再输出最终答案

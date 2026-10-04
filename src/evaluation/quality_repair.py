@@ -24,7 +24,6 @@ FINAL_ANSWER_PATTERN = re.compile(
     r"([^\n\r]+)",
     re.IGNORECASE,
 )
-JSON_VALUE_PATTERN = re.compile(r"\{.*?\}", re.DOTALL)
 ALLOWED_UNITS = {
     "",
     "%",
@@ -99,9 +98,12 @@ def safe_calculate(expression: str) -> Decimal:
 
 
 def _json_candidates(text: str) -> Iterable[dict[str, Any]]:
-    for candidate in JSON_VALUE_PATTERN.findall(text):
+    decoder = json.JSONDecoder()
+    for index, character in enumerate(text):
+        if character != "{":
+            continue
         try:
-            value = json.loads(candidate)
+            value, _ = decoder.raw_decode(text[index:])
         except json.JSONDecodeError:
             continue
         if isinstance(value, dict):
@@ -119,7 +121,6 @@ def parse_structured_output(text: str) -> dict[str, Any] | None:
         if (
             value is not None
             and isinstance(evidence, list)
-            and all(isinstance(item, str) for item in evidence)
             and isinstance(formula, str)
             and isinstance(unit, str)
             and unit.lower() in ALLOWED_UNITS
@@ -127,7 +128,10 @@ def parse_structured_output(text: str) -> dict[str, Any] | None:
             parsed = parse_numeric_answer(f"{value}{unit}")
             if parsed is not None:
                 return {
-                    "evidence": evidence,
+                    "evidence": [
+                        item if isinstance(item, str) else json.dumps(item, ensure_ascii=False)
+                        for item in evidence
+                    ],
                     "formula": formula,
                     "value": str(value),
                     "unit": unit,
@@ -256,6 +260,9 @@ def run_quality_repair_experiment(
     if batch_size <= 0:
         raise ValueError("quality repair batch_size must be positive")
     results = []
+    original_generation = service.config.get("generation")
+    if isinstance(config.get("generation"), dict):
+        service.config["generation"] = config["generation"]
     for variant in variants:
         started = time.perf_counter()
         variant_dir = output_path / variant.name
@@ -350,6 +357,7 @@ def run_quality_repair_experiment(
                 "predictions_sha256": _sha256(predictions_path),
             }
         )
+    service.config["generation"] = original_generation
     report = {
         "schema_version": 1,
         "experiment_name": config.get("experiment_name"),
@@ -362,6 +370,7 @@ def run_quality_repair_experiment(
         },
         "variants": results,
         "schema": quality_repair_schema(),
+        "generation": config.get("generation", original_generation),
         "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
     }
     (output_path / "comparison_report.json").write_text(

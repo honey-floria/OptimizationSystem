@@ -34,6 +34,12 @@ class QualityRepairTest(unittest.TestCase):
         self.assertEqual(parsed["normalized_value"], "-12.5")
         self.assertEqual(repair_with_calculator(parsed)["normalized_value"], "-12.5")
 
+    def test_structured_output_supports_nested_evidence(self):
+        parsed = parse_structured_output(
+            '{"evidence":[["2016", "303.1"]], "formula":"290.6 - 303.1", "value":-12.5, "unit":"million"}'
+        )
+        self.assertEqual(parsed["normalized_value"], "-12.5")
+
     def test_final_answer_marker_beats_first_number(self):
         parsed = extract_final_numeric("2016 value 303.1; 2017 value 290.6. Final answer: -12.5 million")
         self.assertEqual(parsed["normalized_value"], "-12.5")
