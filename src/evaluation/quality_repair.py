@@ -6,6 +6,7 @@ import ast
 import hashlib
 import json
 import operator
+import random
 import re
 import time
 from datetime import datetime, timezone
@@ -242,6 +243,25 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _select_evaluation_rows(
+    dataset: Any, config: dict[str, Any]
+) -> tuple[list[dict[str, Any]], list[int] | None, int | None]:
+    """Select a reproducible pilot subset without changing the source dataset."""
+
+    source_size = len(dataset)
+    requested_size = config.get("evaluation_size")
+    if requested_size is None:
+        return [dataset[index] for index in range(source_size)], None, None
+    requested_size = int(requested_size)
+    if requested_size <= 0 or requested_size > source_size:
+        raise ValueError(
+            f"evaluation_size must be between 1 and {source_size}, got {requested_size}"
+        )
+    seed = int(config.get("evaluation_seed", 0))
+    indices = sorted(random.Random(seed).sample(range(source_size), requested_size))
+    return [dataset[index] for index in indices], indices, seed
+
+
 def run_quality_repair_experiment(
     service: Any,
     dataset: Any,
@@ -255,6 +275,15 @@ def run_quality_repair_experiment(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     variants = build_prompt_variants(config)
+    pilot_variants = config.get("pilot_variants")
+    if pilot_variants is not None:
+        allowed_variants = {str(name) for name in pilot_variants}
+        variants = [variant for variant in variants if variant.name in allowed_variants]
+        if not variants:
+            raise ValueError("pilot_variants did not match any configured variant")
+    evaluation_rows, sample_indices, sample_seed = _select_evaluation_rows(
+        dataset, config
+    )
     calibration_rows = list(calibration or [])
     batch_size = int(config.get("batch_size", 4))
     if batch_size <= 0:
@@ -278,8 +307,11 @@ def run_quality_repair_experiment(
             few_shot = build_few_shot_suffix(calibration_rows)
             prompt_suffix = f"{few_shot}\n\n{prompt_suffix}" if few_shot else prompt_suffix
         with predictions_path.open("w", encoding="utf-8") as stream:
-            for start in range(0, len(dataset), batch_size):
-                rows = [dataset[index] for index in range(start, min(start + batch_size, len(dataset)))]
+            for start in range(0, len(evaluation_rows), batch_size):
+                rows = [
+                    evaluation_rows[index]
+                    for index in range(start, min(start + batch_size, len(evaluation_rows)))
+                ]
                 requests = [
                     InferenceRequest.from_finqa_row(
                         row, request_id=f"quality-repair-{variant.name}-{start + offset + 1:06d}"
@@ -319,8 +351,14 @@ def run_quality_repair_experiment(
                         [reference],
                         tolerance=float(config.get("tolerance", 1e-4)),
                     )
+                    prediction_index = len(predictions)
                     record = {
-                        "index": len(predictions),
+                        "index": prediction_index,
+                        "source_index": (
+                            sample_indices[prediction_index]
+                            if sample_indices is not None
+                            else prediction_index
+                        ),
                         "request_id": request.request_id,
                         "question": request.question,
                         "raw_prediction": raw_output,
@@ -349,8 +387,8 @@ def run_quality_repair_experiment(
                 "calculator_enabled": variant.calculator_enabled,
                 "prompt_suffix": prompt_suffix,
                 "metrics": metrics,
-                "structured_output_rate": structured_count / len(dataset) if len(dataset) else 0.0,
-                "calculator_use_rate": calculator_count / len(dataset) if len(dataset) else 0.0,
+                "structured_output_rate": structured_count / len(evaluation_rows) if evaluation_rows else 0.0,
+                "calculator_use_rate": calculator_count / len(evaluation_rows) if evaluation_rows else 0.0,
                 "format_retry_count": format_retry_count,
                 "duration_seconds": time.perf_counter() - started,
                 "predictions_file": str(predictions_path.relative_to(output_path)),
@@ -364,7 +402,8 @@ def run_quality_repair_experiment(
         "created_at": datetime.now(timezone.utc).isoformat(),
         "dataset": {
             "role": config.get("dataset_role"),
-            "size": len(dataset),
+            "size": len(evaluation_rows),
+            "source_size": len(dataset),
             "version": dataset_manifest.get("assets", {}).get(config.get("dataset_role"), {}).get("version"),
             "sha256": dataset_manifest.get("assets", {}).get(config.get("dataset_role"), {}).get("sha256"),
         },
@@ -373,6 +412,14 @@ def run_quality_repair_experiment(
         "generation": config.get("generation", original_generation),
         "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
     }
+    if sample_indices is not None:
+        report["dataset"]["sample"] = {
+            "seed": sample_seed,
+            "indices": sample_indices,
+            "indices_sha256": hashlib.sha256(
+                json.dumps(sample_indices, separators=(",", ":")).encode("utf-8")
+            ).hexdigest(),
+        }
     (output_path / "comparison_report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

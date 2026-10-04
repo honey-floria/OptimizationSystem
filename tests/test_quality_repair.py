@@ -9,6 +9,7 @@ from src.evaluation.quality_repair import (
     quality_repair_schema,
     repair_with_calculator,
     safe_calculate,
+    _select_evaluation_rows,
 )
 
 
@@ -53,6 +54,17 @@ class QualityRepairTest(unittest.TestCase):
         schema = quality_repair_schema()
         self.assertEqual(schema["required"], ["evidence", "formula", "value", "unit"])
         self.assertFalse(schema["additionalProperties"])
+
+    def test_pilot_sample_is_reproducible(self):
+        dataset = [{"index": index} for index in range(883)]
+        config = {"evaluation_size": 80, "evaluation_seed": 20261004}
+        selected, indices, seed = _select_evaluation_rows(dataset, config)
+        repeated, repeated_indices, repeated_seed = _select_evaluation_rows(dataset, config)
+        self.assertEqual(len(selected), 80)
+        self.assertEqual(seed, repeated_seed)
+        self.assertEqual(indices, repeated_indices)
+        self.assertEqual(selected, repeated)
+        self.assertEqual([row["index"] for row in selected], indices)
 
 
 if __name__ == "__main__":
