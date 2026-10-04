@@ -1,0 +1,35 @@
+{
+  "complete": true,
+  "checks": [
+    {
+      "name": "full_fp16_predictions_diagnosed",
+      "status": "pass",
+      "detail": "All 883 frozen FP16 development predictions are classified."
+    },
+    {
+      "name": "normalization_logic_audited",
+      "status": "pass",
+      "detail": "Decimal, percentage, currency, signed number, and thousands-separator cases are verified."
+    },
+    {
+      "name": "error_taxonomy_recorded",
+      "status": "pass",
+      "detail": "Every prediction has a deterministic suggested error category."
+    },
+    {
+      "name": "question_type_statistics_recorded",
+      "status": "pass",
+      "detail": "Question types plus single-step, multi-step, comparison, percentage, and time-series dimensions are recorded."
+    },
+    {
+      "name": "manual_review_queue_created",
+      "status": "pass",
+      "detail": "A stratified queue of at least 50 predictions is ready for human review."
+    },
+    {
+      "name": "manual_review_completed",
+      "status": "pass",
+      "detail": "Human decisions must be filled in for at least 50 queued predictions."
+    }
+  ]
+}

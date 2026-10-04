@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "source_report": "out/baseline_quality_experiment/baseline_quality_report.json",
+  "manual_review_sample_size": 50,
+  "numeric_tolerance": 0.0001,
+  "classification_version": "finqa-error-taxonomy-v1"
+}
