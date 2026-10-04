@@ -223,6 +223,18 @@ def _candidate(
                 - baseline_performance["mean_output_tokens_per_second"]
                 if comparable else None
             ),
+            "memory_change_percent": (
+                (performance["max_model_allocated_mib"] / baseline_performance["max_model_allocated_mib"] - 1) * 100
+                if comparable else None
+            ),
+            "latency_change_percent": (
+                (performance["mean_end_to_end_p50_ms"] / baseline_performance["mean_end_to_end_p50_ms"] - 1) * 100
+                if comparable else None
+            ),
+            "throughput_change_percent": (
+                (performance["mean_output_tokens_per_second"] / baseline_performance["mean_output_tokens_per_second"] - 1) * 100
+                if comparable else None
+            ),
         },
         "risk_assessment": risk_assessment,
     }
@@ -348,6 +360,33 @@ def build_quantization_comparison(
         candidate["plan_id"] for candidate in candidates
         if candidate["risk_assessment"]["l2_candidate"]
     ]
+    validated_findings = [
+        {
+            "plan_id": candidate["plan_id"],
+            **candidate["performance_delta_from_fp16"],
+        }
+        for candidate in candidates
+        if candidate["performance_comparable_to_fp16"]
+    ]
+    limitations = [
+        "The FP16 reference accuracy is not production-quality."
+    ]
+    next_evidence = []
+    if performance_missing:
+        limitations.append(
+            "Some applicable candidates have no performance benchmark."
+        )
+        next_evidence.append("Run the missing candidate benchmarks.")
+    if performance_incomparable:
+        limitations.append(
+            "Some INT4 benchmarks use a different A100 memory variant from FP16."
+        )
+        next_evidence.append(
+            "Rerun AWQ/GPTQ on A100 80GB, or rerun FP16/INT8 on A100 40GB."
+        )
+    if monetary_cost_missing:
+        limitations.append("Approved hourly GPU prices are missing.")
+        next_evidence.append("Record approved hourly GPU prices for monetary cost.")
     return {
         "schema_version": 1,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -382,16 +421,9 @@ def build_quantization_comparison(
         "recommendation": {
             "l2_candidates_by_current_gates": l2_candidates,
             "deployment_recommendation": None,
-            "reason": (
-                "The FP16 baseline is not production-quality, INT8 performance is "
-                "missing, FP8 is unavailable, and FP16/INT4 benchmarks use different "
-                "hardware or matrices. No deployment winner can be selected."
-            ),
-            "next_evidence": [
-                "Rerun FP16 with the 16-case comparison matrix on A100.",
-                "Run the INT8 16-case benchmark on the same A100.",
-                "Record approved hourly GPU prices for monetary cost.",
-            ],
+            "reason": " ".join(limitations) + " No deployment winner can be selected.",
+            "validated_performance_findings": validated_findings,
+            "next_evidence": next_evidence,
         },
     }
 
