@@ -356,10 +356,11 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 使用安全 `Decimal` 计算器执行加减乘除、平均、比例和百分比变化
 - [x] 记录 evidence、operands、operation、formula 和 calculator 使用情况，支持逐条错误定位
 - [x] 增加本地 NVIDIA 4080 CLI，支持固定 80 条 pilot、完整 883 条评测、方案选择和进度输出
-- [ ] 在 4080 上使用固定 80 条 pilot 对比 `structured_json` 与 `evidence_operation`
-- [ ] 验证 evidence 中的行、列、年份和操作数是否来自真实表格单元格
-- [ ] 为表格行列增加稳定 ID，限制模型只能引用合法单元格
-- [ ] 对 evidence—operation—value—unit 执行一致性校验，失败时只重试证据和操作数
+- [x] 在 4080 上使用固定 80 条 pilot 对比 `structured_json` 与 `evidence_operation`
+- [x] 实现 evidence 中的行、列、年份和操作数回指真实表格单元格的校验
+- [x] 为表格行列增加稳定 ID，限制模型只能引用合法单元格
+- [x] 实现 evidence—operation—value—unit 一致性校验，失败时只重试证据和操作数
+- [ ] 在 4080 上复测带稳定 ID 和一致性校验的新方案
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 使用 FinQA train 构造“证据、操作数、操作、计算结果、单位”LoRA 监督数据
 - [ ] 严格隔离 train/dev/test，禁止使用 dev/test 答案进行 Prompt 或微调

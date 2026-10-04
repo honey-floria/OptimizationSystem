@@ -62,6 +62,7 @@ class PromptVariant:
     output_mode: str
     calculator_enabled: bool = False
     format_retry: bool = False
+    stable_cell_ids: bool = False
 
 
 class CalculationError(ValueError):
@@ -183,15 +184,101 @@ def parse_evidence_operation_output(text: str) -> dict[str, Any] | None:
             numeric_operands.append(parsed_operand)
         else:
             return {
-                "evidence": [
-                    item if isinstance(item, str) else json.dumps(item, ensure_ascii=False)
-                    for item in evidence
-                ],
+                "evidence": list(evidence),
                 "operands": [str(value) for value in numeric_operands],
                 "operation": operation,
                 "unit": unit,
                 "structured": True,
             }
+    return None
+
+
+def add_stable_table_ids(row: dict[str, Any]) -> dict[str, Any]:
+    """Add deterministic row/column IDs to a copy of a FinQA row."""
+
+    enriched = dict(row)
+    enriched["table"] = [
+        [f"[cell_id=r{row_index}c{column_index}] {cell}"
+         for column_index, cell in enumerate(table_row)]
+        for row_index, table_row in enumerate(row.get("table", []))
+    ]
+    return enriched
+
+
+def _table_cell_values(row: dict[str, Any]) -> dict[str, str]:
+    return {
+        f"r{row_index}c{column_index}": str(cell).strip()
+        for row_index, table_row in enumerate(row.get("table", []))
+        for column_index, cell in enumerate(table_row)
+    }
+
+
+def validate_evidence_operation(
+    parsed: dict[str, Any], row: dict[str, Any]
+) -> str | None:
+    """Validate cell references, operand membership, operation arity, and units."""
+
+    evidence = parsed.get("evidence")
+    operation = parsed.get("operation")
+    operands = parsed.get("operands")
+    unit = str(parsed.get("unit", "")).lower()
+    if not isinstance(evidence, list) or not evidence:
+        return "evidence must be a non-empty list"
+    if not isinstance(operation, str) or operation not in ALLOWED_OPERATIONS:
+        return "operation is not allowed"
+    if not isinstance(operands, list) or not operands:
+        return "operands must be a non-empty list"
+    if unit not in ALLOWED_UNITS:
+        return "unit is not allowed"
+
+    cell_values = _table_cell_values(row)
+    evidence_numbers: list[Decimal] = []
+    cell_id_pattern = re.compile(r"^r(\d+)c(\d+)$")
+    for item in evidence:
+        if not isinstance(item, dict):
+            return "each evidence item must be an object with cell_id and value"
+        cell_id = item.get("cell_id")
+        if not isinstance(cell_id, str) or not cell_id_pattern.fullmatch(cell_id):
+            return "evidence cell_id must match rNcM"
+        if cell_id not in cell_values:
+            return f"evidence cell_id does not exist: {cell_id}"
+        if "value" not in item:
+            return f"evidence value is missing: {cell_id}"
+        expected = parse_numeric_answer(cell_values[cell_id])
+        actual = parse_numeric_answer(item["value"])
+        if expected is not None or actual is not None:
+            if expected is None or actual is None or expected != actual:
+                return f"evidence value does not match table cell: {cell_id}"
+            evidence_numbers.append(actual)
+        elif str(item["value"]).strip() != cell_values[cell_id]:
+            return f"evidence text does not match table cell: {cell_id}"
+
+    parsed_operands: list[Decimal] = []
+    for operand in operands:
+        value = parse_numeric_answer(operand)
+        if value is None:
+            return "every operand must be numeric"
+        parsed_operands.append(value)
+    unmatched = list(evidence_numbers)
+    for operand in parsed_operands:
+        for index, evidence_number in enumerate(unmatched):
+            if operand == evidence_number:
+                unmatched.pop(index)
+                break
+        else:
+            return "operands must be copied from numeric evidence cells"
+
+    exact_two = {
+        "subtract", "difference", "absolute_difference", "divide",
+        "ratio", "percent", "percentage", "percent_change",
+    }
+    at_least_two = {"add", "sum", "multiply"}
+    if operation in exact_two and len(parsed_operands) != 2:
+        return f"{operation} requires exactly two operands"
+    if operation in at_least_two and len(parsed_operands) < 2:
+        return f"{operation} requires at least two operands"
+    if operation in {"percent_change", "percent", "percentage", "ratio"} and unit not in {"%", "percent"}:
+        return f"{operation} requires percent unit"
     return None
 
 
@@ -299,6 +386,7 @@ def build_prompt_variants(config: dict[str, Any]) -> list[PromptVariant]:
                 output_mode=str(item["output_mode"]),
                 calculator_enabled=bool(item.get("calculator_enabled", False)),
                 format_retry=bool(item.get("format_retry", False)),
+                stable_cell_ids=bool(item.get("stable_cell_ids", False)),
             )
         )
     if not variants:
@@ -340,7 +428,18 @@ def evidence_operation_schema() -> dict[str, Any]:
         "type": "object",
         "required": ["evidence", "operands", "operation", "unit"],
         "properties": {
-            "evidence": {"type": "array"},
+            "evidence": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["cell_id", "value"],
+                    "properties": {
+                        "cell_id": {"type": "string", "pattern": "^r[0-9]+c[0-9]+$"},
+                        "value": {"type": ["string", "number"]},
+                    },
+                    "additionalProperties": False,
+                },
+            },
             "operands": {"type": "array", "items": {"type": "number"}},
             "operation": {"type": "string", "enum": sorted(ALLOWED_OPERATIONS)},
             "unit": {"type": "string"},
@@ -442,6 +541,7 @@ def run_quality_repair_experiment(
         structured_count = 0
         calculator_count = 0
         format_retry_count = 0
+        validation_failure_count = 0
         prompt_suffix = variant.prompt_suffix
         if variant.name == "few_shot_structured_json":
             few_shot = build_few_shot_suffix(calibration_rows)
@@ -454,17 +554,25 @@ def run_quality_repair_experiment(
                     evaluation_rows[index]
                     for index in range(start, min(start + batch_size, len(evaluation_rows)))
                 ]
+                request_rows = [
+                    add_stable_table_ids(row) if variant.stable_cell_ids else row
+                    for row in rows
+                ]
                 requests = [
                     InferenceRequest.from_finqa_row(
-                        row, request_id=f"quality-repair-{variant.name}-{start + offset + 1:06d}"
+                        request_row,
+                        request_id=f"quality-repair-{variant.name}-{start + offset + 1:06d}",
                     )
-                    for offset, row in enumerate(rows)
+                    for offset, request_row in enumerate(request_rows)
                 ]
                 generated = service.generate_batch(requests, prompt_suffix=prompt_suffix)
                 for row, request, result in zip(rows, requests, generated):
                     raw_output = result["output_text"]
+                    validation_error = None
                     if variant.output_mode == "evidence_operation":
                         parsed = parse_evidence_operation_output(raw_output)
+                        if parsed is not None and variant.stable_cell_ids:
+                            validation_error = validate_evidence_operation(parsed, row)
                     else:
                         parsed = parse_structured_output(raw_output)
                     retry_used = False
@@ -481,27 +589,55 @@ def run_quality_repair_experiment(
                         format_retry_count += 1
                         retry_used = True
                     elif (
-                        parsed is None
-                        and variant.format_retry
+                        variant.format_retry
                         and variant.output_mode == "evidence_operation"
+                        and (parsed is None or validation_error is not None)
                     ):
+                        validation_hint = (
+                            f" Validation failure: {validation_error}."
+                            if validation_error
+                            else ""
+                        )
                         retry = service.generate_one(
                             request,
                             prompt_suffix=(
                                 f"{prompt_suffix}\nYour previous response did not match the required evidence-operation schema. "
-                                "Return one valid JSON object only, with no markdown or explanation."
+                                f"Return one valid JSON object only, with no markdown or explanation.{validation_hint}"
                             ),
                         )
                         raw_output = retry["output_text"]
                         parsed = parse_evidence_operation_output(raw_output)
+                        validation_error = None
+                        if parsed is not None and variant.stable_cell_ids:
+                            validation_error = validate_evidence_operation(parsed, row)
                         format_retry_count += 1
                         retry_used = True
-                    if parsed is None:
+                    if parsed is None and variant.output_mode == "evidence_operation" and variant.stable_cell_ids:
+                        validation_error = validation_error or "unparseable evidence-operation output"
+                        parsed = {
+                            "normalized_value": None,
+                            "structured": False,
+                            "validation_error": validation_error,
+                        }
+                    elif parsed is None:
                         parsed = extract_final_numeric(raw_output)
+                    elif validation_error is not None:
+                        parsed = {
+                            **parsed,
+                            "normalized_value": None,
+                            "structured": False,
+                            "validation_error": validation_error,
+                        }
+                    if validation_error is not None:
+                        validation_failure_count += 1
                     if parsed.get("structured"):
                         structured_count += 1
                     if variant.output_mode == "evidence_operation":
-                        repaired = repair_with_evidence_operation(parsed)
+                        repaired = (
+                            repair_with_evidence_operation(parsed)
+                            if validation_error is None
+                            else parsed
+                        )
                         if repaired.get("calculator_used"):
                             calculator_count += 1
                         parsed = repaired
@@ -540,6 +676,7 @@ def run_quality_repair_experiment(
                         "operands": parsed.get("operands"),
                         "operation": parsed.get("operation"),
                         "unit": parsed.get("unit"),
+                        "validation_error": parsed.get("validation_error"),
                     }
                     stream.write(json.dumps(record, ensure_ascii=False) + "\n")
                     predictions.append(extracted if extracted is not None else "")
@@ -572,11 +709,13 @@ def run_quality_repair_experiment(
                 "variant": variant.name,
                 "output_mode": variant.output_mode,
                 "calculator_enabled": variant.calculator_enabled,
+                "stable_cell_ids": variant.stable_cell_ids,
                 "prompt_suffix": prompt_suffix,
                 "metrics": metrics,
                 "structured_output_rate": structured_count / len(evaluation_rows) if evaluation_rows else 0.0,
                 "calculator_use_rate": calculator_count / len(evaluation_rows) if evaluation_rows else 0.0,
                 "format_retry_count": format_retry_count,
+                "validation_failure_count": validation_failure_count,
                 "duration_seconds": time.perf_counter() - started,
                 "predictions_file": str(predictions_path.relative_to(output_path)),
                 "predictions_sha256": _sha256(predictions_path),
