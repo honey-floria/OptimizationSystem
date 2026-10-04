@@ -27,3 +27,15 @@ FP8 dtype”误报成“设备支持 FP8”。FP8 只有在对应设备完成真
 - `在 NVIDIA 上验证 FP8 可用性`：必须成功执行真实 FP8 矩阵运算；A100 仅暴露 dtype 不算通过。
 - `确认 Ascend 对应数据类型支持情况`：必须在真实 NPU 上执行探测，不接受静态推断。
 - 三项质量对比：必须生成 `evaluation.json` 和完整通过的 `evaluation_validation.json`。
+
+## 当前结果
+
+- SmoothQuant W8A8：已在 A100 上完成，ModelOpt 版本为 0.47.0，校准样本数为 1024。
+- NVIDIA FP8：A100 上真实 FP8 矩阵运算返回 `NotImplementedError`，保持 `not_run`。
+- Ascend FP8：未连接真实 NPU，保持 `not_run`。
+- INT8 数值质量：883 条 dev 样本解析率为 0.9604，准确率为 0.0068；FP16 准确率为
+  0.0091，绝对下降 0.0023，相对下降约 25%。
+- 长上下文：三个最长样本中 FP16 和 INT8 均为 0 个正确，当前模型在该集合上没有有效基线。
+- 结构化输出：十个样本中 FP16 通过 2 个，INT8 通过 0 个，存在明确结构化输出退化。
+- `evaluation_validation.json` 三项检查全部为 `pass`，代表三类对比已经执行并可追溯，不代表
+  INT8 方案满足业务质量门槛。
