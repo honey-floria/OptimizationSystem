@@ -29,11 +29,17 @@ class QuantizationComparisonTest(unittest.TestCase):
         self.assertEqual(self.report["coverage"]["performance_missing"], [])
         self.assertEqual(
             self.report["coverage"]["performance_comparable_to_fp16"],
-            ["smoothquant-int8-w8a8"],
+            [
+                "awq-int4-w4a16-g32",
+                "awq-int4-w4a16-g64",
+                "awq-int4-w4a16-g128",
+                "gptq-int4-w4a16-g32",
+                "gptq-int4-w4a16-g64",
+                "gptq-int4-w4a16-g128",
+                "smoothquant-int8-w8a8",
+            ],
         )
-        self.assertEqual(
-            len(self.report["coverage"]["performance_incomparable"]), 6
-        )
+        self.assertEqual(self.report["coverage"]["performance_incomparable"], [])
 
     def test_marks_int8_structured_regression_as_high_risk(self):
         int8 = next(
@@ -54,6 +60,9 @@ class QuantizationComparisonTest(unittest.TestCase):
         statuses = {check.name: check.status for check in validation.checks}
         self.assertEqual(statuses["fp16_int8_int4_fp8_comparison_table"], PASS)
         self.assertEqual(statuses["quality_changes_recorded"], PASS)
+        self.assertEqual(statuses["memory_changes_recorded"], PASS)
+        self.assertEqual(statuses["latency_changes_recorded"], PASS)
+        self.assertEqual(statuses["throughput_changes_recorded"], PASS)
         self.assertEqual(statuses["high_risk_unsuitable_plans_marked"], PASS)
         self.assertEqual(statuses["unit_token_cost_recorded"], NOT_RUN)
 
@@ -62,7 +71,11 @@ class QuantizationComparisonTest(unittest.TestCase):
         self.assertIn("Performance deltas against FP16 are intentionally blank", markdown)
 
     def test_records_valid_int8_performance_regression(self):
-        finding = self.report["recommendation"]["validated_performance_findings"][0]
+        finding = next(
+            item
+            for item in self.report["recommendation"]["validated_performance_findings"]
+            if item["plan_id"] == "smoothquant-int8-w8a8"
+        )
         self.assertEqual(finding["plan_id"], "smoothquant-int8-w8a8")
         self.assertGreater(finding["memory_change_percent"], 0)
         self.assertGreater(finding["latency_change_percent"], 0)

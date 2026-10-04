@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "created_at": "2026-10-04T04:32:37.326226+00:00",
+  "created_at": "2026-10-04T04:37:40.007223+00:00",
   "cost_basis": {
     "resource_metric": "gpu_hours_per_million_output_tokens",
     "formula": "1000000 / mean_output_tokens_per_second / 3600",
@@ -222,21 +222,21 @@
             32
           ]
         ],
-        "mean_output_tokens_per_second": 131.66098553571237,
+        "mean_output_tokens_per_second": 131.6609855357124,
         "mean_end_to_end_p50_ms": 1311.5661629376518,
         "max_model_allocated_mib": 1679.998046875,
         "max_peak_allocated_mib": 2064.630859375,
-        "gpu_hours_per_million_output_tokens": 2.109795674455376,
+        "gpu_hours_per_million_output_tokens": 2.1097956744553756,
         "usd_per_million_output_tokens": null
       },
       "performance_comparable_to_fp16": true,
       "performance_delta_from_fp16": {
         "memory_change_mib": 5.0810546875,
         "latency_change_ms": 551.7712214376261,
-        "throughput_change_tokens_per_second": -94.51138156564704,
+        "throughput_change_tokens_per_second": -94.51138156564701,
         "memory_change_percent": 0.3033615821679492,
         "latency_change_percent": 72.62107067313337,
-        "throughput_change_percent": -41.78732476337026
+        "throughput_change_percent": -41.787324763370236
       },
       "risk_assessment": {
         "l2_candidate": true,
@@ -350,21 +350,21 @@
             32
           ]
         ],
-        "mean_output_tokens_per_second": 131.6343640528688,
+        "mean_output_tokens_per_second": 131.63436405286882,
         "mean_end_to_end_p50_ms": 1312.4543588753568,
         "max_model_allocated_mib": 1667.09130859375,
         "max_peak_allocated_mib": 2051.49462890625,
-        "gpu_hours_per_million_output_tokens": 2.110222355510548,
+        "gpu_hours_per_million_output_tokens": 2.1102223555105475,
         "usd_per_million_output_tokens": null
       },
       "performance_comparable_to_fp16": true,
       "performance_delta_from_fp16": {
         "memory_change_mib": -7.82568359375,
         "latency_change_ms": 552.659417375331,
-        "throughput_change_tokens_per_second": -94.53800304849062,
+        "throughput_change_tokens_per_second": -94.5380030484906,
         "memory_change_percent": -0.46722814505150145,
         "latency_change_percent": 72.73797010075414,
-        "throughput_change_percent": -41.79909520340445
+        "throughput_change_percent": -41.799095203404434
       },
       "risk_assessment": {
         "l2_candidate": true,
@@ -2915,7 +2915,7 @@
           ]
         ],
         "mean_output_tokens_per_second": 57.099023064128616,
-        "mean_end_to_end_p50_ms": 3037.4237917499586,
+        "mean_end_to_end_p50_ms": 3037.423791749959,
         "max_model_allocated_mib": 1772.5654296875,
         "max_peak_allocated_mib": 2157.07568359375,
         "gpu_hours_per_million_output_tokens": 4.864842914489135,
@@ -2924,10 +2924,10 @@
       "performance_comparable_to_fp16": true,
       "performance_delta_from_fp16": {
         "memory_change_mib": 97.6484375,
-        "latency_change_ms": 2277.628850249933,
+        "latency_change_ms": 2277.6288502499333,
         "throughput_change_tokens_per_second": -169.0733440372308,
         "memory_change_percent": 5.830046381729503,
-        "latency_change_percent": 299.7688883994571,
+        "latency_change_percent": 299.7688883994572,
         "throughput_change_percent": -74.75420017223429
       },
       "risk_assessment": {
@@ -3034,19 +3034,19 @@
         "plan_id": "awq-int4-w4a16-g32",
         "memory_change_mib": 5.0810546875,
         "latency_change_ms": 551.7712214376261,
-        "throughput_change_tokens_per_second": -94.51138156564704,
+        "throughput_change_tokens_per_second": -94.51138156564701,
         "memory_change_percent": 0.3033615821679492,
         "latency_change_percent": 72.62107067313337,
-        "throughput_change_percent": -41.78732476337026
+        "throughput_change_percent": -41.787324763370236
       },
       {
         "plan_id": "awq-int4-w4a16-g64",
         "memory_change_mib": -7.82568359375,
         "latency_change_ms": 552.659417375331,
-        "throughput_change_tokens_per_second": -94.53800304849062,
+        "throughput_change_tokens_per_second": -94.5380030484906,
         "memory_change_percent": -0.46722814505150145,
         "latency_change_percent": 72.73797010075414,
-        "throughput_change_percent": -41.79909520340445
+        "throughput_change_percent": -41.799095203404434
       },
       {
         "plan_id": "awq-int4-w4a16-g128",
@@ -3087,10 +3087,10 @@
       {
         "plan_id": "smoothquant-int8-w8a8",
         "memory_change_mib": 97.6484375,
-        "latency_change_ms": 2277.628850249933,
+        "latency_change_ms": 2277.6288502499333,
         "throughput_change_tokens_per_second": -169.0733440372308,
         "memory_change_percent": 5.830046381729503,
-        "latency_change_percent": 299.7688883994571,
+        "latency_change_percent": 299.7688883994572,
         "throughput_change_percent": -74.75420017223429
       }
     ],
