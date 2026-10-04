@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "format": "gptqmodel_transformers",
+  "plan": {
+    "plan_id": "gptq-int4-w4a16-g32",
+    "method": "gptq",
+    "bits": 4,
+    "weight_bits": 4,
+    "activation_bits": 16,
+    "group_size": 32,
+    "quantization_granularity": "groupwise",
+    "backend_package": "gptqmodel"
+  },
+  "model_path": "/content/drive/MyDrive/banking_llm_project/gptq/gptq-int4-w4a16-g32",
+  "source_model_path": "/content/drive/MyDrive/banking_llm_project/model_input_real/qwen2.5-0.5b-instruct",
+  "required_files": [
+    "config.json",
+    "quantization_config.json"
+  ],
+  "backend_versions": {
+    "gptqmodel": "7.5.0",
+    "transformers": "5.18.0"
+  },
+  "analysis_artifacts": {
+    "config": "/content/drive/MyDrive/OptimizationSystem/out/gptq/gptq-int4-w4a16-g32/quantization_config.json",
+    "manifest": "/content/drive/MyDrive/OptimizationSystem/out/gptq/gptq-int4-w4a16-g32/quantized_model_manifest.json",
+    "events": "/content/drive/MyDrive/OptimizationSystem/out/gptq/gptq-int4-w4a16-g32/quantization_events.jsonl"
+  }
+}

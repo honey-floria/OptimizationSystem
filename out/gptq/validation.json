@@ -1,6 +1,6 @@
 {
   "evidence": "/content/drive/MyDrive/OptimizationSystem/out/gptq/gptq_evidence.json",
-  "complete": false,
+  "complete": true,
   "checks": [
     {
       "name": "gptq_awq_comparable_matrix",
@@ -14,12 +14,12 @@
     },
     {
       "name": "gptq_quantized_artifacts",
-      "status": "not_run",
+      "status": "pass",
       "detail": "Each GPTQ plan has config, manifest, and event log."
     },
     {
       "name": "gptq_real_execution",
-      "status": "not_run",
+      "status": "pass",
       "detail": "All GPTQ plans completed real export."
     }
   ]
