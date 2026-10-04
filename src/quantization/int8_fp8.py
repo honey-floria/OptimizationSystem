@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from src.input_validation.model_input import FAIL, NOT_RUN, PASS, CheckResult
+from src.evaluation.finqa_metrics import evaluate_numeric_answers
 
 
 @dataclass
@@ -143,3 +144,45 @@ def validate_int8_fp8_evidence(evidence_file: str | Path) -> Int8Fp8ValidationRe
         CheckResult("smoothquant_real_execution", PASS if evidence.get("status") == "completed" else NOT_RUN, "SmoothQuant INT8 weights were exported."),
     ]
     return Int8Fp8ValidationReport(str(evidence_path), checks)
+
+
+def evaluate_int8_outputs(
+    predictions: list[str],
+    references: list[str],
+    long_context_results: list[dict[str, Any]],
+    structured_results: list[dict[str, Any]],
+    tolerance: float = 1e-4,
+) -> dict[str, Any]:
+    """Compute the three 6.4 quality views using one candidate model."""
+    numeric = evaluate_numeric_answers(predictions, references, tolerance=tolerance)
+    long_context_passed = sum(
+        bool(item.get("passed")) for item in long_context_results
+    )
+    structured_passed = sum(
+        bool(item.get("passed")) for item in structured_results
+    )
+    return {
+        "schema_version": 1,
+        "numeric": numeric,
+        "long_context": {
+            "total": len(long_context_results),
+            "passed": long_context_passed,
+            "pass_rate": long_context_passed / len(long_context_results)
+            if long_context_results else 0.0,
+        },
+        "structured_output": {
+            "total": len(structured_results),
+            "passed": structured_passed,
+            "pass_rate": structured_passed / len(structured_results)
+            if structured_results else 0.0,
+        },
+    }
+
+
+def check_structured_json(text: str, required_fields: list[str]) -> dict[str, Any]:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return {"passed": False, "valid_json": False, "missing_fields": required_fields}
+    missing = [field for field in required_fields if field not in payload]
+    return {"passed": not missing, "valid_json": True, "missing_fields": missing}

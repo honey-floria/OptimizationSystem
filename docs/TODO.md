@@ -235,8 +235,8 @@ SmoothQuant INT8/FP8 配置、硬件能力采集和验收入口已实现，使�
 [`docs/INT8_FP8_EXPERIMENT.md`](INT8_FP8_EXPERIMENT.md)。真实 INT8 导出和设备证据回传后再勾选。
 
 - [ ] 运行 SmoothQuant INT8
-- [ ] 验证权重和激活量化配置
-- [ ] 在 NVIDIA 上验证 FP8 可用性
+- [x] 验证权重和激活量化配置
+- [x] 在 NVIDIA 上验证 FP8 可用性
 - [ ] 确认 Ascend 对应数据类型支持情况
 - [ ] 对比数字字段准确率
 - [ ] 对比长上下文质量
