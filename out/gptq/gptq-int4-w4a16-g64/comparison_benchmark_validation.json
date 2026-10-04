@@ -1,0 +1,61 @@
+{
+  "report": "/content/drive/MyDrive/OptimizationSystem/out/gptq/gptq-int4-w4a16-g64/comparison_benchmark_report.json",
+  "complete": true,
+  "checks": [
+    {
+      "name": "unified_benchmark_command",
+      "status": "pass",
+      "detail": "Unified benchmark command is recorded."
+    },
+    {
+      "name": "ttft_measured",
+      "status": "pass",
+      "detail": "TTFT is positive for every measured sample."
+    },
+    {
+      "name": "per_token_latency_measured",
+      "status": "pass",
+      "detail": "Per-output-token latency is recorded."
+    },
+    {
+      "name": "end_to_end_latency_measured",
+      "status": "pass",
+      "detail": "End-to-end latency is positive."
+    },
+    {
+      "name": "tokens_per_second_measured",
+      "status": "pass",
+      "detail": "Output token throughput is positive."
+    },
+    {
+      "name": "batch_throughput_measured",
+      "status": "pass",
+      "detail": "Request throughput is positive."
+    },
+    {
+      "name": "latency_percentiles_measured",
+      "status": "pass",
+      "detail": "P50, P95, and P99 end-to-end latency are recorded."
+    },
+    {
+      "name": "gpu_and_kv_cache_memory_measured",
+      "status": "pass",
+      "detail": "GPU peaks and actual KV cache tensor memory are recorded."
+    },
+    {
+      "name": "batch_size_matrix_measured",
+      "status": "pass",
+      "detail": "Batch size one and larger batches are covered."
+    },
+    {
+      "name": "input_output_length_matrix_measured",
+      "status": "pass",
+      "detail": "Multiple input and output lengths are covered."
+    },
+    {
+      "name": "fp16_or_bf16_baseline_report_generated",
+      "status": "pass",
+      "detail": "Baseline model and runtime metadata are complete."
+    }
+  ]
+}

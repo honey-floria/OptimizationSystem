@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "plan": {
+    "plan_id": "gptq-int4-w4a16-g128",
+    "method": "gptq",
+    "bits": 4,
+    "weight_bits": 4,
+    "activation_bits": 16,
+    "group_size": 128,
+    "quantization_granularity": "groupwise",
+    "backend_package": "gptqmodel"
+  },
+  "quant_config": {
+    "bits": 4,
+    "group_size": 128,
+    "desc_act": false
+  },
+  "calibration": {
+    "size": 1024,
+    "max_seq_len": 512
+  }
+}
