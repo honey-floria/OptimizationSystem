@@ -234,13 +234,20 @@ g32/g64 通过解析率门槛，g128 的解析率为 0.9887、未通过 0.99 门
 SmoothQuant INT8/FP8 配置、硬件能力采集和验收入口已实现，使用说明见
 [`docs/INT8_FP8_EXPERIMENT.md`](INT8_FP8_EXPERIMENT.md)。真实 INT8 导出和设备证据回传后再勾选。
 
-- [ ] 运行 SmoothQuant INT8
+已在 NVIDIA A100-SXM4-40GB 上使用 NVIDIA ModelOpt 0.47.0 完成 1024 条校准样本的真实
+SmoothQuant W8A8 导出，证据见 [`out/int8_fp8/validation.json`](../out/int8_fp8/validation.json)。
+A100 的真实 FP8 矩阵运算探测失败，因此 NVIDIA FP8 保持未完成；Ascend 尚未执行。INT8
+质量对比已完成：883 条 dev 样本的数值准确率为 0.0068，低于 FP16 的 0.0091；三个最长
+上下文样本中 FP16 和 INT8 均为 0 个正确；十个结构化输出样本中 FP16 通过 2 个，INT8
+通过 0 个。三项检查表示“对比已执行”，不表示 INT8 质量达到部署门槛。
+
+- [x] 运行 SmoothQuant INT8
 - [x] 验证权重和激活量化配置
 - [ ] 在 NVIDIA 上验证 FP8 可用性
 - [ ] 确认 Ascend 对应数据类型支持情况
-- [ ] 对比数字字段准确率
-- [ ] 对比长上下文质量
-- [ ] 对比结构化输出成功率
+- [x] 对比数字字段准确率
+- [x] 对比长上下文质量
+- [x] 对比结构化输出成功率
 
 ### 6.5 量化结果整理
 
