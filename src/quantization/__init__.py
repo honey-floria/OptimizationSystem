@@ -25,7 +25,12 @@ from .gptq import (
     validate_gptq_evidence,
 )
 from .int8_fp8 import (
+    SmoothQuantPlan,
+    build_smoothquant_plan,
     collect_int8_fp8_evidence,
+    load_smoothquant_service,
+    run_smoothquant_plan,
+    validate_int8_evaluation,
     validate_int8_fp8_evidence,
 )
 
@@ -47,6 +52,11 @@ __all__ = [
     "load_gptq_service",
     "run_gptq_plan",
     "validate_gptq_evidence",
+    "SmoothQuantPlan",
+    "build_smoothquant_plan",
     "collect_int8_fp8_evidence",
+    "load_smoothquant_service",
+    "run_smoothquant_plan",
+    "validate_int8_evaluation",
     "validate_int8_fp8_evidence",
 ]
