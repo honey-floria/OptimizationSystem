@@ -1013,3 +1013,52 @@ JSON 变体在首次输出不符合契约时执行一次确定性格式重试；
 本轮配置同时启用 `show_progress=true` 和 `progress_every_batches=1`。Colab 输出会显示当前方案的
 完成数、方案内百分比和所有方案总百分比；完整评测时若不希望逐批输出，可将
 `progress_every_batches` 改为 `0`，自动按约 10 个进度节点显示。
+
+## 6.7.2 80 条试跑结果分析（2026-10-04）
+
+本轮使用固定种子 `20261004` 从 883 条 dev 中抽取 80 条，三个方案均使用
+`max_new_tokens=256`、`do_sample=false`、`num_beams=1`。
+
+| 方案 | 解析率 | 结构化成功率 | 数值准确率 | 正确数 | 重试次数 | 用时 |
+|---|---:|---:|---:|---:|---:|---:|
+| `zero_shot_final_answer` | 16.25% | 0% | 2.50% | 2/80 | 0 | 3.0 分钟 |
+| `structured_json` | **86.25%** | **86.25%** | 0% | 0/80 | 30 | 4.1 分钟 |
+| `structured_json_compact` | 82.50% | 82.50% | **2.50%** | **2/80** | 44 | 7.1 分钟 |
+
+同一批 80 条样本上的原 FP16 基线为 75/80 可解析、0/80 正确，因此 pilot 的正确数仍然很少，
+不能用来宣称完整 dev 上的最终提升。
+
+### 结果解释
+
+1. `structured_json` 的格式效果最好：69/80 条输出通过结构化解析，说明 `max_new_tokens=256`
+   和一次重试可以把结构化成功率提高到接近 90%，但本轮 69 条中没有一条数值正确，说明格式已经不是
+   当前主要瓶颈。
+2. `structured_json_compact` 得到 2/80 正确答案，但解析率低于原 `structured_json`（82.50% 对 86.25%），
+   重试次数更多（44 对 30），耗时也更长。两条正确答案不足以证明紧凑 Prompt 稳定优于原方案，尤其是样本只有 80 条。
+3. `zero_shot_final_answer` 也得到 2/80 正确答案，但只有 13/80 可解析；模型经常输出解释文本，
+   严格提取器无法从中找到最终答案标记。这说明自然语言答案偶尔能答对，但不适合作为稳定的服务接口。
+4. 输出长度提高到 256 后，结构化方案的主要失败不再是单纯的 JSON 截断，而是模型忽略契约、复制提示词、
+   选择错误表格字段或生成错误公式。下一步应优先提升表格证据选择和数值推理能力，而不是继续堆叠格式约束。
+
+### Pilot 结论
+
+本轮不直接选择 `structured_json_compact` 替换原方案。暂时保留原 `structured_json` 作为结构化对照，
+将紧凑 Prompt 作为候选；下一步应在相同 80 条上加入更可靠的证据/公式一致性检查，或直接开始 6.7.3
+的 1.5B/3B/7B 模型小规模对比。只有候选方案在 pilot 上同时改善解析率和正确数，才值得扩展到完整 883 条评测。
+
+## 6.7.3 模型规模小范围对比准备（2026-10-05）
+
+之前的 0.5B 结果不需要重新运行，继续作为控制组保留。新增
+`notebooks/quality_repair_6_7_3_model_scale_colab.ipynb`，在相同的 80 条固定 pilot、相同的
+`structured_json`/`structured_json_compact` 配置和相同生成参数下，依次运行
+`Qwen2.5-1.5B-Instruct` 与 `Qwen2.5-3B-Instruct`。
+
+两个模型分别写入独立目录：
+
+- `out/quality_repair_6_7_3_model_scale/qwen2.5-1.5b/`
+- `out/quality_repair_6_7_3_model_scale/qwen2.5-3b/`
+
+Notebook 会在每个模型结束后释放显存，并输出解析率、结构化成功率、数值准确率和正确数。模型目录默认
+使用 `banking_llm_project/model_input_real/qwen2.5-1.5b-instruct` 与
+`qwen2.5-3b-instruct`；如果 Google Drive 中目录名不同，只需修改 Notebook 的
+`MODEL_CANDIDATES`，不需要重新运行 0.5B。
