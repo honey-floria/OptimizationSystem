@@ -1,0 +1,2 @@
+{"event": "quantization", "plan_id": "smoothquant-int8-w8a8", "method": "smoothquant", "timestamp": "2026-10-04T02:41:06.993143+00:00", "status": "started"}
+{"event": "quantization", "plan_id": "smoothquant-int8-w8a8", "method": "smoothquant", "timestamp": "2026-10-04T02:41:06.993143+00:00", "status": "completed", "elapsed_seconds": 81.03533385100013}

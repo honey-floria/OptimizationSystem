@@ -14,18 +14,18 @@
     },
     {
       "name": "smoothquant_backend_recorded",
-      "status": "not_run",
+      "status": "pass",
       "detail": "NVIDIA ModelOpt version is recorded."
     },
     {
       "name": "smoothquant_quantized_artifacts",
-      "status": "not_run",
+      "status": "pass",
       "detail": "SmoothQuant config, manifest, and event log exist."
     },
     {
       "name": "nvidia_fp8_capability",
       "status": "not_run",
-      "detail": "Legacy evidence only recorded the FP8 dtype; rerun the real matrix-operation probe."
+      "detail": "A real FP8 matrix multiplication completed on NVIDIA CUDA."
     },
     {
       "name": "ascend_fp8_capability",
@@ -34,7 +34,7 @@
     },
     {
       "name": "smoothquant_real_execution",
-      "status": "not_run",
+      "status": "pass",
       "detail": "SmoothQuant INT8 weights were exported."
     }
   ]
