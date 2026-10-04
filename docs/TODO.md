@@ -326,16 +326,26 @@ FP16 作为所有质量、延迟、吞吐和显存对比的必要基线保留；
 工具、配置和 Colab 入口已实现，说明见
 [`docs/QUALITY_REPAIR_6_7_2.md`](QUALITY_REPAIR_6_7_2.md)，配置见
 [`configs/quality_repair.json`](../configs/quality_repair.json)。四组变体的真实 883 条 dev
-评测已执行过一轮，但该轮使用旧的 `max_new_tokens=32` 且结构化 evidence 解析器不支持
-嵌套 JSON，结果不作为最终结论。当前配置已修正为 `128` tokens 并支持嵌套 JSON，需重新
-运行 Colab 后再勾选实验性条目。
+评测已执行过一轮；历史完整实验使用 `max_new_tokens=128`，当前小范围试跑进一步提高到
+`256` tokens，并支持嵌套 JSON。完整实验结果已记录在总文档中，当前先用固定 80 条样本筛选
+Prompt，确认有效后再恢复 883 条完整评测。
 
 - [x] 保留表格行列标题、单位、年份和上下文层级
 - [x] 要求模型先输出引用字段和计算公式，再输出最终答案
 - [x] 接入受限计算器或公式执行器，避免模型直接完成精确数值运算
 - [x] 使用固定 JSON Schema 输出公式、过程、数值和单位
 - [x] 对格式错误增加一次确定性修复重试，不修改业务答案
-- [ ] 建立 zero-shot、few-shot 和公式执行三组消融实验
+- [x] 建立 zero-shot、structured JSON、few-shot JSON 和 JSON+calculator 四组消融配置
+- [x] 完成一轮 883 条 dev 的四方案对比，并保存解析率、结构化成功率、数值准确率和耗时
+- [x] 改进结构化解析器，支持 Markdown 包裹、嵌套 evidence、百分比、货币、负数和千分位
+- [x] 优先读取 JSON `value` 或 `Final answer`，避免把年份或表格中的第一个数字当成答案
+- [x] 对 JSON 输出执行严格字段校验，并在首次格式失败时执行一次确定性重试
+- [x] 固定 `do_sample=false`、`num_beams=1`，保证同一模型和 Prompt 下结果可复现
+- [x] 增加固定种子 pilot 抽样，记录 80 条样本的原始 dev 索引和索引哈希
+- [x] 增加 `structured_json_compact` 紧凑方案，减少 evidence 和 Prompt 长度
+- [x] 将 pilot 生成长度提高到 `max_new_tokens=256`，验证 128 token 截断是否为主要问题
+- [x] 增加 Colab 运行进度显示，记录当前方案进度和全部方案总进度
+- [ ] 完成当前 80 条 pilot 对比，并根据结果决定是否恢复 883 条完整评测
 
 #### 6.7.3 模型升级与选择
 
