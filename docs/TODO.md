@@ -364,7 +364,13 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 新增 `cell_ids_operation` 紧凑契约，只输出 cell_ids、operation 和 unit，由程序恢复 operands
 - [x] 在 4080 上复测 `structured_json` 与 `cell_ids_operation`
 - [ ] 为 cell_id 增加行名、列名和年份语义提示，减少模型按裸索引选错单元格
-- [ ] 增加题型路由和 structured_json 回退策略，避免紧凑方案失败时丢失基线答案
+- [x] 为 cell_id 增加行名、列名和年份语义提示，减少模型按裸索引选错单元格
+- [x] 增加 structured_json 回退策略，避免紧凑方案失败时丢失基线答案
+- [x] 增加题型路由提示：百分比、比率、平均、总和和变化题使用不同运算规则
+- [x] 为 routed cell-id 方案附加合法数值 cell ID 清单，减少引用文字或越界单元格
+- [x] 从模型输出的多个 JSON 候选中选择首个通过真实表格校验的候选
+- [ ] 在固定 80 条 pilot 上运行 `routed_cell_ids_operation`，确认是否超过 structured_json 的 12/80
+- [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 使用 FinQA train 构造“证据、操作数、操作、计算结果、单位”LoRA 监督数据
 - [ ] 严格隔离 train/dev/test，禁止使用 dev/test 答案进行 Prompt 或微调

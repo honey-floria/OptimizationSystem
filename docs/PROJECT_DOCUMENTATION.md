@@ -1230,3 +1230,32 @@ operation，或把百分比题的分子和分母顺序反过来。下一步应�
 短的 `cell_ids_operation` 契约；如果 cell ID 校验失败、单元格非数字、操作数数量不正确或 JSON 无法解析，程序
 会额外请求一次 `structured_json`，并记录 `fallback_used` 和 `validation_error`。这保留了新方案的可追溯校验，
 同时避免严格契约失败时直接丢失基线答案。
+
+## 4080 `cell_ids_operation` v4 结果（2026-10-05）
+
+第四轮结果位于 `out/quality_repair_3b_4080_v4`。语义化 cell ID 加回退后，紧凑方案解析率为 `85.00%`、
+数值准确率为 `13.75%`、正确数为 `11/80`，校验失败 `21` 条、回退 `21` 次；`structured_json` 仍为
+`12/80`、解析率 `93.75%`。新方案已接近基线，但没有超过基线，暂不运行完整 883 条。
+
+紧凑方案直接计算正确 `8` 条，回退额外挽回 `3` 条。剩余主要问题是 operation 缺失、cell ID 仍指向文字或年份
+单元格，以及百分比题的分子分母方向错误。下一步应实现题型路由和有限操作方向候选，而不是继续增加 JSON 字段。
+
+## 4080 题型路由优化准备（2026-10-04）
+
+针对 v4 中单元格和运算方向选择错误的问题，新增 `routed_cell_ids_operation` 方案。它
+保留 `cell_ids_operation` 的短 JSON 契约，在每条请求中根据题目关键词追加运算规则提示，
+并列出当前表格内合法的数值 cell ID。解析器还会逐一校验模型一次输出中的多个 JSON 候选，
+优先采用首个通过真实表格校验的候选。
+
+本轮代码和测试已完成，尚未在 4080 上运行。下一步固定同一 80 条 pilot，同时比较：
+
+```bash
+python3 scripts/run_quality_repair_4080.py \
+  --model-path /userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-3B-Instruct \
+  --model-id Qwen/Qwen2.5-3B-Instruct \
+  --dataset-dir /userhome/cs5/u3680889/OptimizationSystem/datasets \
+  --output-dir out/quality_repair_3b_4080_v5 \
+  --variants structured_json,cell_ids_operation,routed_cell_ids_operation
+```
+
+门禁仍为超过现有 `structured_json` 的 `12/80` 后才恢复完整 883 条评测。
