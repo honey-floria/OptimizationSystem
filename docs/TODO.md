@@ -379,6 +379,9 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [ ] 在相同 80 条样本上只运行 7B `structured_json` pilot，记录显存和 OOM 情况
 - [x] 完成 7B AWQ INT4 `structured_json` pilot：18/80，数值准确率 22.50%
 - [x] 分析 AWQ pilot：准确率超过 20% 门槛，但解析率 96.25% 仍低于 99%，不能宣布质量门禁完成
+- [x] 完成 7B GPTQ INT4 `structured_json` pilot：19/80，数值准确率 23.75%
+- [x] 对比 AWQ/GPTQ pilot：GPTQ 准确率高 1.25 个百分点、解析率低 2.50 个百分点
+- [ ] 排查 GPTQ 运行记录中合法 JSON 被标记为未解析的问题，并确认服务器代码版本
 - [ ] 补齐 7B AWQ pilot 的显存峰值和吞吐记录
 - [ ] 在同一 7B FP16 或同源未量化模型上复测，分离模型规模收益与 AWQ 量化收益
 - [ ] 使用 FinQA train 执行 LoRA/QLoRA 微调前，先固定当前 3B `structured_json` 基线
