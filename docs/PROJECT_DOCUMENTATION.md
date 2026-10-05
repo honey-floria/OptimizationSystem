@@ -1333,6 +1333,19 @@ uv pip install --python /userhome/cs5/u3680889/OptimizationSystem/.venv/bin/pyth
 
 该流程使用已量化权重，不会在 4080 上重新执行 GPTQ 校准；结果需标记为 7B GPTQ INT4。
 
+## 7B AWQ INT4 pilot 结果（2026-10-05）
+
+`out/quality_repair_7b_awq_pilot/comparison_report.json` 显示，预量化
+`Qwen2.5-7B-Instruct-AWQ` 在固定 80 条 pilot 上的 `structured_json` 结果为：解析率 `96.25%`、
+数值准确率 `22.50%`、正确 `18/80`、格式重试 `7` 次、用时 `535.4` 秒。作为对照，3B FP16
+为解析率 `93.75%`、准确率 `15.00%`、正确 `12/80`、重试 `23` 次。
+
+AWQ 7B 的数值准确率首次超过 `20%` 门槛，但解析率仍低于 `99%`，所以质量门禁尚未全部通过。
+此外，这个对照同时改变了模型规模和数值格式，不能据此计算 AWQ 的独立量化损失；要得到严格结论，
+还需要同源 7B FP16 的 80 条对照。当前 AWQ 输出仍存在多 JSON、`Human:`/`Assistant:` 续写、百分比
+分母选择和最大/最低值题套算四则运算等问题。下一步先补显存/吞吐记录，并复测 `18/80` 的可重复性，
+再决定是否扩展到完整 883 条。
+
 ## 7B 量化入口实现（2026-10-04）
 
 `scripts/run_quality_repair_4080.py` 现在支持统一参数：
