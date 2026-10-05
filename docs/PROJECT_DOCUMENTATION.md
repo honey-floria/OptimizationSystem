@@ -1274,3 +1274,46 @@ v5 固定相同的 80 条 pilot 样本，对比结果如下：
 `percentage change`、`average price increase` 和 `what percentage increased` 分类错误，且路由方案按条生成导致耗时增加。
 这轮不进入完整 883 条评测。已修正路由优先级，CLI 默认恢复为 `structured_json,cell_ids_operation`，
 下一轮仅显式加入 `routed_cell_ids_operation` 进行复测。
+
+## 4080 v6 路由复测（2026-10-04）
+
+修正 `percentage change`、`average price increase` 等路由规则后，`routed_cell_ids_operation`
+在同一 80 条样本上达到解析率 `88.75%`、数值准确率 `15.00%`、正确数 `12/80`，校验失败和回退各
+`19` 条，用时 `381.2` 秒。它追平但没有超过 `structured_json` 的 `12/80`，且两者正确样本重叠较少，
+说明 Prompt 路由改变了错误分布，却没有带来稳定总体收益。
+
+因此不运行完整 883 条，也不继续增加关键词规则。下一阶段冻结 3B `structured_json` 作为 FP16 基线，
+先比较更大模型；如果模型规模受限，再使用严格隔离的 FinQA train 执行 LoRA/QLoRA 微调。
+
+## 7B 4080 pilot 准备（2026-10-04）
+
+下一轮仅使用固定 80 条样本和 `structured_json`：
+
+```bash
+python3 scripts/download_model_4080.py \
+  --model-id Qwen/Qwen2.5-7B-Instruct \
+  --output-dir /userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct
+
+python3 scripts/run_quality_repair_4080.py \
+  --model-path /userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct \
+  --model-id Qwen/Qwen2.5-7B-Instruct \
+  --dataset-dir /userhome/cs5/u3680889/OptimizationSystem/datasets \
+  --output-dir out/quality_repair_7b_4080_pilot \
+  --variants structured_json --batch-size 1 --max-new-tokens 256
+```
+
+4080 若为 16GB，7B FP16 可能因权重、CUDA runtime 和 KV cache 叠加而 OOM。4-bit 结果必须单独标记，不能与
+3B FP16 直接作为同一基线比较。
+
+## 7B 量化入口实现（2026-10-04）
+
+`scripts/run_quality_repair_4080.py` 现在支持统一参数：
+
+- `--quantization none`：默认 Transformers FP16/BF16 加载；
+- `--quantization awq`：调用 `load_awq_service()`；
+- `--quantization gptq`：调用 `load_gptq_service()`。
+
+量化模式可以传 `--quantized-model-path`，也可以传已有的
+`--quantized-manifest quantized_model_manifest.json`。未传 manifest 时，入口会在输出目录生成最小 manifest，
+并将量化方式、模型路径写入结果报告。量化评测仍建议只使用固定 80 条和 `structured_json`，先确认显存、解析率和
+数值准确率，再考虑完整评测。

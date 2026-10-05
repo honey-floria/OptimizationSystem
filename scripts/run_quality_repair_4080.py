@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the FP16 quality-repair evaluation on a local NVIDIA 4080 server."""
+"""Run quality-repair evaluation for FP16, AWQ, or GPTQ models on NVIDIA."""
 
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.baseline.service import BaselineService
 from src.data.finqa_assets import load_assets
 from src.evaluation.quality_repair import run_quality_repair_experiment
+from src.quantization.awq import load_awq_service
+from src.quantization.gptq import load_gptq_service
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -55,6 +57,40 @@ def _build_manifest(model_id: str, model_path: Path) -> dict[str, Any]:
     }
 
 
+def _build_quantized_manifest(
+    model_id: str, model_path: Path, quantization: str
+) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "format": quantization,
+        "model_path": str(model_path.resolve()),
+        "source_model_path": str(model_path.resolve()),
+        "required_files": ["config.json"],
+        "plan": {
+            "method": quantization,
+            "bits": 4,
+            "weight_bits": 4,
+            "activation_bits": 16,
+            "model_id": model_id,
+        },
+    }
+
+
+def _resolve_model_path(
+    args: argparse.Namespace, quantized_manifest: dict[str, Any] | None
+) -> Path:
+    candidate = args.quantized_model_path or args.model_path
+    if candidate is None and quantized_manifest is not None:
+        value = quantized_manifest.get("model_path")
+        if isinstance(value, str) and value.strip():
+            candidate = Path(value)
+    if candidate is None:
+        raise ValueError(
+            "必须提供 --model-path、--quantized-model-path 或包含 model_path 的 --quantized-manifest"
+        )
+    return candidate.expanduser().resolve()
+
+
 def _build_quality_config(
     source: dict[str, Any],
     *,
@@ -85,7 +121,23 @@ def _build_quality_config(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model-path", required=True, type=Path)
+    parser.add_argument("--model-path", type=Path, help="FP16/BF16 模型目录。")
+    parser.add_argument(
+        "--quantized-model-path",
+        type=Path,
+        help="AWQ/GPTQ 量化模型目录；与 --quantization 一起使用。",
+    )
+    parser.add_argument(
+        "--quantized-manifest",
+        type=Path,
+        help="已有 quantized_model_manifest.json；不提供时由入口生成临时 manifest。",
+    )
+    parser.add_argument(
+        "--quantization",
+        choices=["none", "awq", "gptq"],
+        default="none",
+        help="模型加载方式，默认 none（Transformers FP16/BF16）。",
+    )
     parser.add_argument("--model-id", default="local-model")
     parser.add_argument("--dataset-dir", required=True, type=Path)
     parser.add_argument("--config", type=Path, default=Path("configs/quality_repair_4080.json"))
@@ -114,7 +166,18 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
-    model_path = args.model_path.expanduser().resolve()
+    if args.quantization == "none" and args.quantized_model_path is not None:
+        raise ValueError("--quantized-model-path 需要同时指定 --quantization awq 或 gptq")
+    if args.quantization == "none" and args.quantized_manifest is not None:
+        raise ValueError("--quantized-manifest 需要同时指定 --quantization awq 或 gptq")
+    if args.quantization != "none" and args.model_path is not None and args.quantized_model_path is not None:
+        raise ValueError("量化模式下只传 --quantized-model-path，不要同时传 --model-path")
+    quantized_manifest = None
+    quantized_manifest_path = None
+    if args.quantized_manifest is not None:
+        quantized_manifest_path = args.quantized_manifest.expanduser().resolve()
+        quantized_manifest = _read_json(quantized_manifest_path)
+    model_path = _resolve_model_path(args, quantized_manifest)
     dataset_dir = args.dataset_dir.expanduser().resolve()
     if not model_path.is_dir():
         raise FileNotFoundError(f"模型目录不存在：{model_path}")
@@ -155,22 +218,49 @@ def main() -> int:
     _write_json(effective_quality_path, quality_config)
 
     model_manifest_path = output_dir / "model_manifest.json"
-    _write_json(model_manifest_path, _build_manifest(args.model_id, model_path))
+    model_manifest = _build_manifest(args.model_id, model_path)
+    model_manifest["runtime"]["quantization"] = args.quantization
+    _write_json(model_manifest_path, model_manifest)
+    if args.quantization != "none":
+        if quantized_manifest is None:
+            quantized_manifest = _build_quantized_manifest(
+                args.model_id, model_path, args.quantization
+            )
+            quantized_manifest_path = output_dir / "quantized_model_manifest.json"
+            _write_json(quantized_manifest_path, quantized_manifest)
+        elif quantized_manifest_path is None:
+            raise AssertionError("quantized manifest path was not resolved")
     dataset_manifest = _read_json(dataset_dir / "manifest.json")
     assets = load_assets(dataset_dir)
 
     print(f"模型：{args.model_id}")
     print(f"模型目录：{model_path}")
+    print(f"量化方式：{args.quantization}")
     print(f"数据目录：{dataset_dir}")
     print(f"输出目录：{output_dir}")
     print(f"模式：{'full-883' if args.full else f'pilot-{args.limit}'}")
     print(f"方案：{', '.join(variants)}")
 
-    service = BaselineService.from_local_model(
-        effective_baseline_path,
-        model_manifest_path,
-        output_dir / "quality_service.jsonl",
-    )
+    if args.quantization == "awq":
+        service = load_awq_service(
+            effective_baseline_path,
+            quantized_manifest_path,
+            model_manifest_path,
+            output_dir / "quality_service.jsonl",
+        )
+    elif args.quantization == "gptq":
+        service = load_gptq_service(
+            effective_baseline_path,
+            quantized_manifest_path,
+            model_manifest_path,
+            output_dir / "quality_service.jsonl",
+        )
+    else:
+        service = BaselineService.from_local_model(
+            effective_baseline_path,
+            model_manifest_path,
+            output_dir / "quality_service.jsonl",
+        )
     report = run_quality_repair_experiment(
         service,
         assets.quality_dev,
@@ -184,6 +274,10 @@ def main() -> int:
         "model_path": str(model_path),
         "device": args.device,
         "dtype": args.dtype,
+        "quantization": args.quantization,
+        "quantized_manifest": (
+            str(quantized_manifest_path) if quantized_manifest_path else None
+        ),
     }
     _write_json(output_dir / "comparison_report.json", report)
 
