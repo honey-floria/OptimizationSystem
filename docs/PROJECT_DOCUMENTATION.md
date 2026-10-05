@@ -1358,6 +1358,24 @@ GPTQ `47.1 token/s`、AWQ `41.6 token/s`，由于生成长度和重试次数不�
 其中索引 `625` 的文本看起来已经是完整 JSON，索引 `722/761` 使用了不在单位白名单中的 `times`；下一步先同步服务器代码并
 修复/确认单位解析，再复跑 GPTQ 80 条 pilot。未复跑确认前，不扩展完整 883 条。
 
+## GPTQ pilot 复跑确认（2026-10-05）
+
+复跑仍得到 `19/80`、数值准确率 `23.75%`、解析率 `93.75%`，格式重试 `14` 次，用时约 `328.7` 秒；
+5 条未解析索引仍为 `297、377、625、722、761`。这确认 GPTQ 的准确率结果具有可重复性，但解析门禁仍未通过。
+下一步先核对服务器 `git rev-parse HEAD` 和 `sha256sum src/evaluation/quality_repair.py`，同步当前解析器并处理
+`unit="times"` 及索引 `625` 的合法 JSON 异常，再重新运行同一 80 条 pilot。
+
+版本核对结果：服务器 commit `12508e99abbdc78ecabfca881e0a82a01a3344c6` 和
+`quality_repair.py` SHA256 `f39a4834662eb633ae8cbd4bba50cc0f19ed3604ae62010f417993ba997bb949`
+与当前仓库一致。进一步检查确认：索引 `625` 是 evidence 数组缺少 `]` 的非法 JSON，索引 `722/761` 是合法
+JSON 但使用了白名单外的 `times` 单位，索引 `297/377` 是不完整或混合回答。因此下一步应扩展 ratio/multiple
+单位契约并增加测试，再复跑 GPTQ pilot，而不是重新下载或重新量化模型。
+
+随后已完成 ratio 单位契约修复：`times` 和 `multiple` 加入单位白名单，`ratio` 允许空单位、`times` 或
+`multiple`，百分比相关 operation 仍要求百分比单位；4080 的结构化 Prompt 也同步说明 ratio 使用 `times`。
+新增回归测试覆盖 structured JSON 和 evidence-operation。服务器同步代码后，只需重跑 GPTQ 80 条 pilot，重点观察
+原索引 `722/761` 的解析率变化；不需要重新下载或重新量化模型。
+
 ## 7B 量化入口实现（2026-10-04）
 
 `scripts/run_quality_repair_4080.py` 现在支持统一参数：

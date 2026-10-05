@@ -52,6 +52,13 @@ class QualityRepairTest(unittest.TestCase):
         )
         self.assertEqual(parsed["normalized_value"], "-12.5")
 
+    def test_structured_output_accepts_ratio_times_unit(self):
+        parsed = parse_structured_output(
+            '{"evidence":["sales", "operating income"],'
+            '"formula":"9.4", "value":9.4, "unit":"times"}'
+        )
+        self.assertEqual(parsed["normalized_value"], "9.4")
+
     def test_final_answer_marker_beats_first_number(self):
         parsed = extract_final_numeric("2016 value 303.1; 2017 value 290.6. Final answer: -12.5 million")
         self.assertEqual(parsed["normalized_value"], "-12.5")
@@ -74,6 +81,17 @@ class QualityRepairTest(unittest.TestCase):
         )
         repaired = repair_with_evidence_operation(parsed)
         self.assertEqual(repaired["normalized_value"], "0.25")
+
+    def test_ratio_operation_accepts_times_unit(self):
+        row = {"table": [["sales", "940"], ["operating income", "100"]]}
+        parsed = parse_evidence_operation_output(
+            '{"evidence":[{"cell_id":"r0c1","value":"940"},'
+            '{"cell_id":"r1c1","value":"100"}],'
+            '"operands":[940,100],"operation":"ratio","unit":"times"}'
+        )
+        self.assertIsNone(validate_evidence_operation(parsed, row))
+        repaired = repair_with_evidence_operation(parsed)
+        self.assertEqual(repaired["normalized_value"], "9.4")
 
     def test_evidence_operation_validates_stable_cell_ids(self):
         row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}

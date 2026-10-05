@@ -38,6 +38,8 @@ ALLOWED_UNITS = {
     "thousands",
     "dollars",
     "shares",
+    "times",
+    "multiple",
 }
 ALLOWED_OPERATIONS = {
     "add",
@@ -302,8 +304,10 @@ def validate_evidence_operation(
         return f"{operation} requires exactly two operands"
     if operation in at_least_two and len(parsed_operands) < 2:
         return f"{operation} requires at least two operands"
-    if operation in {"percent_change", "percent", "percentage", "ratio"} and unit not in {"%", "percent"}:
+    if operation in {"percent_change", "percent", "percentage"} and unit not in {"%", "percent"}:
         return f"{operation} requires percent unit"
+    if operation == "ratio" and unit not in {"", "times", "multiple"}:
+        return "ratio requires an empty, times, or multiple unit"
     return None
 
 
@@ -497,6 +501,8 @@ def validate_cell_ids_operation(
         return f"{operation} requires at least two cell_ids"
     if operation in {"percent_change", "percent", "percentage"} and unit not in {"", "%", "percent"}:
         return f"{operation} requires percent unit"
+    if operation == "ratio" and unit not in {"", "times", "multiple"}:
+        return "ratio requires an empty, times, or multiple unit"
     return None
 
 
