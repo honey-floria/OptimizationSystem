@@ -20,6 +20,7 @@ env/
 
 # Downloaded model weights
 models/
+datasets/
 
 # Test and tool caches
 .pytest_cache/
