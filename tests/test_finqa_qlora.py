@@ -1,9 +1,40 @@
 import unittest
 
-from scripts.train_finqa_qlora import build_training_examples
+from pathlib import Path
+
+from scripts.train_finqa_qlora import (
+    DEFAULT_ARTIFACT_DIR,
+    DEFAULT_BASE_MODEL_PATH,
+    DEFAULT_OUTPUT_DIR,
+    DEFAULT_TRAIN_PATH,
+    PROJECT_ROOT,
+    _parse_args,
+    build_training_examples,
+)
 
 
 class FinqaQloraDataTest(unittest.TestCase):
+    def test_default_paths_follow_qlora_storage_contract(self):
+        args = _parse_args([])
+        self.assertEqual(args.model_path, DEFAULT_BASE_MODEL_PATH)
+        self.assertEqual(args.train_path, DEFAULT_TRAIN_PATH)
+        self.assertEqual(args.output_dir, DEFAULT_OUTPUT_DIR)
+        self.assertEqual(args.artifact_dir, DEFAULT_ARTIFACT_DIR)
+        self.assertEqual(
+            DEFAULT_BASE_MODEL_PATH,
+            PROJECT_ROOT / "models" / "data" / "Qwen2.5-7B-Instruct",
+        )
+        self.assertEqual(
+            DEFAULT_ARTIFACT_DIR,
+            PROJECT_ROOT / "models" / "data" / "finqa_qlora_7b",
+        )
+        self.assertEqual(
+            DEFAULT_TRAIN_PATH,
+            PROJECT_ROOT / "datasets" / "raw_finqa" / "train.json",
+        )
+        self.assertEqual(DEFAULT_OUTPUT_DIR, PROJECT_ROOT / "out" / "finqa_qlora_7b")
+        self.assertIsInstance(args.model_path, Path)
+
     def test_build_training_examples_uses_numeric_program_rows(self):
         rows = [
             {
