@@ -360,7 +360,9 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 实现 evidence 中的行、列、年份和操作数回指真实表格单元格的校验
 - [x] 为表格行列增加稳定 ID，限制模型只能引用合法单元格
 - [x] 实现 evidence—operation—value—unit 一致性校验，失败时只重试证据和操作数
-- [ ] 在 4080 上复测带稳定 ID 和一致性校验的新方案
+- [x] 在 4080 上复测带稳定 ID 和一致性校验的新方案
+- [x] 新增 `cell_ids_operation` 紧凑契约，只输出 cell_ids、operation 和 unit，由程序恢复 operands
+- [ ] 在 4080 上复测 `structured_json` 与 `cell_ids_operation`
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 使用 FinQA train 构造“证据、操作数、操作、计算结果、单位”LoRA 监督数据
 - [ ] 严格隔离 train/dev/test，禁止使用 dev/test 答案进行 Prompt 或微调

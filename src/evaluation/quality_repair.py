@@ -53,6 +53,7 @@ ALLOWED_OPERATIONS = {
     "percentage",
     "percent_change",
 }
+OPERATION_OUTPUT_MODES = {"evidence_operation", "cell_ids_operation"}
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,7 @@ class PromptVariant:
     calculator_enabled: bool = False
     format_retry: bool = False
     stable_cell_ids: bool = False
+    cell_ids_only: bool = False
 
 
 class CalculationError(ValueError):
@@ -282,6 +284,101 @@ def validate_evidence_operation(
     return None
 
 
+def parse_cell_ids_operation_output(text: str) -> dict[str, Any] | None:
+    """Parse the compact contract that references cells without copying values."""
+
+    for payload in _json_candidates(text):
+        cell_ids = payload.get("cell_ids")
+        operation = str(payload.get("operation", "")).strip().lower()
+        unit = payload.get("unit", "")
+        if (
+            not isinstance(cell_ids, list)
+            or not cell_ids
+            or not all(isinstance(cell_id, str) for cell_id in cell_ids)
+            or operation not in ALLOWED_OPERATIONS
+            or not isinstance(unit, str)
+            or unit.lower() not in ALLOWED_UNITS
+        ):
+            continue
+        return {
+            "cell_ids": cell_ids,
+            "operation": operation,
+            "unit": unit,
+            "structured": True,
+        }
+    return None
+
+
+def validate_cell_ids_operation(
+    parsed: dict[str, Any], row: dict[str, Any]
+) -> str | None:
+    """Validate compact cell references before resolving their numeric values."""
+
+    cell_ids = parsed.get("cell_ids")
+    operation = parsed.get("operation")
+    unit = str(parsed.get("unit", "")).lower()
+    if not isinstance(cell_ids, list) or not cell_ids:
+        return "cell_ids must be a non-empty list"
+    if not all(isinstance(cell_id, str) for cell_id in cell_ids):
+        return "every cell_id must be a string"
+    if len(set(cell_ids)) != len(cell_ids):
+        return "cell_ids must not contain duplicates"
+    if not isinstance(operation, str) or operation not in ALLOWED_OPERATIONS:
+        return "operation is not allowed"
+    if unit not in ALLOWED_UNITS:
+        return "unit is not allowed"
+
+    cell_values = _table_cell_values(row)
+    cell_id_pattern = re.compile(r"^r(\d+)c(\d+)$")
+    numeric_values: list[Decimal] = []
+    for cell_id in cell_ids:
+        if not cell_id_pattern.fullmatch(cell_id):
+            return "cell_id must match rNcM"
+        if cell_id not in cell_values:
+            return f"cell_id does not exist: {cell_id}"
+        value = parse_numeric_answer(cell_values[cell_id])
+        if value is None:
+            return f"cell is not numeric: {cell_id}"
+        numeric_values.append(value)
+
+    exact_two = {
+        "subtract", "difference", "absolute_difference", "divide",
+        "ratio", "percent", "percentage", "percent_change",
+    }
+    at_least_two = {"add", "sum", "multiply", "average"}
+    if operation in exact_two and len(numeric_values) != 2:
+        return f"{operation} requires exactly two cell_ids"
+    if operation in at_least_two and len(numeric_values) < 2:
+        return f"{operation} requires at least two cell_ids"
+    if operation in {"percent_change", "percent", "percentage"} and unit not in {"", "%", "percent"}:
+        return f"{operation} requires percent unit"
+    return None
+
+
+def materialize_cell_ids_operation(
+    parsed: dict[str, Any], row: dict[str, Any]
+) -> dict[str, Any]:
+    """Resolve validated cell IDs to evidence and operands for deterministic calculation."""
+
+    cell_values = _table_cell_values(row)
+    cell_ids = parsed["cell_ids"]
+    unit = str(parsed.get("unit", "")).lower()
+    operation = parsed["operation"]
+    if not unit and operation in {"percent_change", "percent", "percentage"}:
+        unit = "percent"
+    evidence = [
+        {"cell_id": cell_id, "value": cell_values[cell_id]}
+        for cell_id in cell_ids
+    ]
+    operands = [str(parse_numeric_answer(cell_values[cell_id])) for cell_id in cell_ids]
+    return {
+        **parsed,
+        "evidence": evidence,
+        "operands": operands,
+        "unit": unit,
+    }
+
+
 def extract_final_numeric(text: str) -> dict[str, Any]:
     """Prefer structured/final-answer values over the first number in prose."""
 
@@ -387,6 +484,7 @@ def build_prompt_variants(config: dict[str, Any]) -> list[PromptVariant]:
                 calculator_enabled=bool(item.get("calculator_enabled", False)),
                 format_retry=bool(item.get("format_retry", False)),
                 stable_cell_ids=bool(item.get("stable_cell_ids", False)),
+                cell_ids_only=bool(item.get("cell_ids_only", False)),
             )
         )
     if not variants:
@@ -441,6 +539,19 @@ def evidence_operation_schema() -> dict[str, Any]:
                 },
             },
             "operands": {"type": "array", "items": {"type": "number"}},
+            "operation": {"type": "string", "enum": sorted(ALLOWED_OPERATIONS)},
+            "unit": {"type": "string"},
+        },
+        "additionalProperties": False,
+    }
+
+
+def cell_ids_operation_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "required": ["cell_ids", "operation", "unit"],
+        "properties": {
+            "cell_ids": {"type": "array", "items": {"type": "string"}},
             "operation": {"type": "string", "enum": sorted(ALLOWED_OPERATIONS)},
             "unit": {"type": "string"},
         },
@@ -569,7 +680,11 @@ def run_quality_repair_experiment(
                 for row, request, result in zip(rows, requests, generated):
                     raw_output = result["output_text"]
                     validation_error = None
-                    if variant.output_mode == "evidence_operation":
+                    if variant.output_mode == "cell_ids_operation":
+                        parsed = parse_cell_ids_operation_output(raw_output)
+                        if parsed is not None and variant.stable_cell_ids:
+                            validation_error = validate_cell_ids_operation(parsed, row)
+                    elif variant.output_mode == "evidence_operation":
                         parsed = parse_evidence_operation_output(raw_output)
                         if parsed is not None and variant.stable_cell_ids:
                             validation_error = validate_evidence_operation(parsed, row)
@@ -590,7 +705,7 @@ def run_quality_repair_experiment(
                         retry_used = True
                     elif (
                         variant.format_retry
-                        and variant.output_mode == "evidence_operation"
+                        and variant.output_mode in OPERATION_OUTPUT_MODES
                         and (parsed is None or validation_error is not None)
                     ):
                         validation_hint = (
@@ -598,22 +713,39 @@ def run_quality_repair_experiment(
                             if validation_error
                             else ""
                         )
+                        contract_name = (
+                            "cell-id operation schema"
+                            if variant.output_mode == "cell_ids_operation"
+                            else "evidence-operation schema"
+                        )
                         retry = service.generate_one(
                             request,
                             prompt_suffix=(
-                                f"{prompt_suffix}\nYour previous response did not match the required evidence-operation schema. "
+                                f"{prompt_suffix}\nYour previous response did not match the required {contract_name}. "
                                 f"Return one valid JSON object only, with no markdown or explanation.{validation_hint}"
                             ),
                         )
                         raw_output = retry["output_text"]
-                        parsed = parse_evidence_operation_output(raw_output)
+                        parsed = (
+                            parse_cell_ids_operation_output(raw_output)
+                            if variant.output_mode == "cell_ids_operation"
+                            else parse_evidence_operation_output(raw_output)
+                        )
                         validation_error = None
                         if parsed is not None and variant.stable_cell_ids:
-                            validation_error = validate_evidence_operation(parsed, row)
+                            validation_error = (
+                                validate_cell_ids_operation(parsed, row)
+                                if variant.output_mode == "cell_ids_operation"
+                                else validate_evidence_operation(parsed, row)
+                            )
                         format_retry_count += 1
                         retry_used = True
-                    if parsed is None and variant.output_mode == "evidence_operation" and variant.stable_cell_ids:
-                        validation_error = validation_error or "unparseable evidence-operation output"
+                    if (
+                        parsed is None
+                        and variant.output_mode in OPERATION_OUTPUT_MODES
+                        and variant.stable_cell_ids
+                    ):
+                        validation_error = validation_error or "unparseable operation output"
                         parsed = {
                             "normalized_value": None,
                             "structured": False,
@@ -632,7 +764,9 @@ def run_quality_repair_experiment(
                         validation_failure_count += 1
                     if parsed.get("structured"):
                         structured_count += 1
-                    if variant.output_mode == "evidence_operation":
+                    if variant.output_mode == "cell_ids_operation" and validation_error is None:
+                        parsed = materialize_cell_ids_operation(parsed, row)
+                    if variant.output_mode in OPERATION_OUTPUT_MODES:
                         repaired = (
                             repair_with_evidence_operation(parsed)
                             if validation_error is None
@@ -710,6 +844,7 @@ def run_quality_repair_experiment(
                 "output_mode": variant.output_mode,
                 "calculator_enabled": variant.calculator_enabled,
                 "stable_cell_ids": variant.stable_cell_ids,
+                "cell_ids_only": variant.cell_ids_only,
                 "prompt_suffix": prompt_suffix,
                 "metrics": metrics,
                 "structured_output_rate": structured_count / len(evaluation_rows) if evaluation_rows else 0.0,
@@ -743,6 +878,7 @@ def run_quality_repair_experiment(
         "variants": results,
         "schema": quality_repair_schema(),
         "evidence_operation_schema": evidence_operation_schema(),
+        "cell_ids_operation_schema": cell_ids_operation_schema(),
         "generation": config.get("generation", original_generation),
         "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
     }
