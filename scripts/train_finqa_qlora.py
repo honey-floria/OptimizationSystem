@@ -206,6 +206,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--max-steps", type=int, default=-1)
     parser.add_argument("--learning-rate", type=float, default=2e-4)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=16)
+    parser.add_argument("--lora-r", type=int, default=8)
+    parser.add_argument("--lora-alpha", type=int, default=16)
+    parser.add_argument("--lora-dropout", type=float, default=0.05)
     parser.add_argument("--seed", type=int, default=20261004)
     parser.add_argument("--eval-ratio", type=float, default=0.05)
     return parser.parse_args()
@@ -215,6 +218,8 @@ def main() -> int:
     args = _parse_args()
     if not 0.0 < args.eval_ratio < 0.5:
         raise ValueError("--eval-ratio 必须在 0 和 0.5 之间")
+    if args.lora_r <= 0 or args.lora_alpha <= 0:
+        raise ValueError("--lora-r 和 --lora-alpha 必须大于 0")
     train_path = args.train_path.expanduser().resolve()
     output_dir = args.output_dir.expanduser().resolve()
     if not train_path.exists():
@@ -262,9 +267,9 @@ def main() -> int:
     model = get_peft_model(
         model,
         LoraConfig(
-            r=16,
-            lora_alpha=32,
-            lora_dropout=0.05,
+            r=args.lora_r,
+            lora_alpha=args.lora_alpha,
+            lora_dropout=args.lora_dropout,
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
             task_type="CAUSAL_LM",
         ),
@@ -282,6 +287,7 @@ def main() -> int:
         "per_device_eval_batch_size": 1,
         "gradient_accumulation_steps": args.gradient_accumulation_steps,
         "learning_rate": args.learning_rate,
+        "optim": "paged_adamw_8bit",
         "fp16": True,
         "gradient_checkpointing": True,
         "logging_steps": 10,
@@ -327,7 +333,7 @@ def main() -> int:
         "eval_examples": len(eval_examples),
         "seed": args.seed,
         "max_length": args.max_length,
-        "lora": {"r": 16, "alpha": 32, "dropout": 0.05},
+        "lora": {"r": args.lora_r, "alpha": args.lora_alpha, "dropout": args.lora_dropout},
     }
     (output_dir / "training_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
