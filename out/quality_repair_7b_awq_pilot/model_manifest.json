@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "model_id": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+  "model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct-AWQ",
+  "version": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+  "commit": "local-server",
+  "weight_files": [],
+  "config_file": "config.json",
+  "tokenizer_files": [],
+  "expected_sha256": {},
+  "runtime": {
+    "framework": "transformers",
+    "model_class": "causal_lm",
+    "dtype": "float16",
+    "device": "cuda:0",
+    "trust_remote_code": false,
+    "quantization": "awq"
+  }
+}
