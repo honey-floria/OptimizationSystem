@@ -188,6 +188,26 @@ class QualityRepairTest(unittest.TestCase):
         self.assertEqual(repaired["normalized_value"], "2")
         self.assertTrue(repaired["calculator_used"])
 
+    def test_steps_operation_accepts_numeric_constants_and_change_chain(self):
+        row = {"table": [["metric", "100", "120"]]}
+        parsed = parse_steps_operation_output(
+            '{"steps":[{"operation":"subtract","operands":["r0c2","r0c1"]},'
+            '{"operation":"divide","operands":["step0","r0c1"]}],'
+            '"unit":"percent"}'
+        )
+        self.assertIsNone(validate_steps_operation(parsed, row))
+        self.assertIsNone(
+            validate_question_operation(
+                parsed,
+                "what was the percentage change from 2010 to 2011?",
+            )
+        )
+        constant_steps = parse_steps_operation_output(
+            '{"steps":[{"operation":"multiply","operands":["r0c2","0.05"]}],'
+            '"unit":"million"}'
+        )
+        self.assertIsNone(validate_steps_operation(constant_steps, row))
+
     def test_validated_parser_skips_invalid_candidate(self):
         row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}
         text = (

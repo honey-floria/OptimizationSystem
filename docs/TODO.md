@@ -399,7 +399,10 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 新增 `deterministic_cell_ids_operation`：模型只选择 cell IDs、operation 和 unit
 - [x] 增加百分比、增长率、平均和利息题型路由，并由程序执行 Decimal 计算
 - [x] 增加确定性平均值和利息计算的回归测试
-- [ ] 在同一 80 条 GPTQ pilot 上运行 `deterministic_cell_ids_operation`，与 `structured_json` 对照
+- [x] 在同一 80 条 GPTQ pilot 上运行 `deterministic_cell_ids_operation`，与 `structured_json` 对照：10/80，解析率 93.75%
+- [x] 首次运行 `deterministic_steps_operation`：4/80，解析率 48.75%
+- [x] 修复多步方案的“subtract+divide”题型校验误拒绝，并允许显式数值常数参与步骤计算
+- [ ] 复跑修复后的确定性方案，确认解析率和数值准确率是否恢复
 - [ ] 检查确定性方案对百分比、平均、利息、多步题的分层收益
 - [ ] 补齐 7B AWQ pilot 的显存峰值和吞吐记录
 - [ ] 在同一 7B FP16 或同源未量化模型上复测，分离模型规模收益与 AWQ 量化收益
