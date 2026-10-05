@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-4080",
+  "created_at": "2026-10-05T06:14:35.777883+00:00",
+  "dataset": {
+    "role": "evaluation_dev",
+    "size": 80,
+    "source_size": 883,
+    "version": "main",
+    "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
+    "sample": {
+      "seed": 20261004,
+      "indices": [
+        18,
+        22,
+        31,
+        55,
+        57,
+        62,
+        75,
+        96,
+        120,
+        129,
+        134,
+        148,
+        151,
+        158,
+        178,
+        183,
+        191,
+        194,
+        195,
+        213,
+        214,
+        219,
+        223,
+        225,
+        234,
+        253,
+        254,
+        260,
+        267,
+        273,
+        281,
+        285,
+        287,
+        297,
+        310,
+        335,
+        341,
+        364,
+        368,
+        377,
+        378,
+        383,
+        396,
+        402,
+        407,
+        430,
+        437,
+        440,
+        455,
+        487,
+        535,
+        556,
+        566,
+        605,
+        610,
+        611,
+        623,
+        625,
+        628,
+        656,
+        657,
+        687,
+        693,
+        708,
+        711,
+        722,
+        728,
+        729,
+        744,
+        761,
+        772,
+        788,
+        824,
+        827,
+        846,
+        847,
+        852,
+        864,
+        873,
+        881
+      ],
+      "indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61"
+    }
+  },
+  "variants": [
+    {
+      "variant": "candidate_cell_ids_operation",
+      "output_mode": "candidate_cell_ids_operation",
+      "calculator_enabled": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": false,
+      "question_routing": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Generate up to three ranked candidates; do not explain. Use only this schema: {\"candidates\":[{\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"divide\",\"unit\":\"percent\"}]}. Each candidate must use existing numeric cell IDs in calculation order. For percentage of a total use divide [part,total] with unit percent. For growth/increase/decrease use percent_change [new,old] with unit percent. For average select every requested period. For annual interest use multiply [principal,rate]. For ratio use ratio [numerator,denominator] with unit times. Include alternatives when row, column, denominator, or operation is ambiguous. The program validates every candidate and calculates the selected answer deterministically.",
+      "metrics": {
+        "total": 80,
+        "parsed": 71,
+        "correct": 9,
+        "parse_rate": 0.8875,
+        "numeric_accuracy": 0.1125
+      },
+      "structured_output_rate": 0.8875,
+      "calculator_use_rate": 0.8875,
+      "format_retry_count": 15,
+      "validation_failure_count": 9,
+      "fallback_count": 0,
+      "duration_seconds": 443.1993337259628,
+      "predictions_file": "candidate_cell_ids_operation/predictions.jsonl",
+      "predictions_sha256": "6dd4620be69cb6875b90f470cb3ab25975f498c0c1fb291369aed02628890abf"
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "formula",
+      "value",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "formula": {
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "evidence_operation_schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "operands",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "cell_id",
+            "value"
+          ],
+          "properties": {
+            "cell_id": {
+              "type": "string",
+              "pattern": "^r[0-9]+c[0-9]+$"
+            },
+            "value": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "operands": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "cell_ids_operation_schema": {
+    "type": "object",
+    "required": [
+      "cell_ids",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "cell_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "steps_operation_schema": {
+    "type": "object",
+    "required": [
+      "steps",
+      "unit"
+    ],
+    "properties": {
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "operation",
+            "operands"
+          ],
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": [
+                "absolute_difference",
+                "add",
+                "average",
+                "difference",
+                "divide",
+                "multiply",
+                "percent",
+                "percent_change",
+                "percentage",
+                "ratio",
+                "subtract",
+                "sum"
+              ]
+            },
+            "operands": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "candidate_cell_ids_operation_schema": {
+    "type": "object",
+    "required": [
+      "candidates"
+    ],
+    "properties": {
+      "candidates": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "required": [
+            "cell_ids",
+            "operation",
+            "unit"
+          ],
+          "properties": {
+            "cell_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "absolute_difference",
+                "add",
+                "average",
+                "difference",
+                "divide",
+                "multiply",
+                "percent",
+                "percent_change",
+                "percentage",
+                "ratio",
+                "subtract",
+                "sum"
+              ]
+            },
+            "unit": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "generation": {
+    "max_new_tokens": 256,
+    "do_sample": false,
+    "num_beams": 1
+  },
+  "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
+  "model": {
+    "model_id": "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4",
+    "model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct-GPTQ-Int4",
+    "device": "cuda:0",
+    "dtype": "float16",
+    "quantization": "gptq",
+    "quantized_manifest": "/userhome/cs5/u3680889/OptimizationSystem/out/quality_repair_7b_gptq_candidate_pilot/quantized_model_manifest.json",
+    "adapter_path": null,
+    "load_in_4bit": false
+  }
+}
