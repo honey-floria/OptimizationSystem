@@ -381,12 +381,18 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 分析 AWQ pilot：准确率超过 20% 门槛，但解析率 96.25% 仍低于 99%，不能宣布质量门禁完成
 - [x] 完成 7B GPTQ INT4 `structured_json` pilot：19/80，数值准确率 23.75%
 - [x] 对比 AWQ/GPTQ pilot：GPTQ 准确率高 1.25 个百分点、解析率低 2.50 个百分点
-- [ ] 排查 GPTQ 运行记录中合法 JSON 被标记为未解析的问题，并确认服务器代码版本
+- [x] 排查 GPTQ 运行记录中合法 JSON 被标记为未解析的问题，并确认服务器代码版本
 - [x] GPTQ pilot 复跑确认：仍为 19/80、解析率 93.75%，5 条未解析可复现
 - [x] 核对服务器 commit 与 `quality_repair.py` SHA256，确认与当前仓库一致
-- [ ] 扩展 ratio/multiple 的 `times` 单位兼容后再复跑 GPTQ pilot
+- [ ] 同步 ratio/multiple 单位兼容后复跑 GPTQ pilot
 - [x] 扩展 `times`/`multiple` 单位白名单、ratio 校验和 4080 Prompt 契约
 - [x] 增加 ratio 使用 `times` 单位的单元测试
+- [x] 分析 GPTQ v2：解析率 97.50%（78/80），数值准确率 21.25%（17/80），剩余 `mmboe` 和数字多余引号问题
+- [x] 增加 `mmboe` 单位契约，并对 `value` 数字后的单个多余引号做保守 JSON 修复
+- [x] 为 `mmboe` 和数字多余引号修复增加回归测试
+- [ ] 在服务器同步代码后复跑 GPTQ v3，确认解析率是否达到 99% 门槛
+- [ ] 对 GPTQ v3 按题型统计错误，优先优化百分比、比率、平均和多步计算的分子/分母选择
+- [ ] 在解析率达到 99% 且 pilot 正确数稳定后，再扩展到完整 883 条 dev
 - [ ] 补齐 7B AWQ pilot 的显存峰值和吞吐记录
 - [ ] 在同一 7B FP16 或同源未量化模型上复测，分离模型规模收益与 AWQ 量化收益
 - [ ] 使用 FinQA train 执行 LoRA/QLoRA 微调前，先固定当前 3B `structured_json` 基线

@@ -59,6 +59,21 @@ class QualityRepairTest(unittest.TestCase):
         )
         self.assertEqual(parsed["normalized_value"], "9.4")
 
+    def test_structured_output_accepts_mmboe_unit(self):
+        parsed = parse_structured_output(
+            '{"evidence":["production"],"formula":"12.5",'
+            '"value":12.5,"unit":"mmboe"}'
+        )
+        self.assertEqual(parsed["normalized_value"], "12.5")
+
+    def test_structured_output_repairs_stray_quote_after_numeric_value(self):
+        parsed = parse_structured_output(
+            '{"evidence":["change"],"formula":"-2",'
+            '"value":-2", "unit":"million"}'
+        )
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["normalized_value"], "-2")
+
     def test_final_answer_marker_beats_first_number(self):
         parsed = extract_final_numeric("2016 value 303.1; 2017 value 290.6. Final answer: -12.5 million")
         self.assertEqual(parsed["normalized_value"], "-12.5")
