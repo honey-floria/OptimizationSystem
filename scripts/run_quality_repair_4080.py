@@ -14,6 +14,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+MODEL_DATA_DIR = PROJECT_ROOT / "models" / "data"
+DEFAULT_MODEL_PATH = MODEL_DATA_DIR / "Qwen2.5-7B-Instruct"
+DEFAULT_DATASET_DIR = PROJECT_ROOT / "datasets"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "out" / "quality_repair_4080"
+
 from src.baseline.service import BaselineService
 from src.data.finqa_assets import load_assets
 from src.evaluation.quality_repair import run_quality_repair_experiment
@@ -34,6 +39,14 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
 
 
 def _build_manifest(model_id: str, model_path: Path) -> dict[str, Any]:
@@ -119,9 +132,13 @@ def _build_quality_config(
     return config
 
 
-def _parse_args() -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model-path", type=Path, help="FP16/BF16 模型目录。")
+    parser.add_argument(
+        "--model-path",
+        type=Path,
+        help="FP16/BF16 基座模型目录；非量化模式默认 models/data/Qwen2.5-7B-Instruct。",
+    )
     parser.add_argument(
         "--quantized-model-path",
         type=Path,
@@ -139,10 +156,15 @@ def _parse_args() -> argparse.Namespace:
         help="模型加载方式，默认 none（Transformers FP16/BF16）。",
     )
     parser.add_argument("--model-id", default="local-model")
-    parser.add_argument("--dataset-dir", required=True, type=Path)
+    parser.add_argument(
+        "--dataset-dir",
+        type=Path,
+        default=DEFAULT_DATASET_DIR,
+        help="包含 manifest.json 的 FinQA assets 目录，默认 datasets/。",
+    )
     parser.add_argument("--config", type=Path, default=Path("configs/quality_repair_4080.json"))
     parser.add_argument("--baseline-config", type=Path, default=Path("configs/baseline.json"))
-    parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--dtype", choices=["float16", "bfloat16"], default="float16")
     parser.add_argument("--adapter-path", type=Path, help="QLoRA/LoRA adapter 目录，仅用于非量化基座加载。")
@@ -163,7 +185,10 @@ def _parse_args() -> argparse.Namespace:
         help="每隔多少批输出一次进度；0 表示自动按约 10 个节点输出。",
     )
     parser.add_argument("--full", action="store_true", help="运行完整 883 条 dev，而不是 pilot。")
-    return parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.quantization == "none" and args.model_path is None:
+        args.model_path = DEFAULT_MODEL_PATH
+    return args
 
 
 def main() -> int:
@@ -183,6 +208,18 @@ def main() -> int:
         quantized_manifest = _read_json(quantized_manifest_path)
     model_path = _resolve_model_path(args, quantized_manifest)
     dataset_dir = args.dataset_dir.expanduser().resolve()
+    output_dir = args.output_dir.expanduser().resolve()
+    if args.adapter_path is not None:
+        adapter_path = args.adapter_path.expanduser().resolve()
+        model_data_root = MODEL_DATA_DIR.resolve()
+        out_root = (PROJECT_ROOT / "out").resolve()
+        if not _is_relative_to(model_path, model_data_root):
+            raise ValueError(f"QLoRA 基座模型必须位于项目 models/data/ 目录下：{model_data_root}")
+        if not _is_relative_to(adapter_path, model_data_root):
+            raise ValueError(f"QLoRA adapter 必须位于项目 models/data/ 目录下：{model_data_root}")
+        if not _is_relative_to(output_dir, out_root):
+            raise ValueError(f"QLoRA 评测输出必须位于项目 out/ 目录下：{out_root}")
+        args.adapter_path = adapter_path
     if not model_path.is_dir():
         raise FileNotFoundError(f"模型目录不存在：{model_path}")
     if not (model_path / "config.json").is_file():
@@ -196,7 +233,6 @@ def main() -> int:
     if args.batch_size <= 0:
         raise ValueError("--batch-size 必须大于 0")
 
-    output_dir = args.output_dir.expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     baseline_config = _read_json(args.baseline_config.expanduser().resolve())
     baseline_config["device"] = args.device

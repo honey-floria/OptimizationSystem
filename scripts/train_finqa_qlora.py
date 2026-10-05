@@ -16,6 +16,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+MODEL_DATA_DIR = PROJECT_ROOT / "models" / "data"
+DEFAULT_BASE_MODEL_PATH = MODEL_DATA_DIR / "Qwen2.5-7B-Instruct"
+DEFAULT_ARTIFACT_DIR = MODEL_DATA_DIR / "finqa_qlora_7b"
+DEFAULT_TRAIN_PATH = PROJECT_ROOT / "datasets" / "raw_finqa" / "train.json"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "out" / "finqa_qlora_7b"
 
 NUMBER_PATTERN = re.compile(r"[-+]?\d+(?:,\d{3})*(?:\.\d+)?")
 
@@ -196,15 +201,31 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _parse_args() -> argparse.Namespace:
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model-id", default="Qwen/Qwen2.5-7B-Instruct")
-    parser.add_argument("--train-path", required=True, type=Path)
-    parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument(
+        "--model-path",
+        type=Path,
+        default=DEFAULT_BASE_MODEL_PATH,
+        help="未量化基座模型目录，默认 models/data/Qwen2.5-7B-Instruct。",
+    )
+    parser.add_argument(
+        "--model-id",
+        default="Qwen/Qwen2.5-7B-Instruct",
+        help="写入 manifest 的模型标识；模型权重实际从 --model-path 读取。",
+    )
+    parser.add_argument(
+        "--train-path",
+        type=Path,
+        default=DEFAULT_TRAIN_PATH,
+        help="FinQA train JSON 或 Dataset 目录，默认 datasets/raw_finqa/train.json。",
+    )
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument(
         "--artifact-dir",
         type=Path,
-        help="模型权重、tokenizer 和 checkpoint 保存目录；不提供时与 --output-dir 相同。",
+        default=DEFAULT_ARTIFACT_DIR,
+        help="adapter、tokenizer 和 checkpoint 目录；默认 models/data/finqa_qlora_7b。",
     )
     parser.add_argument("--max-length", type=int, default=2048)
     parser.add_argument("--num-train-epochs", type=float, default=2.0)
@@ -216,7 +237,15 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--lora-dropout", type=float, default=0.05)
     parser.add_argument("--seed", type=int, default=20261004)
     parser.add_argument("--eval-ratio", type=float, default=0.05)
-    return parser.parse_args()
+    return parser.parse_args(argv)
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
 
 
 def main() -> int:
@@ -225,9 +254,22 @@ def main() -> int:
         raise ValueError("--eval-ratio 必须在 0 和 0.5 之间")
     if args.lora_r <= 0 or args.lora_alpha <= 0:
         raise ValueError("--lora-r 和 --lora-alpha 必须大于 0")
+    model_path = args.model_path.expanduser().resolve()
     train_path = args.train_path.expanduser().resolve()
     output_dir = args.output_dir.expanduser().resolve()
-    artifact_dir = (args.artifact_dir or args.output_dir).expanduser().resolve()
+    artifact_dir = args.artifact_dir.expanduser().resolve()
+    model_data_root = MODEL_DATA_DIR.resolve()
+    out_root = (PROJECT_ROOT / "out").resolve()
+    if not _is_relative_to(model_path, model_data_root):
+        raise ValueError(f"--model-path 必须位于项目 models/data/ 目录下：{model_data_root}")
+    if not _is_relative_to(output_dir, out_root):
+        raise ValueError(f"--output-dir 必须位于项目 out/ 目录下：{out_root}")
+    if not _is_relative_to(artifact_dir, model_data_root):
+        raise ValueError(f"--artifact-dir 必须位于项目 models/data/ 目录下：{model_data_root}")
+    if not model_path.is_dir():
+        raise FileNotFoundError(f"基座模型目录不存在：{model_path}")
+    if not (model_path / "config.json").is_file():
+        raise FileNotFoundError(f"基座模型目录缺少 config.json：{model_path}")
     if not train_path.exists():
         raise FileNotFoundError(f"训练集路径不存在：{train_path}")
     rows = _load_train_rows(train_path)
@@ -252,7 +294,7 @@ def main() -> int:
             "QLoRA 需要安装 torch、transformers、peft、bitsandbytes"
         ) from exc
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_id, use_fast=True)
+    tokenizer = AutoTokenizer.from_pretrained(str(model_path), use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     quantization_config = BitsAndBytesConfig(
@@ -262,7 +304,7 @@ def main() -> int:
         bnb_4bit_use_double_quant=True,
     )
     model = AutoModelForCausalLM.from_pretrained(
-        args.model_id,
+        str(model_path),
         quantization_config=quantization_config,
         device_map="auto",
         torch_dtype=torch.float16,
@@ -332,6 +374,7 @@ def main() -> int:
         "schema_version": 1,
         "method": "qlora",
         "base_model_id": args.model_id,
+        "base_model_path": str(model_path),
         "train_path": str(train_path),
         "artifact_dir": str(artifact_dir),
         "train_sha256": _sha256(train_path),
