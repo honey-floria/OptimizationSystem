@@ -372,6 +372,12 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 在固定 80 条 pilot 上运行 `routed_cell_ids_operation`，确认是否超过 structured_json 的 12/80
 - [x] 分析 v5 结果：`structured_json` 为 12/80，`cell_ids_operation` 为 11/80，路由方案为 8/80，暂不进入完整 883 条
 - [ ] 修正百分比变化、实体名含 average 的题型路由，并重新运行 routed pilot
+- [x] 修正百分比变化、实体名含 average 的题型路由，并重新运行 routed pilot
+- [x] v6 路由方案达到 12/80，但未超过 structured_json，停止继续堆叠 Prompt 路由
+- [ ] 在相同 80 条样本上评估 7B 或其他更强模型，比较是否突破 12/80
+- [ ] 下载并验证 `Qwen/Qwen2.5-7B-Instruct` 本地权重
+- [ ] 在相同 80 条样本上只运行 7B `structured_json` pilot，记录显存和 OOM 情况
+- [ ] 使用 FinQA train 执行 LoRA/QLoRA 微调前，先固定当前 3B `structured_json` 基线
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 使用 FinQA train 构造“证据、操作数、操作、计算结果、单位”LoRA 监督数据
