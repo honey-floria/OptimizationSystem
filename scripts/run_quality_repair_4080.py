@@ -145,6 +145,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--dtype", choices=["float16", "bfloat16"], default="float16")
+    parser.add_argument("--adapter-path", type=Path, help="QLoRA/LoRA adapter 目录，仅用于非量化基座加载。")
+    parser.add_argument("--load-in-4bit", action="store_true", help="使用 BitsAndBytes NF4 4-bit 加载基座模型。")
     parser.add_argument("--limit", type=int, default=80, help="Pilot 样本数；使用 --full 时忽略。")
     parser.add_argument("--seed", type=int, default=20261004)
     parser.add_argument("--batch-size", type=int, default=1)
@@ -170,6 +172,8 @@ def main() -> int:
         raise ValueError("--quantized-model-path 需要同时指定 --quantization awq 或 gptq")
     if args.quantization == "none" and args.quantized_manifest is not None:
         raise ValueError("--quantized-manifest 需要同时指定 --quantization awq 或 gptq")
+    if args.adapter_path is not None and args.quantization != "none":
+        raise ValueError("QLoRA adapter 评测暂只支持 --quantization none 的基座模型")
     if args.quantization != "none" and args.model_path is not None and args.quantized_model_path is not None:
         raise ValueError("量化模式下只传 --quantized-model-path，不要同时传 --model-path")
     quantized_manifest = None
@@ -260,6 +264,8 @@ def main() -> int:
             effective_baseline_path,
             model_manifest_path,
             output_dir / "quality_service.jsonl",
+            adapter_path=args.adapter_path,
+            load_in_4bit=args.load_in_4bit,
         )
     report = run_quality_repair_experiment(
         service,
@@ -278,6 +284,8 @@ def main() -> int:
         "quantized_manifest": (
             str(quantized_manifest_path) if quantized_manifest_path else None
         ),
+        "adapter_path": str(args.adapter_path.resolve()) if args.adapter_path else None,
+        "load_in_4bit": args.load_in_4bit,
     }
     _write_json(output_dir / "comparison_report.json", report)
 
