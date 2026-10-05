@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-4080",
+  "created_at": "2026-10-05T05:44:36.453821+00:00",
+  "dataset": {
+    "role": "evaluation_dev",
+    "size": 80,
+    "source_size": 883,
+    "version": "main",
+    "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
+    "sample": {
+      "seed": 20261004,
+      "indices": [
+        18,
+        22,
+        31,
+        55,
+        57,
+        62,
+        75,
+        96,
+        120,
+        129,
+        134,
+        148,
+        151,
+        158,
+        178,
+        183,
+        191,
+        194,
+        195,
+        213,
+        214,
+        219,
+        223,
+        225,
+        234,
+        253,
+        254,
+        260,
+        267,
+        273,
+        281,
+        285,
+        287,
+        297,
+        310,
+        335,
+        341,
+        364,
+        368,
+        377,
+        378,
+        383,
+        396,
+        402,
+        407,
+        430,
+        437,
+        440,
+        455,
+        487,
+        535,
+        556,
+        566,
+        605,
+        610,
+        611,
+        623,
+        625,
+        628,
+        656,
+        657,
+        687,
+        693,
+        708,
+        711,
+        722,
+        728,
+        729,
+        744,
+        761,
+        772,
+        788,
+        824,
+        827,
+        846,
+        847,
+        852,
+        864,
+        873,
+        881
+      ],
+      "indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61"
+    }
+  },
+  "variants": [
+    {
+      "variant": "deterministic_cell_ids_operation",
+      "output_mode": "cell_ids_operation",
+      "calculator_enabled": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": false,
+      "question_routing": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. The program, not you, performs all arithmetic. Use this schema only: {\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"divide\",\"unit\":\"percent\"}. Return only existing numeric cell IDs in calculation order; do not copy their values, write a formula, or write an answer. Choose operation from add, subtract, multiply, divide, average, ratio, or percent_change. For a percentage of a total use divide with [part, total] and unit percent. For a percentage increase/decrease or growth rate use percent_change with [new, old] and unit percent. For a ratio or multiple use ratio with [numerator, denominator] and unit times. For an average select every requested period and use average. For annual or yearly interest expense select principal and rate cells and use multiply; percent-formatted rate cells are converted to fractions by the program. For a multi-step sum or product, select every numeric input needed and use add or multiply. The program validates cell IDs and computes the result deterministically.",
+      "metrics": {
+        "total": 80,
+        "parsed": 75,
+        "correct": 10,
+        "parse_rate": 0.9375,
+        "numeric_accuracy": 0.125
+      },
+      "structured_output_rate": 0.9375,
+      "calculator_use_rate": 0.9375,
+      "format_retry_count": 18,
+      "validation_failure_count": 5,
+      "fallback_count": 0,
+      "duration_seconds": 399.60376201209147,
+      "predictions_file": "deterministic_cell_ids_operation/predictions.jsonl",
+      "predictions_sha256": "b81d286ed4e0f5ccbef4e74856869ed762a4e841d680f90a9487a80570261c90"
+    },
+    {
+      "variant": "deterministic_steps_operation",
+      "output_mode": "steps_operation",
+      "calculator_enabled": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": false,
+      "question_routing": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. The program performs all arithmetic. Use only this schema: {\"steps\":[{\"operation\":\"subtract\",\"operands\":[\"r1c2\",\"r1c3\"]},{\"operation\":\"divide\",\"operands\":[\"step0\",\"r2c3\"]}],\"unit\":\"percent\"}. Each operand must be an existing numeric cell ID such as r1c2, a prior result such as step0, or a numeric constant such as 3 when the question explicitly requires it. Steps execute in order. Use divide [part,total] for a percentage of a total, percent_change [new,old] for growth/increase/decrease, average over every requested period, multiply for principal times rate interest expense, and add/subtract for multi-step totals or changes. Do not multiply a percent_change result by 100; the program keeps percentage results as fractions. Do not copy table values, write formulas, or write final answers. The program validates every reference and computes the result deterministically.",
+      "metrics": {
+        "total": 80,
+        "parsed": 74,
+        "correct": 3,
+        "parse_rate": 0.925,
+        "numeric_accuracy": 0.0375
+      },
+      "structured_output_rate": 0.9375,
+      "calculator_use_rate": 0.925,
+      "format_retry_count": 14,
+      "validation_failure_count": 5,
+      "fallback_count": 0,
+      "duration_seconds": 285.02311767602805,
+      "predictions_file": "deterministic_steps_operation/predictions.jsonl",
+      "predictions_sha256": "f9ad16064a08e3858cc0467122c713080a0a0987f06ad6af6f312a745519c874"
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "formula",
+      "value",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "formula": {
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "evidence_operation_schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "operands",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "cell_id",
+            "value"
+          ],
+          "properties": {
+            "cell_id": {
+              "type": "string",
+              "pattern": "^r[0-9]+c[0-9]+$"
+            },
+            "value": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "operands": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "cell_ids_operation_schema": {
+    "type": "object",
+    "required": [
+      "cell_ids",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "cell_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "steps_operation_schema": {
+    "type": "object",
+    "required": [
+      "steps",
+      "unit"
+    ],
+    "properties": {
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "operation",
+            "operands"
+          ],
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": [
+                "absolute_difference",
+                "add",
+                "average",
+                "difference",
+                "divide",
+                "multiply",
+                "percent",
+                "percent_change",
+                "percentage",
+                "ratio",
+                "subtract",
+                "sum"
+              ]
+            },
+            "operands": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "generation": {
+    "max_new_tokens": 256,
+    "do_sample": false,
+    "num_beams": 1
+  },
+  "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
+  "model": {
+    "model_id": "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4",
+    "model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct-GPTQ-Int4",
+    "device": "cuda:0",
+    "dtype": "float16",
+    "quantization": "gptq",
+    "quantized_manifest": "/userhome/cs5/u3680889/OptimizationSystem/out/quality_repair_7b_gptq_deterministic_pilot_v2/quantized_model_manifest.json"
+  }
+}
