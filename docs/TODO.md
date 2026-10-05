@@ -369,7 +369,9 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 增加题型路由提示：百分比、比率、平均、总和和变化题使用不同运算规则
 - [x] 为 routed cell-id 方案附加合法数值 cell ID 清单，减少引用文字或越界单元格
 - [x] 从模型输出的多个 JSON 候选中选择首个通过真实表格校验的候选
-- [ ] 在固定 80 条 pilot 上运行 `routed_cell_ids_operation`，确认是否超过 structured_json 的 12/80
+- [x] 在固定 80 条 pilot 上运行 `routed_cell_ids_operation`，确认是否超过 structured_json 的 12/80
+- [x] 分析 v5 结果：`structured_json` 为 12/80，`cell_ids_operation` 为 11/80，路由方案为 8/80，暂不进入完整 883 条
+- [ ] 修正百分比变化、实体名含 average 的题型路由，并重新运行 routed pilot
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 使用 FinQA train 构造“证据、操作数、操作、计算结果、单位”LoRA 监督数据

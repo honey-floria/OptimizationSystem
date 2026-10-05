@@ -1259,3 +1259,18 @@ python3 scripts/run_quality_repair_4080.py \
 ```
 
 门禁仍为超过现有 `structured_json` 的 `12/80` 后才恢复完整 883 条评测。
+
+## 4080 v5 结果分析（2026-10-04）
+
+v5 固定相同的 80 条 pilot 样本，对比结果如下：
+
+| 方案 | 解析率 | 数值准确率 | 正确数 | 校验失败 | 回退 | 用时 |
+|---|---:|---:|---:|---:|---:|---:|
+| `structured_json` | 93.75% | **15.00%** | **12/80** | 0 | 0 | 300.4 秒 |
+| `cell_ids_operation` | 90.00% | 13.75% | 11/80 | 16 | 16 | 306.2 秒 |
+| `routed_cell_ids_operation` | 90.00% | 10.00% | 8/80 | 18 | 18 | 386.5 秒 |
+
+多候选 JSON 校验改善了解析率，但没有改善数值正确率；题型路由反而下降，原因是旧路由规则将
+`percentage change`、`average price increase` 和 `what percentage increased` 分类错误，且路由方案按条生成导致耗时增加。
+这轮不进入完整 883 条评测。已修正路由优先级，CLI 默认恢复为 `structured_json,cell_ids_operation`，
+下一轮仅显式加入 `routed_cell_ids_operation` 进行复测。

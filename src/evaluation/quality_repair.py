@@ -374,24 +374,46 @@ def parse_validated_operation_output(
 def validate_question_operation(parsed: dict[str, Any], question: str) -> str | None:
     """Reject operations that contradict an explicit question type."""
 
-    normalized = re.sub(r"\s+", " ", str(question).lower()).strip()
+    family = _question_operation_family(question)
     operation = parsed.get("operation")
-    if any(token in normalized for token in ("percent change", "percentage increase", "percentage increased", "percentage decrease", "percentage decreased", "growth rate")):
+    if family == "percent_change":
         allowed = {"percent_change"}
-    elif any(token in normalized for token in ("what percentage", "what percent", "percent of", "portion of", "proportion of")):
+    elif family == "divide":
         allowed = {"divide", "ratio"}
-    elif any(token in normalized for token in ("ratio", "rate of return", "roi", "return on")):
-        allowed = {"divide", "ratio"}
-    elif any(token in normalized for token in ("average", "mean")):
+    elif family == "average":
         allowed = {"average"}
-    elif any(token in normalized for token in ("total", "combined", "sum of")):
+    elif family == "add":
         allowed = {"add", "sum"}
-    elif any(token in normalized for token in ("increase", "decrease", "decline", "change", "difference", "variation")):
+    elif family == "subtract":
         allowed = {"subtract", "difference", "absolute_difference"}
     else:
         return None
     if operation not in allowed:
         return f"operation {operation!r} conflicts with question type; expected one of {sorted(allowed)}"
+    return None
+
+
+def _question_operation_family(question: str) -> str | None:
+    normalized = re.sub(r"\s+", " ", str(question).lower()).strip()
+    has_percent = any(token in normalized for token in ("percent", "percentage", "percentual"))
+    has_change = any(
+        token in normalized
+        for token in ("increase", "increased", "decrease", "decreased", "decline", "change", "difference", "variation", "growth")
+    )
+    if has_percent and has_change and not any(
+        token in normalized for token in ("percent of", "percentage of", "percent to", "percentage to")
+    ):
+        return "percent_change"
+    if any(token in normalized for token in ("what percentage", "what percent", "percent of", "percentage of", "percent to", "percentage to", "portion of", "proportion of")):
+        return "divide"
+    if any(token in normalized for token in ("ratio", "rate of return", "roi", "return on")):
+        return "divide"
+    if has_change:
+        return "subtract"
+    if any(token in normalized for token in ("average", "mean")):
+        return "average"
+    if any(token in normalized for token in ("total", "combined", "sum of")):
+        return "add"
     return None
 
 
@@ -406,17 +428,16 @@ def question_operation_hint(question: str) -> str:
             f" The question names years {years[0]} and {years[1]}; when it asks "
             "for an increase, decrease, or change, use later year minus earlier year."
         )
-    if any(token in normalized for token in ("percent change", "percentage increase", "percentage increased", "percentage decrease", "percentage decreased", "growth rate")):
+    family = _question_operation_family(question)
+    if family == "percent_change":
         rule = "Use percent_change with [new value, old value]; divide by the old value and keep the result as a fraction."
-    elif any(token in normalized for token in ("what percentage", "what percent", "percent of", "portion of", "proportion of")):
+    elif family == "divide":
         rule = "Use divide with [part value, total value]; keep the result as a fraction even when unit is percent."
-    elif any(token in normalized for token in ("ratio", "rate of return", "roi", "return on")):
-        rule = "Use divide with [numerator, denominator]; do not multiply by 100."
-    elif any(token in normalized for token in ("average", "mean")):
+    elif family == "average":
         rule = "Use average over the requested numeric cells."
-    elif any(token in normalized for token in ("total", "combined", "sum of")):
+    elif family == "add":
         rule = "Use add over the requested numeric cells."
-    elif any(token in normalized for token in ("increase", "decrease", "decline", "change", "difference", "variation")):
+    elif family == "subtract":
         rule = "Use subtract in semantic order [later/new value, earlier/old value]."
     else:
         rule = "Choose the operation that directly matches the question wording."
