@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "format": "gptq",
+  "model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct-GPTQ-Int4",
+  "source_model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct-GPTQ-Int4",
+  "required_files": [
+    "config.json"
+  ],
+  "plan": {
+    "method": "gptq",
+    "bits": 4,
+    "weight_bits": 4,
+    "activation_bits": 16,
+    "model_id": "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4"
+  }
+}
