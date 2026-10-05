@@ -201,6 +201,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--model-id", default="Qwen/Qwen2.5-7B-Instruct")
     parser.add_argument("--train-path", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument(
+        "--artifact-dir",
+        type=Path,
+        help="模型权重、tokenizer 和 checkpoint 保存目录；不提供时与 --output-dir 相同。",
+    )
     parser.add_argument("--max-length", type=int, default=2048)
     parser.add_argument("--num-train-epochs", type=float, default=2.0)
     parser.add_argument("--max-steps", type=int, default=-1)
@@ -222,6 +227,7 @@ def main() -> int:
         raise ValueError("--lora-r 和 --lora-alpha 必须大于 0")
     train_path = args.train_path.expanduser().resolve()
     output_dir = args.output_dir.expanduser().resolve()
+    artifact_dir = (args.artifact_dir or args.output_dir).expanduser().resolve()
     if not train_path.exists():
         raise FileNotFoundError(f"训练集路径不存在：{train_path}")
     rows = _load_train_rows(train_path)
@@ -279,8 +285,9 @@ def main() -> int:
     train_dataset = SupervisedDataset(train_examples, tokenizer, args.max_length)
     eval_dataset = SupervisedDataset(eval_examples, tokenizer, args.max_length)
     output_dir.mkdir(parents=True, exist_ok=True)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
     training_kwargs = {
-        "output_dir": str(output_dir),
+        "output_dir": str(artifact_dir),
         "num_train_epochs": args.num_train_epochs,
         "max_steps": args.max_steps,
         "per_device_train_batch_size": 1,
@@ -319,13 +326,14 @@ def main() -> int:
         data_collator=CausalCollator(tokenizer),
     )
     trainer.train()
-    trainer.save_model(str(output_dir))
-    tokenizer.save_pretrained(str(output_dir))
+    trainer.save_model(str(artifact_dir))
+    tokenizer.save_pretrained(str(artifact_dir))
     manifest = {
         "schema_version": 1,
         "method": "qlora",
         "base_model_id": args.model_id,
         "train_path": str(train_path),
+        "artifact_dir": str(artifact_dir),
         "train_sha256": _sha256(train_path),
         "source_rows": len(rows),
         "numeric_program_examples": len(examples),
