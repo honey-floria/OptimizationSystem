@@ -40,6 +40,7 @@ ALLOWED_UNITS = {
     "shares",
     "times",
     "multiple",
+    "mmboe",
 }
 ALLOWED_OPERATIONS = {
     "add",
@@ -129,7 +130,17 @@ def _json_candidates(text: str) -> Iterable[dict[str, Any]]:
         try:
             value, _ = decoder.raw_decode(text[index:])
         except json.JSONDecodeError:
-            continue
+            repaired_text = re.sub(
+                r'("value"\s*:\s*)([-+]?(?:\d+(?:\.\d*)?|\.\d+))"(\s*[,}])',
+                r"\1\2\3",
+                text[index:],
+            )
+            if repaired_text == text[index:]:
+                continue
+            try:
+                value, _ = decoder.raw_decode(repaired_text)
+            except json.JSONDecodeError:
+                continue
         if isinstance(value, dict):
             yield value
 
