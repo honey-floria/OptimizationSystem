@@ -28,6 +28,15 @@
       "format_retry": true,
       "stable_cell_ids": true,
       "prompt_suffix": "\nReturn exactly one JSON object and no other text. Do not output a final value or explanation. Every table cell is labeled [cell_id=rNcM]. Use this schema: {\"evidence\":[{\"cell_id\":\"r1c2\",\"value\":\"exact cell value\"}],\"operands\":[0,0],\"operation\":\"subtract\",\"unit\":\"million|percent|dollars|shares|\"}. Evidence must use existing cell IDs and copy the exact cell value. Every operand must be copied from a numeric evidence cell, in calculation order. subtract, divide, ratio, percent_change, and absolute_difference require exactly two operands; add and multiply require at least two. For percent_change use [new, old] and unit percent. operation must be one of add, subtract, absolute_difference, multiply, divide, average, ratio, percent_change. The program calculates the final answer deterministically."
+    },
+    {
+      "name": "cell_ids_operation",
+      "output_mode": "cell_ids_operation",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Do not output evidence values, operands, a formula, a final answer, or explanation. Every table cell is labeled [cell_id=rNcM]. Use this schema: {\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"subtract\",\"unit\":\"million|percent|dollars|shares|\"}. Return cell_ids in calculation order. subtract, divide, ratio, percent_change, and absolute_difference require exactly two cell_ids; add, multiply, and average require at least two. For percent_change use [new, old]. The program will look up cell values and calculate the final answer deterministically."
     }
   ],
   "schema": {

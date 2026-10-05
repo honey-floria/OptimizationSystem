@@ -5,6 +5,8 @@ from decimal import Decimal
 from src.evaluation.quality_repair import (
     add_stable_table_ids,
     build_few_shot_suffix,
+    materialize_cell_ids_operation,
+    parse_cell_ids_operation_output,
     parse_evidence_operation_output,
     extract_final_numeric,
     parse_structured_output,
@@ -12,6 +14,7 @@ from src.evaluation.quality_repair import (
     repair_with_calculator,
     repair_with_evidence_operation,
     safe_calculate,
+    validate_cell_ids_operation,
     validate_evidence_operation,
     _select_evaluation_rows,
 )
@@ -92,6 +95,26 @@ class QualityRepairTest(unittest.TestCase):
             '"operands":[303.1],"operation":"subtract","unit":"million"}'
         )
         self.assertIn("exactly two", validate_evidence_operation(wrong_arity, row))
+
+    def test_cell_ids_operation_resolves_values_from_table(self):
+        row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}
+        parsed = parse_cell_ids_operation_output(
+            '{"cell_ids":["r1c1","r0c1"],"operation":"subtract",'
+            '"unit":"million"}'
+        )
+        self.assertIsNone(validate_cell_ids_operation(parsed, row))
+        materialized = materialize_cell_ids_operation(parsed, row)
+        repaired = repair_with_evidence_operation(materialized)
+        self.assertEqual(repaired["operands"], ["290.6", "303.1"])
+        self.assertEqual(repaired["normalized_value"], "-12.5")
+
+    def test_cell_ids_operation_rejects_non_numeric_cell(self):
+        row = {"table": [["metric", "303.1"], ["label", "shares"]]}
+        parsed = parse_cell_ids_operation_output(
+            '{"cell_ids":["r0c1","r1c1"],"operation":"subtract",'
+            '"unit":"million"}'
+        )
+        self.assertIn("not numeric", validate_cell_ids_operation(parsed, row))
 
     def test_few_shot_uses_only_passed_examples(self):
         suffix = build_few_shot_suffix([{"question": "q", "answer": "1"}])

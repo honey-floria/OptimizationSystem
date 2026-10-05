@@ -1071,8 +1071,8 @@ Notebook 会在每个模型结束后释放显存，并输出解析率、结构�
 
 新增本地入口 `scripts/run_quality_repair_4080.py`，不依赖 Google Colab 或 Google Drive，模型和数据均从
 服务器本地路径读取。默认配置为单卡安全模式：`batch_size=1`、`max_new_tokens=256`、固定 80 条 pilot、
-只运行新的 `evidence_operation` 两阶段方案；需要对照时可传入
-`--variants structured_json,evidence_operation`。
+默认对照 `structured_json` 和新的 `cell_ids_operation` 紧凑方案；也可以通过
+`--variants` 选择其他已配置方案。
 
 服务器环境可先安装 `requirements-server.txt`：
 
@@ -1099,7 +1099,7 @@ python3 scripts/run_quality_repair_4080.py \
   --model-id Qwen/Qwen2.5-3B-Instruct \
   --dataset-dir /data/finqa_assets \
   --output-dir out/quality_repair_3b_4080 \
-  --variants structured_json,evidence_operation
+  --variants structured_json,cell_ids_operation
 ```
 
 确认 pilot 有效后，增加 `--full` 执行完整 883 条 dev：
@@ -1200,3 +1200,16 @@ python3 scripts/run_quality_repair_4080.py \
 3. 下一步优先为表格单元格增加稳定 ID，并限制操作类型和操作数个数；
 4. 增加百分比、平均值和除法的操作语义校验，校验失败时只重试证据和操作数；
 5. 完成这些约束后，再用同一 80 条样本复测，确认正确数提升后才运行完整 dev。
+
+## 4080 稳定 ID 复测结果（2026-10-05）
+
+第二轮输出位于 `out/quality_repair_3b_4080_v2`。同一批 80 条样本上，原始 `structured_json` 保持
+`12/80` 正确、解析率 `93.75%`；带稳定 ID 的 `evidence_operation` 只有 `2/80` 正确、解析率 `6.25%`，
+并产生 `75` 条校验失败和 `78` 次重试，用时 `384.7` 秒。
+
+校验失败主要来自完整 evidence-operation 契约过于复杂：模型遗漏 operands 或 unit、引用不存在的 cell ID、
+复制了错误的 cell value，或输出 JSON 后继续生成解释。稳定 ID 因此证明了“错误可以被机器拦截”，但没有证明
+“模型已经具备稳定生成该契约的能力”。本轮不扩展完整 883 条评测。
+
+下一轮将保留 cell ID 校验和 Decimal 计算，但允许在 evidence 明确、数值数量与操作无歧义时由程序恢复缺失
+operands；恢复失败则拒绝计算，不读取解释文本中的数字。目标是在降低输出复杂度的同时保留可追溯性。
