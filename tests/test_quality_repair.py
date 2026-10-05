@@ -74,7 +74,8 @@ class QualityRepairTest(unittest.TestCase):
     def test_evidence_operation_validates_stable_cell_ids(self):
         row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}
         enriched = add_stable_table_ids(row)
-        self.assertIn("[cell_id=r0c1] 303.1", enriched["table"][0][1])
+        self.assertIn("[cell_id=r0c1", enriched["table"][0][1])
+        self.assertIn("column=303.1] 303.1", enriched["table"][0][1])
         parsed = parse_evidence_operation_output(
             '{"evidence":[{"cell_id":"r0c1","value":"303.1"},'
             '{"cell_id":"r1c1","value":"290.6"}],'

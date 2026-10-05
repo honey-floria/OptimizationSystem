@@ -1213,3 +1213,20 @@ python3 scripts/run_quality_repair_4080.py \
 
 下一轮将保留 cell ID 校验和 Decimal 计算，但允许在 evidence 明确、数值数量与操作无歧义时由程序恢复缺失
 operands；恢复失败则拒绝计算，不读取解释文本中的数字。目标是在降低输出复杂度的同时保留可追溯性。
+
+## 4080 `cell_ids_operation` v3 结果（2026-10-05）
+
+第三轮结果位于 `out/quality_repair_3b_4080_v3`。`structured_json` 保持 `12/80` 正确、解析率
+`93.75%`；紧凑 `cell_ids_operation` 达到 `6/80` 正确、解析率 `71.25%`，校验失败 `23` 条，重试 `37` 次，
+用时 `255.5` 秒。紧凑契约相较严格 `evidence_operation` 的 `2/80` 有改善，但仍未超过基线。
+
+当前主要瓶颈已经从重复输出 operands 转为单元格语义选择和操作方向：模型会引用文字或年份单元格、遗漏
+operation，或把百分比题的分子和分母顺序反过来。下一步应为 cell ID 附加行名、列名和年份语义提示，并对校验
+失败样本启用 `structured_json` 回退；在混合方案超过 `12/80` 前不运行完整 883 条。
+
+## 下一轮代码优化（2026-10-05）
+
+已实现语义化 cell ID 和结构化回退。表格单元格现在会同时显示 `cell_id`、行名、列名和年份，模型仍只需输出
+短的 `cell_ids_operation` 契约；如果 cell ID 校验失败、单元格非数字、操作数数量不正确或 JSON 无法解析，程序
+会额外请求一次 `structured_json`，并记录 `fallback_used` 和 `validation_error`。这保留了新方案的可追溯校验，
+同时避免严格契约失败时直接丢失基线答案。

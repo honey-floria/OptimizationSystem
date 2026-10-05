@@ -362,7 +362,9 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 实现 evidence—operation—value—unit 一致性校验，失败时只重试证据和操作数
 - [x] 在 4080 上复测带稳定 ID 和一致性校验的新方案
 - [x] 新增 `cell_ids_operation` 紧凑契约，只输出 cell_ids、operation 和 unit，由程序恢复 operands
-- [ ] 在 4080 上复测 `structured_json` 与 `cell_ids_operation`
+- [x] 在 4080 上复测 `structured_json` 与 `cell_ids_operation`
+- [ ] 为 cell_id 增加行名、列名和年份语义提示，减少模型按裸索引选错单元格
+- [ ] 增加题型路由和 structured_json 回退策略，避免紧凑方案失败时丢失基线答案
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
 - [ ] 使用 FinQA train 构造“证据、操作数、操作、计算结果、单位”LoRA 监督数据
 - [ ] 严格隔离 train/dev/test，禁止使用 dev/test 答案进行 Prompt 或微调
