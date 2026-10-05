@@ -27,6 +27,21 @@ def _load_json(path: Path) -> Any:
         raise ValueError(f"无法读取 FinQA JSON：{path}: {exc}") from exc
 
 
+def _load_train_rows(path: Path) -> list[dict[str, Any]]:
+    if path.is_dir():
+        try:
+            from datasets import load_from_disk
+        except ImportError as exc:
+            raise RuntimeError(
+                "读取 HuggingFace Arrow 数据集需要安装 datasets。"
+            ) from exc
+        dataset = load_from_disk(str(path))
+        if hasattr(dataset, "keys") and not hasattr(dataset, "column_names"):
+            raise ValueError("--train-path 必须指向单个 Dataset 目录，不能是 DatasetDict 根目录")
+        return [dict(row) for row in dataset]
+    return _rows_from_payload(_load_json(path))
+
+
 def _rows_from_payload(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, list):
         return [row for row in payload if isinstance(row, dict)]
@@ -172,9 +187,12 @@ class CausalCollator:
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
+    paths = [path] if path.is_file() else sorted(item for item in path.rglob("*") if item.is_file())
+    for item in paths:
+        digest.update(str(item.relative_to(path.parent if path.is_file() else path)).encode())
+        with item.open("rb") as stream:
+            for block in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(block)
     return digest.hexdigest()
 
 
@@ -199,7 +217,9 @@ def main() -> int:
         raise ValueError("--eval-ratio 必须在 0 和 0.5 之间")
     train_path = args.train_path.expanduser().resolve()
     output_dir = args.output_dir.expanduser().resolve()
-    rows = _rows_from_payload(_load_json(train_path))
+    if not train_path.exists():
+        raise FileNotFoundError(f"训练集路径不存在：{train_path}")
+    rows = _load_train_rows(train_path)
     examples = build_training_examples(rows)
     random.Random(args.seed).shuffle(examples)
     split_index = max(1, int(len(examples) * (1.0 - args.eval_ratio)))
@@ -254,26 +274,37 @@ def main() -> int:
     train_dataset = SupervisedDataset(train_examples, tokenizer, args.max_length)
     eval_dataset = SupervisedDataset(eval_examples, tokenizer, args.max_length)
     output_dir.mkdir(parents=True, exist_ok=True)
-    training_args = TrainingArguments(
-        output_dir=str(output_dir),
-        num_train_epochs=args.num_train_epochs,
-        max_steps=args.max_steps,
-        per_device_train_batch_size=1,
-        per_device_eval_batch_size=1,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        learning_rate=args.learning_rate,
-        fp16=True,
-        gradient_checkpointing=True,
-        logging_steps=10,
-        evaluation_strategy="steps",
-        eval_steps=100,
-        save_strategy="steps",
-        save_steps=100,
-        save_total_limit=2,
-        report_to="none",
-        remove_unused_columns=False,
-        seed=args.seed,
-    )
+    training_kwargs = {
+        "output_dir": str(output_dir),
+        "num_train_epochs": args.num_train_epochs,
+        "max_steps": args.max_steps,
+        "per_device_train_batch_size": 1,
+        "per_device_eval_batch_size": 1,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
+        "learning_rate": args.learning_rate,
+        "fp16": True,
+        "gradient_checkpointing": True,
+        "logging_steps": 10,
+        "eval_steps": 100,
+        "save_strategy": "steps",
+        "save_steps": 100,
+        "save_total_limit": 2,
+        "report_to": "none",
+        "remove_unused_columns": False,
+        "seed": args.seed,
+    }
+    try:
+        training_args = TrainingArguments(
+            evaluation_strategy="steps",
+            **training_kwargs,
+        )
+    except TypeError as exc:
+        if "evaluation_strategy" not in str(exc):
+            raise
+        training_args = TrainingArguments(
+            eval_strategy="steps",
+            **training_kwargs,
+        )
     trainer = Trainer(
         model=model,
         args=training_args,
