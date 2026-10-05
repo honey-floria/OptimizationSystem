@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-4080",
+  "dataset_role": "evaluation_dev",
+  "calibration_role": "calibration",
+  "minimum_parse_rate": 0.99,
+  "tolerance": 0.0001,
+  "batch_size": 1,
+  "show_progress": true,
+  "progress_every_batches": 10,
+  "generation": {
+    "max_new_tokens": 256,
+    "do_sample": false,
+    "num_beams": 1
+  },
+  "variants": [
+    {
+      "name": "structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "format_retry": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Preserve the table column, row, year, and unit in evidence. Use times or multiple for a ratio, and mmboe when the table uses that unit. The value must be the final answer."
+    },
+    {
+      "name": "evidence_operation",
+      "output_mode": "evidence_operation",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "stable_cell_ids": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Do not output a final value or explanation. Every table cell is labeled [cell_id=rNcM]. Use this schema: {\"evidence\":[{\"cell_id\":\"r1c2\",\"value\":\"exact cell value\"}],\"operands\":[0,0],\"operation\":\"subtract\",\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Evidence must use existing cell IDs and copy the exact cell value. Every operand must be copied from a numeric evidence cell, in calculation order. subtract, divide, ratio, percent_change, and absolute_difference require exactly two operands; add and multiply require at least two. For percent_change use [new, old] and unit percent. For ratio use unit times or multiple; use mmboe when the table uses that unit. operation must be one of add, subtract, absolute_difference, multiply, divide, average, ratio, percent_change. The program calculates the final answer deterministically."
+    },
+    {
+      "name": "cell_ids_operation",
+      "output_mode": "cell_ids_operation",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": true,
+      "fallback_prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Preserve the table column, row, year, and unit in evidence. Use times or multiple for a ratio, and mmboe when the table uses that unit. The value must be the final answer.",
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Do not output evidence values, operands, a formula, a final answer, or explanation. Every table cell is labeled [cell_id=rNcM]. Use this schema: {\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"subtract\",\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Return cell_ids in calculation order. subtract, divide, ratio, percent_change, and absolute_difference require exactly two cell_ids; add, multiply, and average require at least two. For percent_change use [new, old]. For ratio use unit times or multiple. Use mmboe when the table uses that unit. The program will look up cell values and calculate the final answer deterministically."
+    },
+    {
+      "name": "routed_cell_ids_operation",
+      "output_mode": "cell_ids_operation",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": true,
+      "question_routing": true,
+      "fallback_prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Preserve the table column, row, year, and unit in evidence. Use times or multiple for a ratio, and mmboe when the table uses that unit. The value must be the final answer.",
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Do not output evidence values, operands, a formula, a final answer, or explanation. Every table cell is labeled [cell_id=rNcM]. Use this schema: {\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"subtract\",\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Return cell_ids in calculation order. subtract, divide, ratio, percent_change, and absolute_difference require exactly two cell_ids; add, multiply, and average require at least two. For percent_change use [new, old]. For ratio use unit times or multiple. Use mmboe when the table uses that unit. The program will look up cell values and calculate the final answer deterministically."
+    },
+    {
+      "name": "deterministic_cell_ids_operation",
+      "output_mode": "cell_ids_operation",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": false,
+      "question_routing": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. The program, not you, performs all arithmetic. Use this schema only: {\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"divide\",\"unit\":\"percent\"}. Return only existing numeric cell IDs in calculation order; do not copy their values, write a formula, or write an answer. Choose operation from add, subtract, multiply, divide, average, ratio, or percent_change. For a percentage of a total use divide with [part, total] and unit percent. For a percentage increase/decrease or growth rate use percent_change with [new, old] and unit percent. For a ratio or multiple use ratio with [numerator, denominator] and unit times. For an average select every requested period and use average. For annual or yearly interest expense select principal and rate cells and use multiply; percent-formatted rate cells are converted to fractions by the program. For a multi-step sum or product, select every numeric input needed and use add or multiply. The program validates cell IDs and computes the result deterministically."
+    },
+    {
+      "name": "deterministic_steps_operation",
+      "output_mode": "steps_operation",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": false,
+      "question_routing": true,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. The program performs all arithmetic. Use only this schema: {\"steps\":[{\"operation\":\"subtract\",\"operands\":[\"r1c2\",\"r1c3\"]},{\"operation\":\"divide\",\"operands\":[\"step0\",\"r2c3\"]}],\"unit\":\"percent\"}. Each operand must be an existing numeric cell ID such as r1c2, a prior result such as step0, or a numeric constant such as 3 when the question explicitly requires it. Steps execute in order. Use divide [part,total] for a percentage of a total, percent_change [new,old] for growth/increase/decrease, average over every requested period, multiply for principal times rate interest expense, and add/subtract for multi-step totals or changes. Do not multiply a percent_change result by 100; the program keeps percentage results as fractions. Do not copy table values, write formulas, or write final answers. The program validates every reference and computes the result deterministically."
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "formula",
+      "value",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "formula": {
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "evaluation_size": 80,
+  "evaluation_seed": 20261004,
+  "pilot_variants": [
+    "deterministic_cell_ids_operation",
+    "deterministic_steps_operation"
+  ]
+}
