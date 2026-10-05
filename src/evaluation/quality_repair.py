@@ -65,6 +65,8 @@ class PromptVariant:
     format_retry: bool = False
     stable_cell_ids: bool = False
     cell_ids_only: bool = False
+    fallback_to_structured: bool = False
+    fallback_prompt_suffix: str = ""
 
 
 class CalculationError(ValueError):
@@ -199,10 +201,30 @@ def add_stable_table_ids(row: dict[str, Any]) -> dict[str, Any]:
     """Add deterministic row/column IDs to a copy of a FinQA row."""
 
     enriched = dict(row)
+    table = row.get("table", [])
+    column_labels = [
+        str(value).replace("\n", " ").strip()
+        for value in (table[0] if table else [])
+    ]
     enriched["table"] = [
-        [f"[cell_id=r{row_index}c{column_index}] {cell}"
-         for column_index, cell in enumerate(table_row)]
-        for row_index, table_row in enumerate(row.get("table", []))
+        [
+            (
+                f"[cell_id=r{row_index}c{column_index} "
+                f"row={row_label} column={column_label}] {cell}"
+            )
+            for column_index, cell in enumerate(table_row)
+            for row_label, column_label in [
+                (
+                    str(table_row[0]).replace("\n", " ").strip()
+                    if table_row
+                    else "",
+                    column_labels[column_index]
+                    if column_index < len(column_labels)
+                    else f"column_{column_index}",
+                )
+            ]
+        ]
+        for row_index, table_row in enumerate(table)
     ]
     return enriched
 
@@ -485,6 +507,8 @@ def build_prompt_variants(config: dict[str, Any]) -> list[PromptVariant]:
                 format_retry=bool(item.get("format_retry", False)),
                 stable_cell_ids=bool(item.get("stable_cell_ids", False)),
                 cell_ids_only=bool(item.get("cell_ids_only", False)),
+                fallback_to_structured=bool(item.get("fallback_to_structured", False)),
+                fallback_prompt_suffix=str(item.get("fallback_prompt_suffix", "")),
             )
         )
     if not variants:
@@ -653,6 +677,7 @@ def run_quality_repair_experiment(
         calculator_count = 0
         format_retry_count = 0
         validation_failure_count = 0
+        fallback_count = 0
         prompt_suffix = variant.prompt_suffix
         if variant.name == "few_shot_structured_json":
             few_shot = build_few_shot_suffix(calibration_rows)
@@ -680,6 +705,8 @@ def run_quality_repair_experiment(
                 for row, request, result in zip(rows, requests, generated):
                     raw_output = result["output_text"]
                     validation_error = None
+                    validation_failure_reason = None
+                    fallback_used = False
                     if variant.output_mode == "cell_ids_operation":
                         parsed = parse_cell_ids_operation_output(raw_output)
                         if parsed is not None and variant.stable_cell_ids:
@@ -741,6 +768,26 @@ def run_quality_repair_experiment(
                         format_retry_count += 1
                         retry_used = True
                     if (
+                        variant.output_mode == "cell_ids_operation"
+                        and variant.fallback_to_structured
+                        and (parsed is None or validation_error is not None)
+                    ):
+                        validation_failure_reason = (
+                            validation_error or "unparseable operation output"
+                        )
+                        fallback = service.generate_one(
+                            request,
+                            prompt_suffix=variant.fallback_prompt_suffix,
+                        )
+                        fallback_output = fallback["output_text"]
+                        fallback_parsed = parse_structured_output(fallback_output)
+                        fallback_count += 1
+                        if fallback_parsed is not None:
+                            raw_output = fallback_output
+                            parsed = fallback_parsed
+                            validation_error = None
+                            fallback_used = True
+                    if (
                         parsed is None
                         and variant.output_mode in OPERATION_OUTPUT_MODES
                         and variant.stable_cell_ids
@@ -751,6 +798,7 @@ def run_quality_repair_experiment(
                             "structured": False,
                             "validation_error": validation_error,
                         }
+                        validation_failure_reason = validation_failure_reason or validation_error
                     elif parsed is None:
                         parsed = extract_final_numeric(raw_output)
                     elif validation_error is not None:
@@ -760,13 +808,18 @@ def run_quality_repair_experiment(
                             "structured": False,
                             "validation_error": validation_error,
                         }
-                    if validation_error is not None:
+                        validation_failure_reason = validation_failure_reason or validation_error
+                    if validation_failure_reason is not None:
                         validation_failure_count += 1
                     if parsed.get("structured"):
                         structured_count += 1
-                    if variant.output_mode == "cell_ids_operation" and validation_error is None:
+                    if (
+                        variant.output_mode == "cell_ids_operation"
+                        and validation_error is None
+                        and not fallback_used
+                    ):
                         parsed = materialize_cell_ids_operation(parsed, row)
-                    if variant.output_mode in OPERATION_OUTPUT_MODES:
+                    if variant.output_mode in OPERATION_OUTPUT_MODES and not fallback_used:
                         repaired = (
                             repair_with_evidence_operation(parsed)
                             if validation_error is None
@@ -810,7 +863,8 @@ def run_quality_repair_experiment(
                         "operands": parsed.get("operands"),
                         "operation": parsed.get("operation"),
                         "unit": parsed.get("unit"),
-                        "validation_error": parsed.get("validation_error"),
+                        "validation_error": validation_failure_reason or parsed.get("validation_error"),
+                        "fallback_used": fallback_used,
                     }
                     stream.write(json.dumps(record, ensure_ascii=False) + "\n")
                     predictions.append(extracted if extracted is not None else "")
@@ -845,12 +899,14 @@ def run_quality_repair_experiment(
                 "calculator_enabled": variant.calculator_enabled,
                 "stable_cell_ids": variant.stable_cell_ids,
                 "cell_ids_only": variant.cell_ids_only,
+                "fallback_to_structured": variant.fallback_to_structured,
                 "prompt_suffix": prompt_suffix,
                 "metrics": metrics,
                 "structured_output_rate": structured_count / len(evaluation_rows) if evaluation_rows else 0.0,
                 "calculator_use_rate": calculator_count / len(evaluation_rows) if evaluation_rows else 0.0,
                 "format_retry_count": format_retry_count,
                 "validation_failure_count": validation_failure_count,
+                "fallback_count": fallback_count,
                 "duration_seconds": time.perf_counter() - started,
                 "predictions_file": str(predictions_path.relative_to(output_path)),
                 "predictions_sha256": _sha256(predictions_path),
