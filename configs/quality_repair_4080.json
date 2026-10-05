@@ -39,6 +39,18 @@
       "fallback_to_structured": true,
       "fallback_prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|\"}. Preserve the table column, row, year, and unit in evidence. The value must be the final answer.",
       "prompt_suffix": "\nReturn exactly one JSON object and no other text. Do not output evidence values, operands, a formula, a final answer, or explanation. Every table cell is labeled [cell_id=rNcM]. Use this schema: {\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"subtract\",\"unit\":\"million|percent|dollars|shares|\"}. Return cell_ids in calculation order. subtract, divide, ratio, percent_change, and absolute_difference require exactly two cell_ids; add, multiply, and average require at least two. For percent_change use [new, old]. The program will look up cell values and calculate the final answer deterministically."
+    },
+    {
+      "name": "routed_cell_ids_operation",
+      "output_mode": "cell_ids_operation",
+      "calculator_enabled": true,
+      "format_retry": true,
+      "stable_cell_ids": true,
+      "cell_ids_only": true,
+      "fallback_to_structured": true,
+      "question_routing": true,
+      "fallback_prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|\"}. Preserve the table column, row, year, and unit in evidence. The value must be the final answer.",
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Do not output evidence values, operands, a formula, a final answer, or explanation. Every table cell is labeled [cell_id=rNcM]. Use this schema: {\"cell_ids\":[\"r1c2\",\"r1c3\"],\"operation\":\"subtract\",\"unit\":\"million|percent|dollars|shares|\"}. Return cell_ids in calculation order. subtract, divide, ratio, percent_change, and absolute_difference require exactly two cell_ids; add, multiply, and average require at least two. For percent_change use [new, old]. The program will look up cell values and calculate the final answer deterministically."
     }
   ],
   "schema": {

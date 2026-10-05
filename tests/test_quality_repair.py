@@ -6,6 +6,7 @@ from src.evaluation.quality_repair import (
     add_stable_table_ids,
     build_few_shot_suffix,
     materialize_cell_ids_operation,
+    parse_validated_operation_output,
     parse_cell_ids_operation_output,
     parse_evidence_operation_output,
     extract_final_numeric,
@@ -16,6 +17,9 @@ from src.evaluation.quality_repair import (
     safe_calculate,
     validate_cell_ids_operation,
     validate_evidence_operation,
+    question_operation_hint,
+    numeric_cell_catalog,
+    validate_question_operation,
     _select_evaluation_rows,
 )
 
@@ -116,6 +120,41 @@ class QualityRepairTest(unittest.TestCase):
             '"unit":"million"}'
         )
         self.assertIn("not numeric", validate_cell_ids_operation(parsed, row))
+
+    def test_validated_parser_skips_invalid_candidate(self):
+        row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}
+        text = (
+            '{"cell_ids":["r9c9","r0c1"],"operation":"subtract","unit":"million"}\n'
+            '{"cell_ids":["r1c1","r0c1"],"operation":"subtract","unit":"million"}'
+        )
+        parsed, error = parse_validated_operation_output(
+            text, row, "cell_ids_operation"
+        )
+        self.assertIsNone(error)
+        self.assertEqual(parsed["cell_ids"], ["r1c1", "r0c1"])
+
+    def test_question_routing_and_numeric_catalog(self):
+        hint = question_operation_hint("what percentage increased from 2010 to 2011?")
+        self.assertIn("percent_change", hint)
+        self.assertIn("2010", hint)
+        catalog = numeric_cell_catalog({"table": [["metric", "1.5"], ["label", "n/a"]]})
+        self.assertIn("r0c1=1.5", catalog)
+        self.assertNotIn("r1c1=n/a", catalog)
+
+    def test_question_operation_validation_rejects_mismatched_family(self):
+        self.assertIsNone(
+            validate_question_operation(
+                {"operation": "divide"},
+                "what percentage of inventory was sold?",
+            )
+        )
+        self.assertIn(
+            "conflicts",
+            validate_question_operation(
+                {"operation": "add"},
+                "what percentage of inventory was sold?",
+            ),
+        )
 
     def test_few_shot_uses_only_passed_examples(self):
         suffix = build_few_shot_suffix([{"question": "q", "answer": "1"}])

@@ -67,6 +67,7 @@ class PromptVariant:
     cell_ids_only: bool = False
     fallback_to_structured: bool = False
     fallback_prompt_suffix: str = ""
+    question_routing: bool = False
 
 
 class CalculationError(ValueError):
@@ -331,6 +332,107 @@ def parse_cell_ids_operation_output(text: str) -> dict[str, Any] | None:
     return None
 
 
+def parse_validated_operation_output(
+    text: str,
+    row: dict[str, Any],
+    output_mode: str,
+    question: str | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Select the first operation candidate that is valid for this table.
+
+    Small causal models often emit several JSON candidates while repairing their
+    own answer. Parsing only the first candidate turns a later valid candidate
+    into a false validation failure, so candidates are checked in output order.
+    """
+
+    if output_mode == "cell_ids_operation":
+        parser = parse_cell_ids_operation_output
+        validator = validate_cell_ids_operation
+    elif output_mode == "evidence_operation":
+        parser = parse_evidence_operation_output
+        validator = validate_evidence_operation
+    else:
+        raise ValueError(f"Unsupported operation output mode: {output_mode}")
+
+    last_error: str | None = None
+    for payload in _json_candidates(text):
+        candidate_text = json.dumps(payload, ensure_ascii=False)
+        parsed = parser(candidate_text)
+        if parsed is None:
+            continue
+        error = validator(parsed, row)
+        if error is None and question is not None:
+            error = validate_question_operation(parsed, question)
+        if error is None:
+            return parsed, None
+        last_error = error
+    if last_error is not None:
+        return None, last_error
+    return None, "unparseable operation output"
+
+
+def validate_question_operation(parsed: dict[str, Any], question: str) -> str | None:
+    """Reject operations that contradict an explicit question type."""
+
+    normalized = re.sub(r"\s+", " ", str(question).lower()).strip()
+    operation = parsed.get("operation")
+    if any(token in normalized for token in ("percent change", "percentage increase", "percentage increased", "percentage decrease", "percentage decreased", "growth rate")):
+        allowed = {"percent_change"}
+    elif any(token in normalized for token in ("what percentage", "what percent", "percent of", "portion of", "proportion of")):
+        allowed = {"divide", "ratio"}
+    elif any(token in normalized for token in ("ratio", "rate of return", "roi", "return on")):
+        allowed = {"divide", "ratio"}
+    elif any(token in normalized for token in ("average", "mean")):
+        allowed = {"average"}
+    elif any(token in normalized for token in ("total", "combined", "sum of")):
+        allowed = {"add", "sum"}
+    elif any(token in normalized for token in ("increase", "decrease", "decline", "change", "difference", "variation")):
+        allowed = {"subtract", "difference", "absolute_difference"}
+    else:
+        return None
+    if operation not in allowed:
+        return f"operation {operation!r} conflicts with question type; expected one of {sorted(allowed)}"
+    return None
+
+
+def question_operation_hint(question: str) -> str:
+    """Return concise, question-only routing guidance for operation selection."""
+
+    normalized = re.sub(r"\s+", " ", str(question).lower()).strip()
+    years = re.findall(r"\b(?:19|20)\d{2}\b", normalized)
+    year_hint = ""
+    if len(years) >= 2:
+        year_hint = (
+            f" The question names years {years[0]} and {years[1]}; when it asks "
+            "for an increase, decrease, or change, use later year minus earlier year."
+        )
+    if any(token in normalized for token in ("percent change", "percentage increase", "percentage increased", "percentage decrease", "percentage decreased", "growth rate")):
+        rule = "Use percent_change with [new value, old value]; divide by the old value and keep the result as a fraction."
+    elif any(token in normalized for token in ("what percentage", "what percent", "percent of", "portion of", "proportion of")):
+        rule = "Use divide with [part value, total value]; keep the result as a fraction even when unit is percent."
+    elif any(token in normalized for token in ("ratio", "rate of return", "roi", "return on")):
+        rule = "Use divide with [numerator, denominator]; do not multiply by 100."
+    elif any(token in normalized for token in ("average", "mean")):
+        rule = "Use average over the requested numeric cells."
+    elif any(token in normalized for token in ("total", "combined", "sum of")):
+        rule = "Use add over the requested numeric cells."
+    elif any(token in normalized for token in ("increase", "decrease", "decline", "change", "difference", "variation")):
+        rule = "Use subtract in semantic order [later/new value, earlier/old value]."
+    else:
+        rule = "Choose the operation that directly matches the question wording."
+    return f"\nQuestion routing hint: {rule}{year_hint}"
+
+
+def numeric_cell_catalog(row: dict[str, Any]) -> str:
+    """Build a compact allow-list of numeric cell IDs for constrained prompting."""
+
+    entries = []
+    for cell_id, value in _table_cell_values(row).items():
+        if parse_numeric_answer(value) is not None:
+            entries.append(f"{cell_id}={value}")
+    return "\nValid numeric cell IDs (copy exactly): " + ", ".join(entries)
+
+
 def validate_cell_ids_operation(
     parsed: dict[str, Any], row: dict[str, Any]
 ) -> str | None:
@@ -509,6 +611,7 @@ def build_prompt_variants(config: dict[str, Any]) -> list[PromptVariant]:
                 cell_ids_only=bool(item.get("cell_ids_only", False)),
                 fallback_to_structured=bool(item.get("fallback_to_structured", False)),
                 fallback_prompt_suffix=str(item.get("fallback_prompt_suffix", "")),
+                question_routing=bool(item.get("question_routing", False)),
             )
         )
     if not variants:
@@ -701,20 +804,48 @@ def run_quality_repair_experiment(
                     )
                     for offset, request_row in enumerate(request_rows)
                 ]
-                generated = service.generate_batch(requests, prompt_suffix=prompt_suffix)
+                def suffix_for_row(row: dict[str, Any]) -> str:
+                    if not variant.question_routing:
+                        return prompt_suffix
+                    question = row.get("question") or row.get("qa", {}).get("question", "")
+                    return (
+                        f"{prompt_suffix}{question_operation_hint(question)}"
+                        f"{numeric_cell_catalog(row)}"
+                    )
+
+                if variant.question_routing:
+                    generated = [
+                        service.generate_one(request, prompt_suffix=suffix_for_row(row))
+                        for request, row in zip(requests, rows)
+                    ]
+                else:
+                    generated = service.generate_batch(requests, prompt_suffix=prompt_suffix)
                 for row, request, result in zip(rows, requests, generated):
+                    request_suffix = suffix_for_row(row)
                     raw_output = result["output_text"]
                     validation_error = None
                     validation_failure_reason = None
                     fallback_used = False
                     if variant.output_mode == "cell_ids_operation":
-                        parsed = parse_cell_ids_operation_output(raw_output)
-                        if parsed is not None and variant.stable_cell_ids:
-                            validation_error = validate_cell_ids_operation(parsed, row)
+                        if variant.stable_cell_ids:
+                            parsed, validation_error = parse_validated_operation_output(
+                                raw_output,
+                                row,
+                                variant.output_mode,
+                                request.question if variant.question_routing else None,
+                            )
+                        else:
+                            parsed = parse_cell_ids_operation_output(raw_output)
                     elif variant.output_mode == "evidence_operation":
-                        parsed = parse_evidence_operation_output(raw_output)
-                        if parsed is not None and variant.stable_cell_ids:
-                            validation_error = validate_evidence_operation(parsed, row)
+                        if variant.stable_cell_ids:
+                            parsed, validation_error = parse_validated_operation_output(
+                                raw_output,
+                                row,
+                                variant.output_mode,
+                                request.question if variant.question_routing else None,
+                            )
+                        else:
+                            parsed = parse_evidence_operation_output(raw_output)
                     else:
                         parsed = parse_structured_output(raw_output)
                     retry_used = False
@@ -722,7 +853,7 @@ def run_quality_repair_experiment(
                         retry = service.generate_one(
                             request,
                             prompt_suffix=(
-                                f"{prompt_suffix}\nYour previous response did not match the required JSON schema. "
+                                f"{request_suffix}\nYour previous response did not match the required JSON schema. "
                                 "Return one valid JSON object only, with no markdown or explanation."
                             ),
                         )
@@ -748,23 +879,25 @@ def run_quality_repair_experiment(
                         retry = service.generate_one(
                             request,
                             prompt_suffix=(
-                                f"{prompt_suffix}\nYour previous response did not match the required {contract_name}. "
+                                f"{request_suffix}\nYour previous response did not match the required {contract_name}. "
                                 f"Return one valid JSON object only, with no markdown or explanation.{validation_hint}"
                             ),
                         )
                         raw_output = retry["output_text"]
-                        parsed = (
-                            parse_cell_ids_operation_output(raw_output)
-                            if variant.output_mode == "cell_ids_operation"
-                            else parse_evidence_operation_output(raw_output)
-                        )
-                        validation_error = None
-                        if parsed is not None and variant.stable_cell_ids:
-                            validation_error = (
-                                validate_cell_ids_operation(parsed, row)
-                                if variant.output_mode == "cell_ids_operation"
-                                else validate_evidence_operation(parsed, row)
+                        if variant.stable_cell_ids:
+                            parsed, validation_error = parse_validated_operation_output(
+                                raw_output,
+                                row,
+                                variant.output_mode,
+                                request.question if variant.question_routing else None,
                             )
+                        else:
+                            parsed = (
+                                parse_cell_ids_operation_output(raw_output)
+                                if variant.output_mode == "cell_ids_operation"
+                                else parse_evidence_operation_output(raw_output)
+                            )
+                            validation_error = None
                         format_retry_count += 1
                         retry_used = True
                     if (
@@ -900,6 +1033,7 @@ def run_quality_repair_experiment(
                 "stable_cell_ids": variant.stable_cell_ids,
                 "cell_ids_only": variant.cell_ids_only,
                 "fallback_to_structured": variant.fallback_to_structured,
+                "question_routing": variant.question_routing,
                 "prompt_suffix": prompt_suffix,
                 "metrics": metrics,
                 "structured_output_rate": structured_count / len(evaluation_rows) if evaluation_rows else 0.0,

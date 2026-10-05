@@ -99,8 +99,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument(
         "--variants",
-        default="structured_json,cell_ids_operation",
-        help="逗号分隔的方案名，默认对照 structured_json 和 cell_ids_operation。",
+        default="structured_json,cell_ids_operation,routed_cell_ids_operation",
+        help="逗号分隔的方案名，默认对照原始 JSON、单元格运算和题型路由运算。",
     )
     parser.add_argument(
         "--progress-every-batches",
