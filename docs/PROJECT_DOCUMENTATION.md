@@ -1305,6 +1305,34 @@ python3 scripts/run_quality_repair_4080.py \
 4080 若为 16GB，7B FP16 可能因权重、CUDA runtime 和 KV cache 叠加而 OOM。4-bit 结果必须单独标记，不能与
 3B FP16 直接作为同一基线比较。
 
+### GPTQ 7B 服务器命令
+
+如果虚拟环境没有 pip，使用 `uv pip` 安装 GPTQ 后端：
+
+```bash
+cd /userhome/cs5/u3680889/OptimizationSystem
+uv pip install --python /userhome/cs5/u3680889/OptimizationSystem/.venv/bin/python3 \
+  "gptqmodel==7.5.0" "transformers==5.18.0" accelerate safetensors
+```
+
+下载预量化的 7B GPTQ 模型并运行 pilot：
+
+```bash
+/userhome/cs5/u3680889/OptimizationSystem/.venv/bin/python3 scripts/download_model_4080.py \
+  --model-id Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4 \
+  --output-dir /userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct-GPTQ-Int4
+
+/userhome/cs5/u3680889/OptimizationSystem/.venv/bin/python3 scripts/run_quality_repair_4080.py \
+  --quantization gptq \
+  --quantized-model-path /userhome/cs5/u3680889/OptimizationSystem/models/Qwen2.5-7B-Instruct-GPTQ-Int4 \
+  --model-id Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4 \
+  --dataset-dir /userhome/cs5/u3680889/OptimizationSystem/datasets \
+  --output-dir /userhome/cs5/u3680889/OptimizationSystem/out/quality_repair_7b_gptq_pilot \
+  --variants structured_json --batch-size 1 --max-new-tokens 256
+```
+
+该流程使用已量化权重，不会在 4080 上重新执行 GPTQ 校准；结果需标记为 7B GPTQ INT4。
+
 ## 7B 量化入口实现（2026-10-04）
 
 `scripts/run_quality_repair_4080.py` 现在支持统一参数：
