@@ -6,8 +6,10 @@ from src.evaluation.quality_repair import (
     add_stable_table_ids,
     build_few_shot_suffix,
     materialize_cell_ids_operation,
+    materialize_steps_operation,
     parse_validated_operation_output,
     parse_cell_ids_operation_output,
+    parse_steps_operation_output,
     parse_evidence_operation_output,
     extract_final_numeric,
     parse_structured_output,
@@ -16,6 +18,7 @@ from src.evaluation.quality_repair import (
     repair_with_evidence_operation,
     safe_calculate,
     validate_cell_ids_operation,
+    validate_steps_operation,
     validate_evidence_operation,
     question_operation_hint,
     numeric_cell_catalog,
@@ -97,6 +100,24 @@ class QualityRepairTest(unittest.TestCase):
         repaired = repair_with_evidence_operation(parsed)
         self.assertEqual(repaired["normalized_value"], "0.25")
 
+    def test_deterministic_calculator_supports_average_and_interest(self):
+        average = repair_with_evidence_operation(
+            {
+                "operands": ["121.1", "97.5", "132.4"],
+                "operation": "average",
+                "unit": "dollars",
+            }
+        )
+        self.assertEqual(average["normalized_value"], "117.0")
+        interest = repair_with_evidence_operation(
+            {
+                "operands": ["750", "0.01375"],
+                "operation": "multiply",
+                "unit": "million",
+            }
+        )
+        self.assertEqual(interest["normalized_value"], "10.31250")
+
     def test_ratio_operation_accepts_times_unit(self):
         row = {"table": [["sales", "940"], ["operating income", "100"]]}
         parsed = parse_evidence_operation_output(
@@ -154,6 +175,19 @@ class QualityRepairTest(unittest.TestCase):
         )
         self.assertIn("not numeric", validate_cell_ids_operation(parsed, row))
 
+    def test_steps_operation_resolves_prior_results(self):
+        row = {"table": [["metric", "100", "120"], ["base", "10", "20"]]}
+        parsed = parse_steps_operation_output(
+            '{"steps":[{"operation":"subtract","operands":["r0c2","r0c1"]},'
+            '{"operation":"divide","operands":["step0","r1c1"]}],'
+            '"unit":"percent"}'
+        )
+        self.assertIsNotNone(parsed)
+        self.assertIsNone(validate_steps_operation(parsed, row))
+        repaired = materialize_steps_operation(parsed, row)
+        self.assertEqual(repaired["normalized_value"], "2")
+        self.assertTrue(repaired["calculator_used"])
+
     def test_validated_parser_skips_invalid_candidate(self):
         row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}
         text = (
@@ -202,6 +236,22 @@ class QualityRepairTest(unittest.TestCase):
             validate_question_operation(
                 {"operation": "percent_change"},
                 "what was the percentage change from 2012 to 2013?",
+            )
+        )
+
+    def test_question_routing_handles_growth_and_interest(self):
+        self.assertIn(
+            "percent_change",
+            question_operation_hint("what was the growth rate in sales from 2012 to 2013?"),
+        )
+        self.assertIn(
+            "multiply",
+            question_operation_hint("what is the annual interest expense for the note?"),
+        )
+        self.assertIsNone(
+            validate_question_operation(
+                {"operation": "multiply"},
+                "what is the annual interest expense for the note?",
             )
         )
 

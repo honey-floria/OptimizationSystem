@@ -390,9 +390,17 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 分析 GPTQ v2：解析率 97.50%（78/80），数值准确率 21.25%（17/80），剩余 `mmboe` 和数字多余引号问题
 - [x] 增加 `mmboe` 单位契约，并对 `value` 数字后的单个多余引号做保守 JSON 修复
 - [x] 为 `mmboe` 和数字多余引号修复增加回归测试
-- [ ] 在服务器同步代码后复跑 GPTQ v3，确认解析率是否达到 99% 门槛
+- [x] 在服务器同步代码后复跑 GPTQ v3：解析率 100%（80/80），数值准确率 23.75%（19/80）
 - [ ] 对 GPTQ v3 按题型统计错误，优先优化百分比、比率、平均和多步计算的分子/分母选择
+- [ ] 重复至少两次 GPTQ pilot，确认 17--19/80 的数值波动范围
 - [ ] 在解析率达到 99% 且 pilot 正确数稳定后，再扩展到完整 883 条 dev
+- [ ] 增加公式/单位一致性检查：百分比统一 fraction 与 percent 表示，ratio 使用 times，禁止把增长率直接当 ratio
+- [ ] 对平均、总和和利息题增加数值证据回指与确定性计算，减少模型自行编造操作数
+- [x] 新增 `deterministic_cell_ids_operation`：模型只选择 cell IDs、operation 和 unit
+- [x] 增加百分比、增长率、平均和利息题型路由，并由程序执行 Decimal 计算
+- [x] 增加确定性平均值和利息计算的回归测试
+- [ ] 在同一 80 条 GPTQ pilot 上运行 `deterministic_cell_ids_operation`，与 `structured_json` 对照
+- [ ] 检查确定性方案对百分比、平均、利息、多步题的分层收益
 - [ ] 补齐 7B AWQ pilot 的显存峰值和吞吐记录
 - [ ] 在同一 7B FP16 或同源未量化模型上复测，分离模型规模收益与 AWQ 量化收益
 - [ ] 使用 FinQA train 执行 LoRA/QLoRA 微调前，先固定当前 3B `structured_json` 基线

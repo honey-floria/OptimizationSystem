@@ -56,7 +56,11 @@ ALLOWED_OPERATIONS = {
     "percentage",
     "percent_change",
 }
-OPERATION_OUTPUT_MODES = {"evidence_operation", "cell_ids_operation"}
+OPERATION_OUTPUT_MODES = {
+    "evidence_operation",
+    "cell_ids_operation",
+    "steps_operation",
+}
 
 
 @dataclass(frozen=True)
@@ -347,6 +351,46 @@ def parse_cell_ids_operation_output(text: str) -> dict[str, Any] | None:
     return None
 
 
+def parse_steps_operation_output(text: str) -> dict[str, Any] | None:
+    """Parse an ordered operation chain whose later steps reference prior results."""
+
+    for payload in _json_candidates(text):
+        steps = payload.get("steps")
+        unit = payload.get("unit", "")
+        if (
+            not isinstance(steps, list)
+            or not steps
+            or not isinstance(unit, str)
+            or unit.lower() not in ALLOWED_UNITS
+            or not all(isinstance(step, dict) for step in steps)
+        ):
+            continue
+        normalized_steps = []
+        valid = True
+        for step in steps:
+            operation = str(step.get("operation", "")).strip().lower()
+            operands = step.get("operands")
+            if (
+                operation not in ALLOWED_OPERATIONS
+                or not isinstance(operands, list)
+                or not operands
+                or not all(isinstance(operand, str) for operand in operands)
+            ):
+                valid = False
+                break
+            normalized_steps.append(
+                {"operation": operation, "operands": list(operands)}
+            )
+        if valid:
+            return {
+                "steps": normalized_steps,
+                "operation": normalized_steps[-1]["operation"],
+                "unit": unit,
+                "structured": True,
+            }
+    return None
+
+
 def parse_validated_operation_output(
     text: str,
     row: dict[str, Any],
@@ -363,6 +407,9 @@ def parse_validated_operation_output(
     if output_mode == "cell_ids_operation":
         parser = parse_cell_ids_operation_output
         validator = validate_cell_ids_operation
+    elif output_mode == "steps_operation":
+        parser = parse_steps_operation_output
+        validator = validate_steps_operation
     elif output_mode == "evidence_operation":
         parser = parse_evidence_operation_output
         validator = validate_evidence_operation
@@ -399,6 +446,8 @@ def validate_question_operation(parsed: dict[str, Any], question: str) -> str | 
         allowed = {"average"}
     elif family == "add":
         allowed = {"add", "sum"}
+    elif family == "multiply":
+        allowed = {"multiply"}
     elif family == "subtract":
         allowed = {"subtract", "difference", "absolute_difference"}
     else:
@@ -423,6 +472,21 @@ def _question_operation_family(question: str) -> str | None:
         return "divide"
     if any(token in normalized for token in ("ratio", "rate of return", "roi", "return on")):
         return "divide"
+    if not has_change and any(token in normalized for token in ("average", "mean")):
+        return "average"
+    if any(
+        token in normalized
+        for token in (
+            "interest expense",
+            "interest cost",
+            "interest payment",
+            "annual interest",
+            "yearly interest",
+        )
+    ):
+        return "multiply"
+    if any(token in normalized for token in ("growth rate", "growth in", "rate of growth")):
+        return "percent_change"
     if has_change:
         return "subtract"
     if any(token in normalized for token in ("average", "mean")):
@@ -452,6 +516,11 @@ def question_operation_hint(question: str) -> str:
         rule = "Use average over the requested numeric cells."
     elif family == "add":
         rule = "Use add over the requested numeric cells."
+    elif family == "multiply":
+        rule = (
+            "Use multiply over the principal and rate cells for interest expense; "
+            "the program converts percent-formatted rate cells to fractions."
+        )
     elif family == "subtract":
         rule = "Use subtract in semantic order [later/new value, earlier/old value]."
     else:
@@ -517,6 +586,57 @@ def validate_cell_ids_operation(
     return None
 
 
+def validate_steps_operation(
+    parsed: dict[str, Any], row: dict[str, Any]
+) -> str | None:
+    """Validate cell references and arity for an ordered multi-step chain."""
+
+    steps = parsed.get("steps")
+    unit = str(parsed.get("unit", "")).lower()
+    if not isinstance(steps, list) or not steps:
+        return "steps must be a non-empty list"
+    if unit not in ALLOWED_UNITS:
+        return "unit is not allowed"
+    cell_values = _table_cell_values(row)
+    cell_id_pattern = re.compile(r"^r(\d+)c(\d+)$")
+    step_pattern = re.compile(r"^step(\d+)$")
+    for step_index, step in enumerate(steps):
+        operation = step.get("operation")
+        operands = step.get("operands")
+        if operation not in ALLOWED_OPERATIONS:
+            return "operation is not allowed"
+        if not isinstance(operands, list) or not operands:
+            return f"step {step_index} operands must be non-empty"
+        exact_two = {
+            "subtract", "difference", "absolute_difference", "divide",
+            "ratio", "percent", "percentage", "percent_change",
+        }
+        at_least_two = {"add", "sum", "multiply", "average"}
+        if operation in exact_two and len(operands) != 2:
+            return f"{operation} requires exactly two operands"
+        if operation in at_least_two and len(operands) < 2:
+            return f"{operation} requires at least two operands"
+        for operand in operands:
+            if not isinstance(operand, str):
+                return "step operands must be strings"
+            cell_match = cell_id_pattern.fullmatch(operand)
+            if cell_match:
+                if operand not in cell_values:
+                    return f"cell_id does not exist: {operand}"
+                if parse_numeric_answer(cell_values[operand]) is None:
+                    return f"cell is not numeric: {operand}"
+                continue
+            step_match = step_pattern.fullmatch(operand)
+            if not step_match or int(step_match.group(1)) >= step_index:
+                return f"step reference is invalid: {operand}"
+    final_operation = steps[-1]["operation"]
+    if final_operation in {"percent_change", "percent", "percentage"} and unit not in {"", "%", "percent"}:
+        return f"{final_operation} requires percent unit"
+    if final_operation == "ratio" and unit not in {"", "times", "multiple"}:
+        return "ratio requires an empty, times, or multiple unit"
+    return None
+
+
 def materialize_cell_ids_operation(
     parsed: dict[str, Any], row: dict[str, Any]
 ) -> dict[str, Any]:
@@ -538,6 +658,50 @@ def materialize_cell_ids_operation(
         "evidence": evidence,
         "operands": operands,
         "unit": unit,
+    }
+
+
+def materialize_steps_operation(
+    parsed: dict[str, Any], row: dict[str, Any]
+) -> dict[str, Any]:
+    """Resolve and execute an ordered operation chain deterministically."""
+
+    cell_values = _table_cell_values(row)
+    results: dict[str, Decimal] = {}
+    formulas: list[str] = []
+    final_operands: list[str] = []
+    for step_index, step in enumerate(parsed["steps"]):
+        operands: list[str] = []
+        for reference in step["operands"]:
+            if reference.startswith("step"):
+                value = results.get(reference)
+                if value is None:
+                    return {**parsed, "normalized_value": None, "structured": False}
+                operands.append(str(value))
+            else:
+                value = parse_numeric_answer(cell_values[reference])
+                if value is None:
+                    return {**parsed, "normalized_value": None, "structured": False}
+                operands.append(str(value))
+        repaired = repair_with_evidence_operation(
+            {
+                "operands": operands,
+                "operation": step["operation"],
+                "unit": parsed.get("unit", ""),
+            }
+        )
+        if not repaired.get("calculator_used"):
+            return {**parsed, "normalized_value": None, "structured": False}
+        result = Decimal(repaired["normalized_value"])
+        results[f"step{step_index}"] = result
+        formulas.append(repaired.get("formula", ""))
+        final_operands = operands
+    return {
+        **parsed,
+        "operands": final_operands,
+        "formula": " -> ".join(formulas),
+        "normalized_value": str(results[f"step{len(parsed['steps']) - 1}"]),
+        "calculator_used": True,
     }
 
 
@@ -724,6 +888,32 @@ def cell_ids_operation_schema() -> dict[str, Any]:
     }
 
 
+def steps_operation_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "required": ["steps", "unit"],
+        "properties": {
+            "steps": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["operation", "operands"],
+                    "properties": {
+                        "operation": {"type": "string", "enum": sorted(ALLOWED_OPERATIONS)},
+                        "operands": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+            },
+            "unit": {"type": "string"},
+        },
+        "additionalProperties": False,
+    }
+
+
 def _reference_answer(row: dict[str, Any]) -> str:
     answer = row.get("answer")
     if answer is None and isinstance(row.get("qa"), dict):
@@ -874,6 +1064,13 @@ def run_quality_repair_experiment(
                             )
                         else:
                             parsed = parse_cell_ids_operation_output(raw_output)
+                    elif variant.output_mode == "steps_operation":
+                        parsed, validation_error = parse_validated_operation_output(
+                            raw_output,
+                            row,
+                            variant.output_mode,
+                            request.question if variant.question_routing else None,
+                        )
                     elif variant.output_mode == "evidence_operation":
                         if variant.stable_cell_ids:
                             parsed, validation_error = parse_validated_operation_output(
@@ -912,6 +1109,8 @@ def run_quality_repair_experiment(
                         contract_name = (
                             "cell-id operation schema"
                             if variant.output_mode == "cell_ids_operation"
+                            else "steps operation schema"
+                            if variant.output_mode == "steps_operation"
                             else "evidence-operation schema"
                         )
                         retry = service.generate_one(
@@ -933,7 +1132,11 @@ def run_quality_repair_experiment(
                             parsed = (
                                 parse_cell_ids_operation_output(raw_output)
                                 if variant.output_mode == "cell_ids_operation"
-                                else parse_evidence_operation_output(raw_output)
+                                else (
+                                    parse_steps_operation_output(raw_output)
+                                    if variant.output_mode == "steps_operation"
+                                    else parse_evidence_operation_output(raw_output)
+                                )
                             )
                             validation_error = None
                         format_retry_count += 1
@@ -990,12 +1193,16 @@ def run_quality_repair_experiment(
                         and not fallback_used
                     ):
                         parsed = materialize_cell_ids_operation(parsed, row)
+                    elif (
+                        variant.output_mode == "steps_operation"
+                        and validation_error is None
+                        and not fallback_used
+                    ):
+                        parsed = materialize_steps_operation(parsed, row)
                     if variant.output_mode in OPERATION_OUTPUT_MODES and not fallback_used:
-                        repaired = (
-                            repair_with_evidence_operation(parsed)
-                            if validation_error is None
-                            else parsed
-                        )
+                        repaired = parsed
+                        if validation_error is None and variant.output_mode != "steps_operation":
+                            repaired = repair_with_evidence_operation(parsed)
                         if repaired.get("calculator_used"):
                             calculator_count += 1
                         parsed = repaired
@@ -1107,6 +1314,7 @@ def run_quality_repair_experiment(
         "schema": quality_repair_schema(),
         "evidence_operation_schema": evidence_operation_schema(),
         "cell_ids_operation_schema": cell_ids_operation_schema(),
+        "steps_operation_schema": steps_operation_schema(),
         "generation": config.get("generation", original_generation),
         "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
     }
