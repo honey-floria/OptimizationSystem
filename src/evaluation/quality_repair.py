@@ -438,8 +438,21 @@ def validate_question_operation(parsed: dict[str, Any], question: str) -> str | 
 
     family = _question_operation_family(question)
     operation = parsed.get("operation")
+    operations = {operation}
+    steps = parsed.get("steps")
+    if isinstance(steps, list):
+        operations.update(
+            step.get("operation")
+            for step in steps
+            if isinstance(step, dict)
+        )
     if family == "percent_change":
-        allowed = {"percent_change"}
+        if "percent_change" in operations or (
+            operations.intersection({"subtract", "difference"})
+            and "divide" in operations
+        ):
+            return None
+        allowed = {"percent_change", "subtract + divide"}
     elif family == "divide":
         allowed = {"divide", "ratio"}
     elif family == "average":
@@ -451,6 +464,8 @@ def validate_question_operation(parsed: dict[str, Any], question: str) -> str | 
     elif family == "subtract":
         allowed = {"subtract", "difference", "absolute_difference"}
     else:
+        return None
+    if operations.intersection(allowed):
         return None
     if operation not in allowed:
         return f"operation {operation!r} conflicts with question type; expected one of {sorted(allowed)}"
@@ -619,6 +634,8 @@ def validate_steps_operation(
         for operand in operands:
             if not isinstance(operand, str):
                 return "step operands must be strings"
+            if parse_numeric_answer(operand) is not None:
+                continue
             cell_match = cell_id_pattern.fullmatch(operand)
             if cell_match:
                 if operand not in cell_values:
@@ -679,7 +696,7 @@ def materialize_steps_operation(
                     return {**parsed, "normalized_value": None, "structured": False}
                 operands.append(str(value))
             else:
-                value = parse_numeric_answer(cell_values[reference])
+                value = parse_numeric_answer(cell_values.get(reference, reference))
                 if value is None:
                     return {**parsed, "normalized_value": None, "structured": False}
                 operands.append(str(value))
