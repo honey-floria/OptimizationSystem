@@ -156,6 +156,22 @@ class QualityRepairTest(unittest.TestCase):
             ),
         )
 
+    def test_question_routing_prioritizes_change_over_entity_average(self):
+        self.assertIn(
+            "percent_change",
+            question_operation_hint("what was the percentage change from 2012 to 2013?"),
+        )
+        self.assertIn(
+            "subtract",
+            question_operation_hint("by how much did the average price increase?"),
+        )
+        self.assertIsNone(
+            validate_question_operation(
+                {"operation": "percent_change"},
+                "what was the percentage change from 2012 to 2013?",
+            )
+        )
+
     def test_few_shot_uses_only_passed_examples(self):
         suffix = build_few_shot_suffix([{"question": "q", "answer": "1"}])
         self.assertIn("Example final answer: 1", suffix)
