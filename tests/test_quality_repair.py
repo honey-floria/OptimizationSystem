@@ -10,6 +10,7 @@ from src.evaluation.quality_repair import (
     parse_validated_operation_output,
     parse_cell_ids_operation_output,
     parse_steps_operation_output,
+    parse_candidate_cell_ids_operation_output,
     parse_evidence_operation_output,
     extract_final_numeric,
     parse_structured_output,
@@ -207,6 +208,20 @@ class QualityRepairTest(unittest.TestCase):
             '"unit":"million"}'
         )
         self.assertIsNone(validate_steps_operation(constant_steps, row))
+
+    def test_candidate_operation_selects_valid_deterministic_candidate(self):
+        row = {"table": [["metric", "2010", "2011"], ["sales", "100", "120"]]}
+        parsed, error = parse_candidate_cell_ids_operation_output(
+            '{"candidates":['
+            '{"cell_ids":["r1c0","r9c9"],"operation":"subtract","unit":"million"},'
+            '{"cell_ids":["r1c2","r1c1"],"operation":"subtract","unit":"million"}'
+            ']}',
+            row,
+            "what was the change from 2010 to 2011?",
+        )
+        self.assertIsNone(error)
+        self.assertEqual(parsed["cell_ids"], ["r1c2", "r1c1"])
+        self.assertEqual(parsed["normalized_value"], "20")
 
     def test_validated_parser_skips_invalid_candidate(self):
         row = {"table": [["metric", "303.1"], ["metric", "290.6"]]}

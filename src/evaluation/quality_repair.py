@@ -60,6 +60,7 @@ OPERATION_OUTPUT_MODES = {
     "evidence_operation",
     "cell_ids_operation",
     "steps_operation",
+    "candidate_cell_ids_operation",
 }
 
 
@@ -391,6 +392,75 @@ def parse_steps_operation_output(text: str) -> dict[str, Any] | None:
     return None
 
 
+def _candidate_semantic_score(
+    parsed: dict[str, Any], row: dict[str, Any], question: str
+) -> tuple[int, int]:
+    """Score candidate cells by matching question terms to row/column labels."""
+
+    table = row.get("table", [])
+    question_text = str(question).lower()
+    question_tokens = {
+        token
+        for token in re.findall(r"[a-z][a-z0-9-]{3,}", question_text)
+        if token not in {"what", "which", "that", "from", "into", "were", "does"}
+    }
+    years = set(re.findall(r"\b(?:19|20)\d{2}\b", question_text))
+    score = 0
+    for cell_id in parsed.get("cell_ids", []):
+        match = re.fullmatch(r"r(\d+)c(\d+)", cell_id)
+        if match is None:
+            continue
+        row_index, column_index = (int(value) for value in match.groups())
+        row_label = str(table[row_index][0]).lower() if row_index < len(table) and table[row_index] else ""
+        column_label = (
+            str(table[0][column_index]).lower()
+            if table and column_index < len(table[0])
+            else ""
+        )
+        context = f"{row_label} {column_label}"
+        score += sum(3 for year in years if year in context)
+        score += sum(1 for token in question_tokens if token in context)
+    return score, -int(parsed.get("candidate_index", 0))
+
+
+def parse_candidate_cell_ids_operation_output(
+    text: str, row: dict[str, Any], question: str
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Validate and deterministically calculate the best model-generated candidate."""
+
+    last_error: str | None = None
+    for payload in _json_candidates(text):
+        candidates = payload.get("candidates")
+        if not isinstance(candidates, list) or not candidates:
+            continue
+        valid: list[tuple[tuple[int, int], dict[str, Any]]] = []
+        for candidate_index, candidate in enumerate(candidates[:3]):
+            if not isinstance(candidate, dict):
+                last_error = "each candidate must be an object"
+                continue
+            parsed = parse_cell_ids_operation_output(
+                json.dumps(candidate, ensure_ascii=False)
+            )
+            if parsed is None:
+                last_error = "candidate does not match cell-id operation schema"
+                continue
+            parsed["candidate_index"] = candidate_index
+            error = validate_cell_ids_operation(parsed, row)
+            if error is None:
+                error = validate_question_operation(parsed, question)
+            if error is not None:
+                last_error = error
+                continue
+            materialized = materialize_cell_ids_operation(parsed, row)
+            repaired = repair_with_evidence_operation(materialized)
+            repaired["candidate_count"] = len(candidates)
+            repaired["candidate_selected_index"] = candidate_index
+            valid.append((_candidate_semantic_score(repaired, row, question), repaired))
+        if valid:
+            return max(valid, key=lambda item: item[0])[1], None
+    return None, last_error or "unparseable candidate operation output"
+
+
 def parse_validated_operation_output(
     text: str,
     row: dict[str, Any],
@@ -410,6 +480,8 @@ def parse_validated_operation_output(
     elif output_mode == "steps_operation":
         parser = parse_steps_operation_output
         validator = validate_steps_operation
+    elif output_mode == "candidate_cell_ids_operation":
+        return parse_candidate_cell_ids_operation_output(text, row, question or "")
     elif output_mode == "evidence_operation":
         parser = parse_evidence_operation_output
         validator = validate_evidence_operation
@@ -931,6 +1003,22 @@ def steps_operation_schema() -> dict[str, Any]:
     }
 
 
+def candidate_cell_ids_operation_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "required": ["candidates"],
+        "properties": {
+            "candidates": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 3,
+                "items": cell_ids_operation_schema(),
+            }
+        },
+        "additionalProperties": False,
+    }
+
+
 def _reference_answer(row: dict[str, Any]) -> str:
     answer = row.get("answer")
     if answer is None and isinstance(row.get("qa"), dict):
@@ -1088,6 +1176,13 @@ def run_quality_repair_experiment(
                             variant.output_mode,
                             request.question if variant.question_routing else None,
                         )
+                    elif variant.output_mode == "candidate_cell_ids_operation":
+                        parsed, validation_error = parse_validated_operation_output(
+                            raw_output,
+                            row,
+                            variant.output_mode,
+                            request.question if variant.question_routing else None,
+                        )
                     elif variant.output_mode == "evidence_operation":
                         if variant.stable_cell_ids:
                             parsed, validation_error = parse_validated_operation_output(
@@ -1128,6 +1223,8 @@ def run_quality_repair_experiment(
                             if variant.output_mode == "cell_ids_operation"
                             else "steps operation schema"
                             if variant.output_mode == "steps_operation"
+                            else "candidate cell-id operation schema"
+                            if variant.output_mode == "candidate_cell_ids_operation"
                             else "evidence-operation schema"
                         )
                         retry = service.generate_one(
@@ -1258,6 +1355,8 @@ def run_quality_repair_experiment(
                         "operands": parsed.get("operands"),
                         "operation": parsed.get("operation"),
                         "unit": parsed.get("unit"),
+                        "candidate_count": parsed.get("candidate_count"),
+                        "candidate_selected_index": parsed.get("candidate_selected_index"),
                         "validation_error": validation_failure_reason or parsed.get("validation_error"),
                         "fallback_used": fallback_used,
                     }
@@ -1332,6 +1431,7 @@ def run_quality_repair_experiment(
         "evidence_operation_schema": evidence_operation_schema(),
         "cell_ids_operation_schema": cell_ids_operation_schema(),
         "steps_operation_schema": steps_operation_schema(),
+        "candidate_cell_ids_operation_schema": candidate_cell_ids_operation_schema(),
         "generation": config.get("generation", original_generation),
         "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
     }

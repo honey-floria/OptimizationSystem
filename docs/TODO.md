@@ -404,6 +404,13 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 修复多步方案的“subtract+divide”题型校验误拒绝，并允许显式数值常数参与步骤计算
 - [ ] 复跑修复后的确定性方案，确认解析率和数值准确率是否恢复
 - [ ] 检查确定性方案对百分比、平均、利息、多步题的分层收益
+- [x] 新增候选生成方案：最多生成 3 个 cell-id/operation 候选，由程序逐个校验并确定性计算
+- [x] 新增候选语义评分：结合问题年份、行名和列名选择候选
+- [ ] 在同一 80 条 GPTQ pilot 上运行 `candidate_cell_ids_operation`
+- [x] 新增 FinQA train QLoRA 数据转换、4-bit NF4 加载和 LoRA adapter 保存脚本
+- [x] 新增 4080 入口 `--adapter-path` 与 `--load-in-4bit`，支持训练后质量复测
+- [ ] 在严格 train/holdout 切分上完成首轮 QLoRA 训练
+- [ ] 用同一 80 条 GPTQ/QLoRA pilot 对比数值准确率和解析率
 - [ ] 补齐 7B AWQ pilot 的显存峰值和吞吐记录
 - [ ] 在同一 7B FP16 或同源未量化模型上复测，分离模型规模收益与 AWQ 量化收益
 - [ ] 使用 FinQA train 执行 LoRA/QLoRA 微调前，先固定当前 3B `structured_json` 基线

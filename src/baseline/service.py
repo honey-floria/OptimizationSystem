@@ -131,6 +131,8 @@ class BaselineService:
         config_file: str | Path,
         model_manifest_file: str | Path,
         log_file: str | Path,
+        adapter_path: str | Path | None = None,
+        load_in_4bit: bool = False,
     ) -> "BaselineService":
         _, config = _load_json(config_file)
         model_manifest_path, model_manifest = _load_json(model_manifest_file)
@@ -138,6 +140,8 @@ class BaselineService:
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
+            if load_in_4bit:
+                from transformers import BitsAndBytesConfig
         except ImportError as exc:
             raise RuntimeError("Install torch and transformers for baseline inference.") from exc
 
@@ -154,15 +158,33 @@ class BaselineService:
                 "trust_remote_code", False
             ),
         )
-        model = AutoModelForCausalLM.from_pretrained(
-            str(model_path),
-            local_files_only=True,
-            trust_remote_code=model_manifest.get("runtime", {}).get(
+        model_kwargs = {
+            "local_files_only": True,
+            "trust_remote_code": model_manifest.get("runtime", {}).get(
                 "trust_remote_code", False
             ),
-            torch_dtype=dtype,
-        )
-        model.to(config["device"])
+            "torch_dtype": dtype,
+        }
+        if load_in_4bit:
+            model_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=dtype,
+                bnb_4bit_use_double_quant=True,
+            )
+            model_kwargs["device_map"] = "auto"
+        model = AutoModelForCausalLM.from_pretrained(str(model_path), **model_kwargs)
+        if adapter_path is not None:
+            try:
+                from peft import PeftModel
+            except ImportError as exc:
+                raise RuntimeError("加载 LoRA adapter 需要安装 peft。") from exc
+            adapter_dir = Path(adapter_path).expanduser().resolve()
+            if not adapter_dir.is_dir():
+                raise FileNotFoundError(f"LoRA adapter 目录不存在：{adapter_dir}")
+            model = PeftModel.from_pretrained(model, str(adapter_dir), is_trainable=False)
+        if not load_in_4bit:
+            model.to(config["device"])
         model.eval()
         metadata = {
             "model_id": model_manifest.get("model_id"),
