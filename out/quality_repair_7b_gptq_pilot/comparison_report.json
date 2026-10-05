@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "experiment_name": "finqa-fp16-quality-repair-4080",
-  "created_at": "2026-10-05T03:29:44.710555+00:00",
+  "created_at": "2026-10-05T03:54:43.101906+00:00",
   "dataset": {
     "role": "evaluation_dev",
     "size": 80,
@@ -117,7 +117,7 @@
       "format_retry_count": 14,
       "validation_failure_count": 0,
       "fallback_count": 0,
-      "duration_seconds": 327.2772373940097,
+      "duration_seconds": 328.6824206269812,
       "predictions_file": "structured_json/predictions.jsonl",
       "predictions_sha256": "c6f5608bbe67fe4f22e09c815f59f0f02b0f59ff670ac5d37f03e8c1ca8de178"
     }
