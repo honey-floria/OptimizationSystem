@@ -2,6 +2,7 @@ import json
 import unittest
 from decimal import Decimal
 
+from src.evaluation.finqa_metrics import evaluate_numeric_answers
 from src.evaluation.quality_repair import (
     add_stable_table_ids,
     build_few_shot_suffix,
@@ -69,6 +70,18 @@ class QualityRepairTest(unittest.TestCase):
             '"value":12.5,"unit":"mmboe"}'
         )
         self.assertEqual(parsed["normalized_value"], "12.5")
+
+    def test_structured_output_normalizes_percent_unit_for_scoring(self):
+        parsed = parse_structured_output(
+            '{"evidence":["operating profit"],"formula":"divide(20,1063)",'
+            '"value":1.9,"unit":"percent"}'
+        )
+        self.assertEqual(parsed["normalized_value"], "1.9%")
+        metrics = evaluate_numeric_answers(
+            [parsed["normalized_value"]],
+            ["1.9%"],
+        )
+        self.assertEqual(metrics["correct"], 1)
 
     def test_structured_output_repairs_stray_quote_after_numeric_value(self):
         parsed = parse_structured_output(

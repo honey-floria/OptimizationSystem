@@ -165,7 +165,11 @@ def parse_structured_output(text: str) -> dict[str, Any] | None:
             and isinstance(unit, str)
             and unit.lower() in ALLOWED_UNITS
         ):
-            parsed = parse_numeric_answer(f"{value}{unit}")
+            value_text = str(value).strip()
+            scoring_value = value_text
+            if unit.lower() in {"%", "percent"} and "%" not in value_text:
+                scoring_value = f"{value_text}%"
+            parsed = parse_numeric_answer(scoring_value)
             if parsed is not None:
                 return {
                     "evidence": [
@@ -175,7 +179,7 @@ def parse_structured_output(text: str) -> dict[str, Any] | None:
                     "formula": formula,
                     "value": str(value),
                     "unit": unit,
-                    "normalized_value": str(parsed),
+                    "normalized_value": scoring_value,
                     "structured": True,
                 }
     return None
