@@ -16,13 +16,23 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.data.finqa_assets import render_finqa_prompt
+
 MODEL_DATA_DIR = PROJECT_ROOT / "models" / "data"
 DEFAULT_BASE_MODEL_PATH = MODEL_DATA_DIR / "Qwen2.5-7B-Instruct"
-DEFAULT_ARTIFACT_DIR = MODEL_DATA_DIR / "finqa_qlora_7b"
+DEFAULT_ARTIFACT_DIR = MODEL_DATA_DIR / "finqa_qlora_7b_v2"
 DEFAULT_TRAIN_PATH = PROJECT_ROOT / "datasets" / "raw_finqa" / "train.json"
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "out" / "finqa_qlora_7b"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "out" / "finqa_qlora_7b_v2"
 
 NUMBER_PATTERN = re.compile(r"[-+]?\d+(?:,\d{3})*(?:\.\d+)?")
+STRUCTURED_JSON_PROMPT_SUFFIX = (
+    "\nReturn exactly one JSON object and no other text. Use this schema: "
+    '{"evidence":["table field and year"],"formula":"numeric arithmetic formula",'
+    '"value":0,"unit":"million|percent|dollars|shares|times|multiple|mmboe|"}'
+    ". Preserve the table column, row, year, and unit in evidence. "
+    "Use times or multiple for a ratio, and mmboe when the table uses that unit. "
+    "The value must be the final answer."
+)
 
 
 def _load_json(path: Path) -> Any:
@@ -58,12 +68,6 @@ def _rows_from_payload(payload: Any) -> list[dict[str, Any]]:
     raise ValueError("FinQA train 文件必须是对象数组，或包含 data/train/examples/rows 数组")
 
 
-def _question(row: dict[str, Any]) -> str:
-    if isinstance(row.get("qa"), dict):
-        return str(row["qa"].get("question", ""))
-    return str(row.get("question", ""))
-
-
 def _qa_value(row: dict[str, Any], key: str, default: Any = None) -> Any:
     if isinstance(row.get("qa"), dict) and key in row["qa"]:
         return row["qa"][key]
@@ -94,16 +98,20 @@ def _answer_parts(answer: Any) -> tuple[str, str, str] | None:
     return value, unit, answer_text
 
 
-def _table_text(table: Any) -> str:
-    if not isinstance(table, list):
-        return ""
-    lines = []
-    for row_index, table_row in enumerate(table):
-        if not isinstance(table_row, list):
-            continue
-        cells = [f"r{row_index}c{column_index}={cell}" for column_index, cell in enumerate(table_row)]
-        lines.append(" | ".join(cells))
-    return "\n".join(lines)
+def _compact_evidence(gold_inds: Any) -> list[str]:
+    if isinstance(gold_inds, dict):
+        return [str(key) for key in gold_inds]
+    if not isinstance(gold_inds, list):
+        gold_inds = [gold_inds]
+    evidence = []
+    for item in gold_inds:
+        if isinstance(item, dict):
+            evidence.extend(str(key) for key in item)
+        else:
+            text = str(item).strip()
+            if text:
+                evidence.append(text)
+    return evidence
 
 
 def build_training_examples(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
@@ -116,22 +124,13 @@ def build_training_examples(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
         if answer_parts is None or not str(program).strip():
             continue
         value, unit, answer_text = answer_parts
-        gold_inds = _qa_value(row, "gold_inds", [])
-        if not isinstance(gold_inds, list):
-            gold_inds = [str(gold_inds)]
         target = {
-            "evidence": [str(item) for item in gold_inds],
+            "evidence": _compact_evidence(_qa_value(row, "gold_inds", [])),
             "formula": str(program),
             "value": float(value),
             "unit": unit,
         }
-        prompt = (
-            "You solve FinQA table questions. Return exactly one JSON object and no other text. "
-            "Use keys evidence, formula, value, unit. Preserve the table evidence and operation. "
-            "The value must be the final numeric answer.\n\n"
-            f"Table:\n{_table_text(row.get('table', []))}\n\n"
-            f"Question: {_question(row)}\n"
-        )
+        prompt = f"{render_finqa_prompt(row)}{STRUCTURED_JSON_PROMPT_SUFFIX}"
         examples.append(
             {
                 "prompt": prompt,
@@ -225,7 +224,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--artifact-dir",
         type=Path,
         default=DEFAULT_ARTIFACT_DIR,
-        help="adapter、tokenizer 和 checkpoint 目录；默认 models/data/finqa_qlora_7b。",
+        help="adapter、tokenizer 和 checkpoint 目录；默认 models/data/finqa_qlora_7b_v2。",
     )
     parser.add_argument("--max-length", type=int, default=2048)
     parser.add_argument("--num-train-epochs", type=float, default=2.0)
@@ -373,6 +372,7 @@ def main() -> int:
     manifest = {
         "schema_version": 1,
         "method": "qlora",
+        "supervision_contract": "structured-json-compact-evidence-v2",
         "base_model_id": args.model_id,
         "base_model_path": str(model_path),
         "train_path": str(train_path),
