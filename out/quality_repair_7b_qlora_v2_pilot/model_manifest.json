@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "model_id": "Qwen2.5-7B-Instruct-QLoRA-v2-step100",
+  "model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct",
+  "version": "Qwen2.5-7B-Instruct-QLoRA-v2-step100",
+  "commit": "local-server",
+  "weight_files": [],
+  "config_file": "config.json",
+  "tokenizer_files": [],
+  "expected_sha256": {},
+  "runtime": {
+    "framework": "transformers",
+    "model_class": "causal_lm",
+    "dtype": "float16",
+    "device": "cuda:0",
+    "trust_remote_code": false,
+    "quantization": "none"
+  }
+}
