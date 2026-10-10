@@ -229,6 +229,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-length", type=int, default=2048)
     parser.add_argument("--num-train-epochs", type=float, default=2.0)
     parser.add_argument("--max-steps", type=int, default=-1)
+    parser.add_argument(
+        "--resume-from-checkpoint",
+        type=Path,
+        help="从已有 Trainer checkpoint 恢复；例如 models/data/finqa_qlora_7b_v2/checkpoint-100。",
+    )
     parser.add_argument("--learning-rate", type=float, default=2e-4)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=16)
     parser.add_argument("--lora-r", type=int, default=8)
@@ -257,6 +262,11 @@ def main() -> int:
     train_path = args.train_path.expanduser().resolve()
     output_dir = args.output_dir.expanduser().resolve()
     artifact_dir = args.artifact_dir.expanduser().resolve()
+    resume_checkpoint = (
+        args.resume_from_checkpoint.expanduser().resolve()
+        if args.resume_from_checkpoint is not None
+        else None
+    )
     model_data_root = MODEL_DATA_DIR.resolve()
     out_root = (PROJECT_ROOT / "out").resolve()
     if not _is_relative_to(model_path, model_data_root):
@@ -265,6 +275,34 @@ def main() -> int:
         raise ValueError(f"--output-dir 必须位于项目 out/ 目录下：{out_root}")
     if not _is_relative_to(artifact_dir, model_data_root):
         raise ValueError(f"--artifact-dir 必须位于项目 models/data/ 目录下：{model_data_root}")
+    if resume_checkpoint is not None:
+        if not _is_relative_to(resume_checkpoint, artifact_dir):
+            raise ValueError(
+                f"--resume-from-checkpoint 必须位于 adapter 目录下：{artifact_dir}"
+            )
+        if not resume_checkpoint.is_dir():
+            raise FileNotFoundError(f"恢复 checkpoint 不存在：{resume_checkpoint}")
+        missing_state_files = [
+            filename
+            for filename in (
+                "adapter_config.json",
+                "trainer_state.json",
+                "optimizer.pt",
+                "scheduler.pt",
+            )
+            if not (resume_checkpoint / filename).is_file()
+        ]
+        if missing_state_files:
+            raise FileNotFoundError(
+                f"恢复 checkpoint 缺少训练状态文件 {missing_state_files}：{resume_checkpoint}"
+            )
+        if not any(
+            (resume_checkpoint / filename).is_file()
+            for filename in ("adapter_model.safetensors", "adapter_model.bin")
+        ):
+            raise FileNotFoundError(
+                f"恢复 checkpoint 缺少 adapter 权重：{resume_checkpoint}"
+            )
     if not model_path.is_dir():
         raise FileNotFoundError(f"基座模型目录不存在：{model_path}")
     if not (model_path / "config.json").is_file():
@@ -342,7 +380,7 @@ def main() -> int:
         "eval_steps": 100,
         "save_strategy": "steps",
         "save_steps": 100,
-        "save_total_limit": 2,
+        "save_total_limit": 8,
         "report_to": "none",
         "remove_unused_columns": False,
         "seed": args.seed,
@@ -366,7 +404,7 @@ def main() -> int:
         eval_dataset=eval_dataset,
         data_collator=CausalCollator(tokenizer),
     )
-    trainer.train()
+    trainer.train(resume_from_checkpoint=str(resume_checkpoint) if resume_checkpoint else None)
     trainer.save_model(str(artifact_dir))
     tokenizer.save_pretrained(str(artifact_dir))
     manifest = {
@@ -377,6 +415,10 @@ def main() -> int:
         "base_model_path": str(model_path),
         "train_path": str(train_path),
         "artifact_dir": str(artifact_dir),
+        "resume_from_checkpoint": (
+            str(resume_checkpoint) if resume_checkpoint else None
+        ),
+        "final_global_step": trainer.state.global_step,
         "train_sha256": _sha256(train_path),
         "source_rows": len(rows),
         "numeric_program_examples": len(examples),

@@ -78,6 +78,18 @@ class FinqaQloraDataTest(unittest.TestCase):
         self.assertIn('"evidence":["table_1","text_2"]', target)
         self.assertNotIn("very long evidence string", target)
 
+    def test_resume_checkpoint_argument_is_available(self):
+        args = _parse_args(
+            [
+                "--resume-from-checkpoint",
+                "models/data/finqa_qlora_7b_v2/checkpoint-100",
+            ]
+        )
+        self.assertEqual(
+            args.resume_from_checkpoint,
+            Path("models/data/finqa_qlora_7b_v2/checkpoint-100"),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
