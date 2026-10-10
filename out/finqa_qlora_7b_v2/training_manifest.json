@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "method": "qlora",
+  "supervision_contract": "structured-json-compact-evidence-v2",
+  "base_model_id": "Qwen/Qwen2.5-7B-Instruct",
+  "base_model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct",
+  "train_path": "/userhome/cs5/u3680889/OptimizationSystem/datasets/raw_finqa/train.json",
+  "artifact_dir": "/userhome/cs5/u3680889/OptimizationSystem/models/data/finqa_qlora_7b_v2",
+  "train_sha256": "99ce9f9923eca85d8353c974baa77c6aeae6bfb5144dc399a82f29ad24433ac9",
+  "source_rows": 6251,
+  "numeric_program_examples": 6083,
+  "train_examples": 5778,
+  "eval_examples": 305,
+  "seed": 20261004,
+  "max_length": 1024,
+  "lora": {
+    "r": 16,
+    "alpha": 32,
+    "dropout": 0.05
+  }
+}

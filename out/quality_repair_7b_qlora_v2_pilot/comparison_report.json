@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-4080",
+  "created_at": "2026-10-10T06:26:06.991148+00:00",
+  "dataset": {
+    "role": "evaluation_dev",
+    "size": 80,
+    "source_size": 883,
+    "version": "main",
+    "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
+    "sample": {
+      "seed": 20261004,
+      "indices": [
+        18,
+        22,
+        31,
+        55,
+        57,
+        62,
+        75,
+        96,
+        120,
+        129,
+        134,
+        148,
+        151,
+        158,
+        178,
+        183,
+        191,
+        194,
+        195,
+        213,
+        214,
+        219,
+        223,
+        225,
+        234,
+        253,
+        254,
+        260,
+        267,
+        273,
+        281,
+        285,
+        287,
+        297,
+        310,
+        335,
+        341,
+        364,
+        368,
+        377,
+        378,
+        383,
+        396,
+        402,
+        407,
+        430,
+        437,
+        440,
+        455,
+        487,
+        535,
+        556,
+        566,
+        605,
+        610,
+        611,
+        623,
+        625,
+        628,
+        656,
+        657,
+        687,
+        693,
+        708,
+        711,
+        722,
+        728,
+        729,
+        744,
+        761,
+        772,
+        788,
+        824,
+        827,
+        846,
+        847,
+        852,
+        864,
+        873,
+        881
+      ],
+      "indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61"
+    }
+  },
+  "variants": [
+    {
+      "variant": "structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "stable_cell_ids": false,
+      "cell_ids_only": false,
+      "fallback_to_structured": false,
+      "question_routing": false,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Preserve the table column, row, year, and unit in evidence. Use times or multiple for a ratio, and mmboe when the table uses that unit. The value must be the final answer.",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 33,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4125
+      },
+      "structured_output_rate": 1.0,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 0,
+      "validation_failure_count": 0,
+      "fallback_count": 0,
+      "duration_seconds": 170.67528037703596,
+      "predictions_file": "structured_json/predictions.jsonl",
+      "predictions_sha256": "51c159ceca442806359a960cf80c7b9778af6e0cb4fbe61bd38a7e5f456e4e5a"
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "formula",
+      "value",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "formula": {
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "evidence_operation_schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "operands",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "cell_id",
+            "value"
+          ],
+          "properties": {
+            "cell_id": {
+              "type": "string",
+              "pattern": "^r[0-9]+c[0-9]+$"
+            },
+            "value": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "operands": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "cell_ids_operation_schema": {
+    "type": "object",
+    "required": [
+      "cell_ids",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "cell_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "steps_operation_schema": {
+    "type": "object",
+    "required": [
+      "steps",
+      "unit"
+    ],
+    "properties": {
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "operation",
+            "operands"
+          ],
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": [
+                "absolute_difference",
+                "add",
+                "average",
+                "difference",
+                "divide",
+                "multiply",
+                "percent",
+                "percent_change",
+                "percentage",
+                "ratio",
+                "subtract",
+                "sum"
+              ]
+            },
+            "operands": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "candidate_cell_ids_operation_schema": {
+    "type": "object",
+    "required": [
+      "candidates"
+    ],
+    "properties": {
+      "candidates": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "required": [
+            "cell_ids",
+            "operation",
+            "unit"
+          ],
+          "properties": {
+            "cell_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "absolute_difference",
+                "add",
+                "average",
+                "difference",
+                "divide",
+                "multiply",
+                "percent",
+                "percent_change",
+                "percentage",
+                "ratio",
+                "subtract",
+                "sum"
+              ]
+            },
+            "unit": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "generation": {
+    "max_new_tokens": 256,
+    "do_sample": false,
+    "num_beams": 1
+  },
+  "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
+  "model": {
+    "model_id": "Qwen2.5-7B-Instruct-QLoRA-v2-step100",
+    "model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct",
+    "device": "cuda:0",
+    "dtype": "float16",
+    "quantization": "none",
+    "quantized_manifest": null,
+    "adapter_path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/finqa_qlora_7b_v2/checkpoint-100",
+    "load_in_4bit": true
+  }
+}
