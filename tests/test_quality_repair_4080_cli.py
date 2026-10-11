@@ -10,6 +10,7 @@ from scripts.run_quality_repair_4080 import (
     PROJECT_ROOT,
     _parse_args,
     _build_quantized_manifest,
+    _effective_runtime_quantization,
     _resolve_model_path,
     _validate_dataset_context,
 )
@@ -72,6 +73,16 @@ class QualityRepair4080CliTest(unittest.TestCase):
             self.assertEqual(manifest["format"], "awq")
             self.assertEqual(manifest["model_path"], str(model_path.resolve()))
             self.assertEqual(manifest["plan"]["weight_bits"], 4)
+
+    def test_reports_bitsandbytes_runtime_quantization(self):
+        self.assertEqual(
+            _effective_runtime_quantization("none", load_in_4bit=True),
+            "bitsandbytes-nf4",
+        )
+        self.assertEqual(
+            _effective_runtime_quantization("none", load_in_4bit=False),
+            "none",
+        )
 
     def test_resolves_model_path_from_quantized_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_dir:

@@ -6,6 +6,7 @@ import ast
 import hashlib
 import json
 import math
+import numbers
 import operator
 import random
 import re
@@ -183,6 +184,34 @@ def parse_structured_output(text: str) -> dict[str, Any] | None:
                     "structured": True,
                 }
     return None
+
+
+def scoring_value_for_reference(
+    parsed: dict[str, Any], reference: Any
+) -> str | None:
+    """Return a prediction using the reference's native numeric convention.
+
+    FinQA answers are strings and may include ``%``; for those rows the
+    unit-normalized value remains the correct comparison value.  The
+    Aiera/finqa-verified ``answer`` column is numeric and stores percentage
+    answers in display scale (for example, 111.97 rather than 1.1197).  When
+    a structured response supplies a numeric ``value``, compare that value
+    directly with a numeric reference instead of applying a second percent
+    conversion.
+    """
+
+    normalized_value = parsed.get("normalized_value")
+    raw_value = parsed.get("value")
+    if (
+        isinstance(reference, numbers.Number)
+        and not isinstance(reference, bool)
+        and raw_value is not None
+        and parse_numeric_answer(raw_value) is not None
+    ):
+        return str(raw_value).strip()
+    if normalized_value is None:
+        return None
+    return str(normalized_value)
 
 
 def parse_evidence_operation_output(text: str) -> dict[str, Any] | None:
@@ -1023,13 +1052,17 @@ def candidate_cell_ids_operation_schema() -> dict[str, Any]:
     }
 
 
-def _reference_answer(row: dict[str, Any]) -> str:
+def _reference_answer_value(row: dict[str, Any]) -> Any:
     answer = row.get("answer")
     if answer is None and isinstance(row.get("qa"), dict):
         answer = row["qa"].get("answer")
     if answer is None:
         raise ValueError("Quality repair row has no reference answer")
-    return str(answer)
+    return answer
+
+
+def _reference_answer(row: dict[str, Any]) -> str:
+    return str(_reference_answer_value(row))
 
 
 def _sha256(path: Path) -> str:
@@ -1329,8 +1362,10 @@ def run_quality_repair_experiment(
                         if repaired.get("calculator_used"):
                             calculator_count += 1
                         parsed = repaired
-                    extracted = parsed.get("normalized_value")
-                    reference = _reference_answer(row)
+                    normalized_extracted = parsed.get("normalized_value")
+                    reference_value = _reference_answer_value(row)
+                    extracted = scoring_value_for_reference(parsed, reference_value)
+                    reference = str(reference_value)
                     metrics = evaluate_numeric_answers(
                         [extracted if extracted is not None else ""],
                         [reference],
@@ -1348,6 +1383,7 @@ def run_quality_repair_experiment(
                         "question": request.question,
                         "raw_prediction": raw_output,
                         "extracted_value": extracted,
+                        "unit_normalized_value": normalized_extracted,
                         "reference": reference,
                         "parsed": metrics["parsed"] == 1,
                         "correct": metrics["correct"] == 1,
@@ -1437,6 +1473,11 @@ def run_quality_repair_experiment(
         "steps_operation_schema": steps_operation_schema(),
         "candidate_cell_ids_operation_schema": candidate_cell_ids_operation_schema(),
         "generation": config.get("generation", original_generation),
+        "scoring": {
+            "tolerance": float(config.get("tolerance", 1e-4)),
+            "numeric_references": "native display scale",
+            "text_references": "unit-normalized scale",
+        },
         "note": "Few-shot examples must come from calibration/train, never evaluation dev/test.",
     }
     if sample_indices is not None:

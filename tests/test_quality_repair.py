@@ -1,6 +1,8 @@
 import json
+import tempfile
 import unittest
 from decimal import Decimal
+from pathlib import Path
 
 from src.evaluation.finqa_metrics import evaluate_numeric_answers
 from src.evaluation.quality_repair import (
@@ -18,7 +20,9 @@ from src.evaluation.quality_repair import (
     quality_repair_schema,
     repair_with_calculator,
     repair_with_evidence_operation,
+    run_quality_repair_experiment,
     safe_calculate,
+    scoring_value_for_reference,
     validate_cell_ids_operation,
     validate_steps_operation,
     validate_evidence_operation,
@@ -82,6 +86,99 @@ class QualityRepairTest(unittest.TestCase):
             ["1.9%"],
         )
         self.assertEqual(metrics["correct"], 1)
+
+    def test_numeric_reference_uses_native_percent_display_scale(self):
+        parsed = parse_structured_output(
+            '{"evidence":["returns"],"formula":"subtract(211.81,98.18)",'
+            '"value":113.63,"unit":"percent"}'
+        )
+
+        self.assertEqual(parsed["normalized_value"], "113.63%")
+        self.assertEqual(
+            scoring_value_for_reference(parsed, 113.63),
+            "113.63",
+        )
+        metrics = evaluate_numeric_answers(
+            [scoring_value_for_reference(parsed, 113.63)],
+            [113.63],
+        )
+        self.assertEqual(metrics["correct"], 1)
+
+    def test_text_percent_reference_keeps_unit_normalization(self):
+        parsed = parse_structured_output(
+            '{"evidence":["operating profit"],"formula":"divide(20,1063)",'
+            '"value":1.9,"unit":"percent"}'
+        )
+
+        self.assertEqual(
+            scoring_value_for_reference(parsed, "1.9%"),
+            "1.9%",
+        )
+
+    def test_experiment_scores_numeric_reference_in_native_scale(self):
+        class FakeService:
+            def __init__(self):
+                self.config = {"generation": {"max_new_tokens": 32}}
+
+            def generate_batch(self, requests, prompt_suffix=""):
+                return [
+                    {
+                        "output_text": (
+                            '{"evidence":["returns"],'
+                            '"formula":"subtract(211.81,98.18)",'
+                            '"value":113.63,"unit":"percent"}'
+                        )
+                    }
+                    for _ in requests
+                ]
+
+        dataset = [
+            {
+                "answer": 113.63,
+                "pre_text": ["returns context"],
+                "post_text": [],
+                "table": [["metric", "value"]],
+                "qa": {"question": "What was the return difference?"},
+            }
+        ]
+        config = {
+            "dataset_role": "high_risk_regression",
+            "batch_size": 1,
+            "show_progress": False,
+            "tolerance": 1e-4,
+            "variants": [
+                {
+                    "name": "structured_json",
+                    "output_mode": "json",
+                    "calculator_enabled": False,
+                    "prompt_suffix": "Return JSON.",
+                }
+            ],
+        }
+        manifest = {
+            "assets": {
+                "high_risk_regression": {
+                    "version": "test",
+                    "sha256": "abc",
+                }
+            }
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            report = run_quality_repair_experiment(
+                FakeService(), dataset, manifest, config, directory
+            )
+            prediction = json.loads(
+                (
+                    Path(directory)
+                    / "structured_json"
+                    / "predictions.jsonl"
+                ).read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(report["variants"][0]["metrics"]["correct"], 1)
+        self.assertEqual(prediction["extracted_value"], "113.63")
+        self.assertEqual(prediction["unit_normalized_value"], "113.63%")
 
     def test_structured_output_repairs_stray_quote_after_numeric_value(self):
         parsed = parse_structured_output(

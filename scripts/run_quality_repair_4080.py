@@ -104,6 +104,14 @@ def _resolve_model_path(
     return candidate.expanduser().resolve()
 
 
+def _effective_runtime_quantization(
+    quantization: str, load_in_4bit: bool
+) -> str:
+    if load_in_4bit:
+        return "bitsandbytes-nf4"
+    return quantization
+
+
 def _validate_dataset_context(dataset: Any, role: str) -> None:
     if role != "high_risk_regression":
         return
@@ -221,6 +229,8 @@ def main() -> int:
         raise ValueError("--quantized-manifest 需要同时指定 --quantization awq 或 gptq")
     if args.adapter_path is not None and args.quantization != "none":
         raise ValueError("QLoRA adapter 评测暂只支持 --quantization none 的基座模型")
+    if args.load_in_4bit and args.quantization != "none":
+        raise ValueError("--load-in-4bit 不能与 AWQ/GPTQ 量化模型同时使用")
     if args.quantization != "none" and args.model_path is not None and args.quantized_model_path is not None:
         raise ValueError("量化模式下只传 --quantized-model-path，不要同时传 --model-path")
     quantized_manifest = None
@@ -282,7 +292,12 @@ def main() -> int:
 
     model_manifest_path = output_dir / "model_manifest.json"
     model_manifest = _build_manifest(args.model_id, model_path)
-    model_manifest["runtime"]["quantization"] = args.quantization
+    runtime_quantization = _effective_runtime_quantization(
+        args.quantization, args.load_in_4bit
+    )
+    model_manifest["runtime"]["dtype"] = args.dtype
+    model_manifest["runtime"]["device"] = args.device
+    model_manifest["runtime"]["quantization"] = runtime_quantization
     _write_json(model_manifest_path, model_manifest)
     if args.quantization != "none":
         if quantized_manifest is None:
@@ -347,7 +362,7 @@ def main() -> int:
         "model_path": str(model_path),
         "device": args.device,
         "dtype": args.dtype,
-        "quantization": args.quantization,
+        "quantization": runtime_quantization,
         "quantized_manifest": (
             str(quantized_manifest_path) if quantized_manifest_path else None
         ),
