@@ -263,6 +263,71 @@ print(len(assets.quality_test))
 print(len(assets.high_risk_regression))
 ```
 
+##### 5.1 `High-risk regression questions have no unique FinQA source context` 报错
+
+执行以下资产构建命令时：
+
+```bash
+.venv/bin/python3 -c \
+"from src.data.finqa_assets import prepare_assets; prepare_assets('datasets_contextual', calibration_size=1024, seed=42, finqa_revision='main')"
+```
+
+如果出现：
+
+```text
+ValueError: High-risk regression questions have no unique FinQA source context: [...]
+```
+
+这不是 FinQA 下载失败，也不是 Hugging Face 缓存损坏，而是高风险回归样本无法唯一回连到
+FinQA `test` 中的原始财报上下文。`Aiera/finqa-verified` 只提供核验后的问题和答案；为了给模型补齐
+`pre_text`、`post_text` 和 `table`，`_enrich_regression_rows()` 必须为每条 verified 问题找到唯一的
+FinQA test 原题。程序在找不到候选或候选不唯一时主动终止，避免把错误财报或表格接到高风险样本上。
+
+本次失败的 3 条 verified 问题使用 `decimal proportion`，而 FinQA test 对应原题使用 `portion`，例如：
+
+```text
+verified: what decimal proportion of total purchase price is related to stock awards?
+FinQA:    what portion of total purchase price is related to stock awards?
+```
+
+匹配器先尝试标准化后的完整文本匹配，再通过 `_question_content_key()` 去除比例问句模板词进行唯一匹配。
+第一次修复已把 `decimal`、`percentage`、`proportion` 和 `ratio` 等词列入
+`_QUESTION_TEMPLATE_WORDS`，但漏掉了 FinQA 原题实际使用的 `portion`。因此两边生成的内容键仍然不同：
+
+```text
+verified 内容键: total purchase price related stock awards
+FinQA 内容键:    portion total purchase price related stock awards
+```
+
+服务器上的 `_QUESTION_TEMPLATE_WORDS` 输出若只有 `proportion`、没有 `portion`，就会稳定复现该错误。
+修复方式是在 `src/data/finqa_assets.py` 的模板词集合中加入：
+
+```python
+"percentage",
+"portion",
+"proportion",
+```
+
+修改后执行：
+
+```bash
+.venv/bin/python3 -m unittest tests.test_finqa_assets -v
+.venv/bin/python3 -c \
+"from src.data.finqa_assets import prepare_assets; prepare_assets('datasets_contextual', calibration_size=1024, seed=42, finqa_revision='main')"
+```
+
+如果修改后仍出现完全相同的错误，使用下面的命令确认 Python 实际导入的文件以及运行版本是否包含
+`portion`；集群上的 `/userhome/...` 工作副本可能尚未同步本地未提交的修复：
+
+```bash
+.venv/bin/python3 -c \
+"import src.data.finqa_assets as f; print(f.__file__); print(sorted(f._QUESTION_TEMPLATE_WORDS))"
+```
+
+`finqa_revision='main'` 只决定下载哪个 FinQA 数据版本，不会改变本地匹配代码；清理
+`datasets_contextual/hf_cache` 也不能修复这一问题。该修复只改变问题到原始上下文的回连方式，
+不修改 verified 答案，也不从 FinQA train/dev 引入评测上下文。
+
 #### 6. 三套数据的使用规则
 
 ```text
@@ -1495,6 +1560,9 @@ dev 的 `37.15%`；最长单条输入为 2225 tokens，对应 source index `543`
 旧资产会在模型加载和推理前直接抛错。下一次必须先同步修复代码、重建资产并核对 manifest，再使用新的输出目录。
 
 首次重建 `datasets_contextual` 时，91 条 verified 问题中有 3 条无法按完整问题文本匹配。它们使用了
-`decimal proportion` 等核验后问法，而 FinQA test 原题使用 `percentage` 或 `ratio` 问句模板。资产构建现先做
-完整文本匹配，失败后仅在 FinQA test 内去除这些计算问句模板词并要求内容词唯一匹配；没有候选或出现多个候选
-仍立即失败。该修复只改变上下文回连，不改变 verified 核验答案，也不会从 train/dev 引入评测上下文。
+`decimal proportion` 等核验后问法，而 FinQA test 原题使用 `portion` 问句模板。第一次内容词匹配修复
+加入了 `proportion/percentage/ratio` 等模板词，却漏掉实际原题中的 `portion`，因此服务器同步该版本后仍然
+报出相同的 3 条未匹配问题。最终修复将 `portion` 同样列为模板词，并增加
+`proportion` 对 `portion` 的单元测试。资产构建先做完整文本匹配，失败后仅在 FinQA test 内去除这些计算问句
+模板词并要求内容词唯一匹配；没有候选或出现多个候选仍立即失败。该修复只改变上下文回连，不改变 verified
+核验答案，也不会从 train/dev 引入评测上下文。完整排障说明见第 4 章 5.1 节。

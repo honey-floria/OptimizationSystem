@@ -63,6 +63,34 @@ class FinQAAssetsTest(unittest.TestCase):
         self.assertEqual(enriched[0]["pre_text"], ["purchase context"])
         self.assertEqual(enriched[0]["qa"]["answer"], "0.03")
 
+    def test_matches_verified_proportion_to_finqa_portion_wording(self):
+        regression = FakeDataset(
+            [
+                {
+                    "question": "What decimal proportion of total purchase price is related to stock awards?",
+                    "answer": "0.03",
+                }
+            ]
+        )
+        source = FakeDataset(
+            [
+                {
+                    "pre_text": ["purchase context"],
+                    "post_text": [],
+                    "table": [["purchase price", "stock awards"]],
+                    "qa": {
+                        "question": "What portion of total purchase price is related to stock awards?",
+                        "answer": "2.9%",
+                    },
+                }
+            ]
+        )
+
+        enriched = _enrich_regression_rows(regression, source)
+
+        self.assertEqual(enriched[0]["pre_text"], ["purchase context"])
+        self.assertEqual(enriched[0]["qa"]["answer"], "0.03")
+
     def test_rejects_ambiguous_rewritten_question(self):
         regression = FakeDataset(
             [{"question": "What decimal proportion of revenue?", "answer": "0.5"}]

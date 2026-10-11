@@ -43,6 +43,7 @@ _QUESTION_TEMPLATE_WORDS = {
     "of",
     "percent",
     "percentage",
+    "portion",
     "proportion",
     "ratio",
     "the",
