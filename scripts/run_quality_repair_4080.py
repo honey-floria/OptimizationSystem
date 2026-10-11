@@ -162,6 +162,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_DATASET_DIR,
         help="包含 manifest.json 的 FinQA assets 目录，默认 datasets/。",
     )
+    parser.add_argument(
+        "--dataset-role",
+        choices=["evaluation_dev", "evaluation_test", "high_risk_regression"],
+        default="evaluation_dev",
+        help="选择评测资产，默认 evaluation_dev。",
+    )
     parser.add_argument("--config", type=Path, default=Path("configs/quality_repair_4080.json"))
     parser.add_argument("--baseline-config", type=Path, default=Path("configs/baseline.json"))
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
@@ -254,6 +260,7 @@ def main() -> int:
         variants=variants,
         progress_every_batches=args.progress_every_batches,
     )
+    quality_config["dataset_role"] = args.dataset_role
     effective_quality_path = output_dir / "quality_repair.effective.json"
     _write_json(effective_quality_path, quality_config)
 
@@ -272,13 +279,20 @@ def main() -> int:
             raise AssertionError("quantized manifest path was not resolved")
     dataset_manifest = _read_json(dataset_dir / "manifest.json")
     assets = load_assets(dataset_dir)
+    datasets_by_role = {
+        "evaluation_dev": assets.quality_dev,
+        "evaluation_test": assets.quality_test,
+        "high_risk_regression": assets.high_risk_regression,
+    }
+    evaluation_dataset = datasets_by_role[args.dataset_role]
 
     print(f"模型：{args.model_id}")
     print(f"模型目录：{model_path}")
     print(f"量化方式：{args.quantization}")
     print(f"数据目录：{dataset_dir}")
     print(f"输出目录：{output_dir}")
-    print(f"模式：{'full-883' if args.full else f'pilot-{args.limit}'}")
+    print(f"数据角色：{args.dataset_role}")
+    print(f"模式：{'full' if args.full else f'pilot-{args.limit}'}")
     print(f"方案：{', '.join(variants)}")
 
     if args.quantization == "awq":
@@ -305,7 +319,7 @@ def main() -> int:
         )
     report = run_quality_repair_experiment(
         service,
-        assets.quality_dev,
+        evaluation_dataset,
         dataset_manifest,
         quality_config,
         output_dir,

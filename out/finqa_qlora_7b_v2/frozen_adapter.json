@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "status": "frozen_for_gate_validation",
+  "frozen_at": "2026-10-11",
+  "selection": {
+    "global_step": 724,
+    "adapter_path": "models/data/finqa_qlora_7b_v2",
+    "base_model_path": "models/data/Qwen2.5-7B-Instruct",
+    "load_in_4bit": true,
+    "inference_variant": "structured_json"
+  },
+  "training_manifest": "out/finqa_qlora_7b_v2/training_manifest.json",
+  "selection_report": "out/quality_repair_7b_qlora_step724_full/comparison_report.json",
+  "selection_metrics": {
+    "total": 883,
+    "parsed": 882,
+    "correct": 328,
+    "parse_rate": 0.9988674971687429,
+    "numeric_accuracy": 0.3714609286523216,
+    "structured_output_rate": 0.9988674971687429,
+    "predictions_sha256": "424485594f5cc4f1fbc61ccf2330fa6a40949de911dff90fdffa24d200697a3a"
+  },
+  "runner_up": {
+    "global_step": 700,
+    "report": "out/quality_repair_7b_qlora_step700_full/comparison_report.json",
+    "correct": 326,
+    "numeric_accuracy": 0.36919592298980747
+  },
+  "decision": "The user accepted step 724 as the frozen adapter after full-dev evaluation. It scored two more correct answers than step 700 while preserving the same parse rate.",
+  "remaining_gates": [
+    "91-row high-risk regression",
+    "longest-context quality check",
+    "final 6.7.5 acceptance report",
+    "adapter weight hash from the training server"
+  ]
+}

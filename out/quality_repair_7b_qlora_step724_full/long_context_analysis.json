@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "source_report": "out/quality_repair_7b_qlora_step724_full/comparison_report.json",
+  "method": "Sort the 883 primary generation requests by input_tokens and evaluate the longest 10 percent (89 rows). Retry requests are excluded by retaining the first log entry per request_id.",
+  "full_dev": {
+    "total": 883,
+    "parsed": 882,
+    "correct": 328,
+    "parse_rate": 0.9988674971687429,
+    "numeric_accuracy": 0.3714609286523216
+  },
+  "longest_decile": {
+    "total": 89,
+    "minimum_input_tokens": 1521,
+    "maximum_input_tokens": 2225,
+    "parsed": 88,
+    "correct": 35,
+    "parse_rate": 0.9887640449438202,
+    "numeric_accuracy": 0.39325842696629215
+  },
+  "single_longest_sample": {
+    "source_index": 543,
+    "input_tokens": 2225,
+    "question": "what was the change in billions of total debt from december 31 , 2014 to 2015?",
+    "prediction": "-1.0",
+    "reference": "-1",
+    "parsed": true,
+    "correct": true
+  },
+  "gate_result": "pass",
+  "interpretation": "The longest-decile numeric accuracy is 39.33%, above the full-dev 37.15%, and the single longest sample is correct. One longest-decile row is the shared 256-token truncated output, so subgroup parse rate is 98.88%."
+}

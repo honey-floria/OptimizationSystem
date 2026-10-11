@@ -1442,3 +1442,32 @@ holdout loss。训练 loss 从 step 100 的约 `0.180` 总体下降到 step 700 
 阶段结论：step 700 和最终 step 724 是完整 dev 的两个候选。下一步分别在完整 883 条 FinQA dev 上评测，
 选择正确数更高且解析率不低于 `99%` 的版本，再对胜出版本完整复跑一次。完成这一步前，不冻结新的 FP16
 基线，也不启动基于新基线的 AWQ、GPTQ 或 INT8 重量化。
+
+## QLoRA step 724 冻结决定（2026-10-11）
+
+完整 883 条 FinQA dev 已分别评测 step 700 和最终 step 724。step 700 正确 `326/883`（`36.92%`），
+step 724 正确 `328/883`（`37.15%`）；两者均解析 `882/883`（`99.89%`），结构化输出成功率也均为
+`99.89%`。step 724 相对 step 700 有 4 题由错变对、2 题由对变错，净提升 2 题；推理总用时分别为
+2320.6 秒和 2337.2 秒，约 `0.7%` 的差异不构成选择障碍。
+
+根据用户决定，不再要求 step 724 进行第二次完整复跑，正式冻结
+`models/data/finqa_qlora_7b_v2` 的最终 step 724 adapter。冻结清单写入
+`out/finqa_qlora_7b_v2/frozen_adapter.json`，选择报告为
+`out/quality_repair_7b_qlora_step724_full/comparison_report.json`，预测文件 SHA256 为
+`424485594f5cc4f1fbc61ccf2330fa6a40949de911dff90fdffa24d200697a3a`。step 700 保留为回退候选。
+
+这次冻结表示 adapter 选择已结束，不等于第 6.7.5 节全部通过。当前已通过完整 dev 数值准确率、解析率、
+结构化输出和最长上下文四项门禁；仍需运行 91 条高风险回归，并从训练服务器补充 adapter 权重哈希。
+4080 评测入口新增 `--dataset-role high_risk_regression`，下一步使用冻结 adapter 对全部 91 条执行统一评测。
+
+### 最长上下文检查
+
+使用 step 724 完整 dev 的 `quality_service.jsonl`，按每道题首次生成请求的 `input_tokens` 降序排列，取最长
+10%（89 条，输入长度 1521～2225 tokens）作为长上下文子集。该子集正确 `35/89`（`39.33%`），高于完整
+dev 的 `37.15%`；最长单条输入为 2225 tokens，对应 source index `543`，预测 `-1.0`、标准答案 `-1`，
+回答正确。因此最长上下文数值质量门禁通过。分析清单见
+`out/quality_repair_7b_qlora_step724_full/long_context_analysis.json`。
+
+长上下文子集解析 `88/89`（`98.88%`），唯一未解析项也是完整 dev 中唯一失败的 source index `435`：模型
+枚举过多 evidence，输出达到 256-token 上限后截断。它不改变完整 dev 的 `99.89%` 解析门禁结论，但应作为
+后续推理契约压缩或输出长度防护的固定回归样本。

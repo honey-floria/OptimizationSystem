@@ -35,6 +35,11 @@ class QualityRepair4080CliTest(unittest.TestCase):
         )
         self.assertIsNone(args.model_path)
 
+    def test_selects_high_risk_regression_dataset(self):
+        args = _parse_args(["--dataset-role", "high_risk_regression", "--full"])
+        self.assertEqual(args.dataset_role, "high_risk_regression")
+        self.assertTrue(args.full)
+
     def test_builds_quantized_manifest_with_absolute_model_path(self):
         with tempfile.TemporaryDirectory() as temporary_dir:
             model_path = Path(temporary_dir) / "model"
