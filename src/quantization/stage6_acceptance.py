@@ -132,11 +132,17 @@ def validate_stage6(project_root: str | Path) -> Stage6Report:
         ):
             regression_plans.append(plan_id)
 
-    recommendation_path = root / "docs/QUANTIZATION_RECOMMENDATION.md"
-    recommendation_text = (
-        recommendation_path.read_text(encoding="utf-8")
-        if recommendation_path.is_file()
-        else ""
+    recommendation_paths = (
+        root / "docs/QUANTIZATION_RECOMMENDATION.md",
+        root / "docs/PROJECT_DOCUMENTATION.md",
+    )
+    recommendation_text = next(
+        (
+            path.read_text(encoding="utf-8")
+            for path in recommendation_paths
+            if path.is_file()
+        ),
+        "",
     )
     recommendation_ready = all(
         phrase in recommendation_text

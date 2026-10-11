@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "scope": "qlora_quality_repair_6_7_5",
+  "created_at": "2026-10-12",
+  "quality_gate_complete": true,
+  "artifact_identity_complete": true,
+  "complete": true,
+  "candidate": {
+    "global_step": 724,
+    "adapter_path": "models/data/finqa_qlora_7b_v2",
+    "runtime_quantization": "bitsandbytes-nf4",
+    "inference_variant": "structured_json"
+  },
+  "checks": [
+    {
+      "name": "finqa_dev_numeric_accuracy_at_least_20_percent",
+      "status": "pass",
+      "actual": 0.3714609286523216,
+      "threshold": 0.2,
+      "evidence": "out/quality_repair_7b_qlora_step724_full/comparison_report.json"
+    },
+    {
+      "name": "finqa_dev_parse_rate_at_least_99_percent",
+      "status": "pass",
+      "actual": 0.9988674971687429,
+      "threshold": 0.99,
+      "evidence": "out/quality_repair_7b_qlora_step724_full/comparison_report.json"
+    },
+    {
+      "name": "structured_output_rate_at_least_90_percent",
+      "status": "pass",
+      "actual": 0.9988674971687429,
+      "threshold": 0.9,
+      "evidence": "out/quality_repair_7b_qlora_step724_full/comparison_report.json"
+    },
+    {
+      "name": "long_context_quality_not_below_full_dev",
+      "status": "pass",
+      "actual": 0.39325842696629215,
+      "threshold": 0.3714609286523216,
+      "evidence": "out/quality_repair_7b_qlora_step724_full/long_context_analysis.json"
+    },
+    {
+      "name": "contextual_high_risk_correct_at_least_20_of_91",
+      "status": "pass",
+      "actual": 21,
+      "threshold": 20,
+      "evidence": "out/quality_repair_7b_qlora_step724_high_risk_contextual_fixed/comparison_report.json"
+    },
+    {
+      "name": "adapter_weight_sha256_recorded",
+      "status": "pass",
+      "actual": "771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260",
+      "threshold": "non-empty SHA256",
+      "evidence": "models/data/finqa_qlora_7b_v2/adapter_model.safetensors",
+      "detail": "SHA256 produced by sha256sum on the training server and supplied on 2026-10-12"
+    }
+  ],
+  "blocking_items": []
+}

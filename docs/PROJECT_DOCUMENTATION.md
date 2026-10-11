@@ -1505,7 +1505,7 @@ holdout loss。训练 loss 从 step 100 的约 `0.180` 总体下降到 step 700 
 训练前修复，不需要为本轮已有 checkpoint 重新训练。
 
 阶段结论：step 700 和最终 step 724 是完整 dev 的两个候选。下一步分别在完整 883 条 FinQA dev 上评测，
-选择正确数更高且解析率不低于 `99%` 的版本，再对胜出版本完整复跑一次。完成这一步前，不冻结新的 FP16
+选择正确数更高且解析率不低于 `99%` 的版本，再对胜出版本完整复跑一次。完成这一步前，不冻结新的 QLoRA/NF4
 基线，也不启动基于新基线的 AWQ、GPTQ 或 INT8 重量化。
 
 ## QLoRA step 724 冻结决定（2026-10-11）
@@ -1566,3 +1566,30 @@ dev 的 `37.15%`；最长单条输入为 2225 tokens，对应 source index `543`
 `proportion` 对 `portion` 的单元测试。资产构建先做完整文本匹配，失败后仅在 FinQA test 内去除这些计算问句
 模板词并要求内容词唯一匹配；没有候选或出现多个候选仍立即失败。该修复只改变上下文回连，不改变 verified
 核验答案，也不会从 train/dev 引入评测上下文。完整排障说明见第 4 章 5.1 节。
+
+### Contextual 高风险回归最终结果（2026-10-12）
+
+修复上下文回连后，冻结的 step 724 adapter 使用完整 91 条 contextual 高风险回归集运行。有效资产的
+SHA256 为 `064f379a0c63ea9cfe49681b1c9a477f8246f9aaf853c85799812bb2feda0693`，输入长度为
+396～2590 tokens、平均 1071.84 tokens，确认财报文本和表格已进入模型。运行时实际采用
+BitsAndBytes NF4 4-bit 基座加载加 QLoRA adapter，因此该结果不再标记为 FP16，而记录为
+`bitsandbytes-nf4`。
+
+第一次 contextual 报告得到 `15/91`，进一步检查发现 `Aiera/finqa-verified` 的 `answer` 列为数值型，
+百分比答案采用显示尺度保存，例如参考答案为 `111.97`；旧评分器却依据模型的 `unit=percent` 将预测值
+`111.97` 再除以 100，造成 6 条假阴性。评分器现按参考答案的原生类型选择尺度：数值型参考答案直接比较
+结构化输出的 `value`，普通 FinQA 中带 `%` 的字符串答案继续使用单位归一化尺度。
+
+修复后使用新输出目录完整复跑，得到正确 `21/91`（`23.08%`）、解析 `91/91`、结构化输出
+`91/91`，超过至少 20 条正确的门槛。新旧两次运行的 91 条 `raw_prediction`、公式和 evidence 逐条完全
+一致，只有 6 条评分结果从错误改为正确，证明提升来自评分修复而非随机推理波动。正式报告为
+`out/quality_repair_7b_qlora_step724_high_risk_contextual_fixed/comparison_report.json`，报告 SHA256 为
+`0b37343a1561b8e49dcb81102289ec0ad2f8223915fc15373383520aee160394`，预测 SHA256 为
+`064ddb7531bca181bc2c6edceeae0a88e387d06785e4cff3c28822f8337dfd25`。
+
+至此，step 724 已通过完整 dev 准确率、解析率、结构化输出、最长上下文和 contextual 高风险回归五项质量
+门禁。训练服务器上的冻结权重文件为 `models/data/finqa_qlora_7b_v2/adapter_model.safetensors`，2026-10-12
+执行 `sha256sum` 得到 SHA256
+`771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`。该哈希已写入
+`out/finqa_qlora_7b_v2/frozen_adapter.json`，6.7.5 质量与制品身份验收全部完成，第 7 章可以启动。完整验收清单
+见 `out/finqa_qlora_7b_v2/acceptance_6_7_5.json`。

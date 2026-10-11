@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
-  "status": "frozen_for_gate_validation",
+  "status": "accepted",
   "frozen_at": "2026-10-11",
+  "quality_validated_at": "2026-10-12",
   "selection": {
     "global_step": 724,
     "adapter_path": "models/data/finqa_qlora_7b_v2",
@@ -10,6 +11,11 @@
     "inference_variant": "structured_json"
   },
   "training_manifest": "out/finqa_qlora_7b_v2/training_manifest.json",
+  "training_manifest_sha256": "9516b333a15a8c060c198640304f47446ba257dcb4e6916241d298e867171b26",
+  "adapter_config_sha256": "cfd908ddadd2951248227a95da94d31b934395c28e1b5e728a30a7a1cac6d742",
+  "adapter_weights_file": "models/data/finqa_qlora_7b_v2/adapter_model.safetensors",
+  "adapter_weights_sha256": "771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260",
+  "adapter_weights_hash_source": "sha256sum on training server, supplied 2026-10-12",
   "selection_report": "out/quality_repair_7b_qlora_step724_full/comparison_report.json",
   "selection_metrics": {
     "total": 883,
@@ -26,11 +32,32 @@
     "correct": 326,
     "numeric_accuracy": 0.36919592298980747
   },
-  "decision": "The user accepted step 724 as the frozen adapter after full-dev evaluation. It scored two more correct answers than step 700 while preserving the same parse rate.",
-  "remaining_gates": [
-    "91-row high-risk regression",
-    "longest-context quality check",
-    "final 6.7.5 acceptance report",
-    "adapter weight hash from the training server"
-  ]
+  "long_context_check": {
+    "report": "out/quality_repair_7b_qlora_step724_full/long_context_analysis.json",
+    "total": 89,
+    "correct": 35,
+    "numeric_accuracy": 0.39325842696629215,
+    "full_dev_numeric_accuracy": 0.3714609286523216,
+    "passed": true
+  },
+  "high_risk_regression": {
+    "report": "out/quality_repair_7b_qlora_step724_high_risk_contextual_fixed/comparison_report.json",
+    "report_sha256": "0b37343a1561b8e49dcb81102289ec0ad2f8223915fc15373383520aee160394",
+    "model_manifest": "out/quality_repair_7b_qlora_step724_high_risk_contextual_fixed/model_manifest.json",
+    "model_manifest_sha256": "7ec0cb045d6f634fd5469a39c416a648accf2a8a725cbffc19b6e500353879e2",
+    "dataset_sha256": "064f379a0c63ea9cfe49681b1c9a477f8246f9aaf853c85799812bb2feda0693",
+    "predictions_sha256": "064ddb7531bca181bc2c6edceeae0a88e387d06785e4cff3c28822f8337dfd25",
+    "runtime_quantization": "bitsandbytes-nf4",
+    "total": 91,
+    "parsed": 91,
+    "correct": 21,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.23076923076923078,
+    "structured_output_rate": 1.0,
+    "minimum_correct": 20,
+    "passed": true
+  },
+  "acceptance_report": "out/finqa_qlora_7b_v2/acceptance_6_7_5.json",
+  "decision": "The frozen step 724 adapter passed the dev, parse, structured-output, longest-context, and 91-row contextual high-risk quality gates. Its adapter_model.safetensors identity is frozen by the SHA256 recorded from the training server, so the 6.7.5 quality and artifact acceptance is complete.",
+  "remaining_gates": []
 }
