@@ -29,11 +29,53 @@ class FinQAAssetsTest(unittest.TestCase):
         self.assertEqual(enriched[0]["qa"]["answer"], "10")
 
     def test_rejects_verified_rows_without_source_context(self):
-        with self.assertRaisesRegex(ValueError, "missing FinQA source context"):
+        with self.assertRaisesRegex(ValueError, "no unique FinQA source context"):
             _enrich_regression_rows(
                 FakeDataset([{"question": "missing", "answer": "10"}]),
                 FakeDataset([]),
             )
+
+    def test_matches_verified_question_with_rewritten_ratio_wording(self):
+        regression = FakeDataset(
+            [
+                {
+                    "question": "What decimal proportion of total purchase price is related to stock awards?",
+                    "answer": "0.03",
+                }
+            ]
+        )
+        source = FakeDataset(
+            [
+                {
+                    "pre_text": ["purchase context"],
+                    "post_text": [],
+                    "table": [["purchase price", "stock awards"]],
+                    "qa": {
+                        "question": "What percentage of total purchase price is related to stock awards?",
+                        "answer": "3%",
+                    },
+                }
+            ]
+        )
+
+        enriched = _enrich_regression_rows(regression, source)
+
+        self.assertEqual(enriched[0]["pre_text"], ["purchase context"])
+        self.assertEqual(enriched[0]["qa"]["answer"], "0.03")
+
+    def test_rejects_ambiguous_rewritten_question(self):
+        regression = FakeDataset(
+            [{"question": "What decimal proportion of revenue?", "answer": "0.5"}]
+        )
+        source = FakeDataset(
+            [
+                {"qa": {"question": "What percentage of revenue?"}},
+                {"qa": {"question": "What ratio of revenue?"}},
+            ]
+        )
+
+        with self.assertRaisesRegex(ValueError, "no unique FinQA source context"):
+            _enrich_regression_rows(regression, source)
 
 
 if __name__ == "__main__":

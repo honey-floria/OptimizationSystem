@@ -1493,3 +1493,8 @@ dev 的 `37.15%`；最长单条输入为 2225 tokens，对应 source index `543`
 
 评测入口现增加硬保护：选择 `high_risk_regression` 时逐行检查 `pre_text/post_text/table/qa` 及非空上下文，
 旧资产会在模型加载和推理前直接抛错。下一次必须先同步修复代码、重建资产并核对 manifest，再使用新的输出目录。
+
+首次重建 `datasets_contextual` 时，91 条 verified 问题中有 3 条无法按完整问题文本匹配。它们使用了
+`decimal proportion` 等核验后问法，而 FinQA test 原题使用 `percentage` 或 `ratio` 问句模板。资产构建现先做
+完整文本匹配，失败后仅在 FinQA test 内去除这些计算问句模板词并要求内容词唯一匹配；没有候选或出现多个候选
+仍立即失败。该修复只改变上下文回连，不改变 verified 核验答案，也不会从 train/dev 引入评测上下文。

@@ -34,6 +34,31 @@ def normalize_question(text: str) -> str:
     return re.sub(r"\s+", " ", str(text).lower().strip())
 
 
+_QUESTION_TEMPLATE_WORDS = {
+    "a",
+    "an",
+    "decimal",
+    "in",
+    "is",
+    "of",
+    "percent",
+    "percentage",
+    "proportion",
+    "ratio",
+    "the",
+    "to",
+    "what",
+}
+
+
+def _question_content_key(text: str) -> tuple[str, ...]:
+    return tuple(
+        token
+        for token in re.findall(r"[a-z0-9]+", normalize_question(text))
+        if token not in _QUESTION_TEMPLATE_WORDS
+    )
+
+
 def _get_question(row: dict[str, Any]) -> str:
     question = row.get("question")
     if question is None and isinstance(row.get("qa"), dict):
@@ -102,19 +127,34 @@ def _enrich_regression_rows(regression: Any, source_dataset: Any) -> Any:
         normalize_question(_get_question(row)): dict(row)
         for row in source_dataset
     }
-    missing_questions = [
-        _get_question(row)
-        for row in regression
-        if normalize_question(_get_question(row)) not in source_by_question
-    ]
-    if missing_questions:
+    source_by_content: dict[tuple[str, ...], list[dict[str, Any]]] = {}
+    for source in source_by_question.values():
+        key = _question_content_key(_get_question(source))
+        source_by_content.setdefault(key, []).append(source)
+
+    matched_sources: dict[str, dict[str, Any]] = {}
+    unresolved_questions: list[str] = []
+    for row in regression:
+        question = _get_question(row)
+        normalized = normalize_question(question)
+        source = source_by_question.get(normalized)
+        if source is None:
+            candidates = source_by_content.get(_question_content_key(question), [])
+            if len(candidates) == 1:
+                source = candidates[0]
+        if source is None:
+            unresolved_questions.append(question)
+        else:
+            matched_sources[normalized] = source
+
+    if unresolved_questions:
         raise ValueError(
-            "High-risk regression questions are missing FinQA source context: "
-            f"{missing_questions[:3]}"
+            "High-risk regression questions have no unique FinQA source context: "
+            f"{unresolved_questions[:3]}"
         )
 
     def enrich(row: dict[str, Any]) -> dict[str, Any]:
-        source = source_by_question[normalize_question(_get_question(row))]
+        source = matched_sources[normalize_question(_get_question(row))]
         source_qa = dict(source.get("qa") or {})
         source_qa["question"] = _get_question(row)
         if row.get("answer") is not None:
