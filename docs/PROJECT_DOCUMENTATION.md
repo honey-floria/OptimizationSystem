@@ -1471,3 +1471,17 @@ dev 的 `37.15%`；最长单条输入为 2225 tokens，对应 source index `543`
 长上下文子集解析 `88/89`（`98.88%`），唯一未解析项也是完整 dev 中唯一失败的 source index `435`：模型
 枚举过多 evidence，输出达到 256-token 上限后截断。它不改变完整 dev 的 `99.89%` 解析门禁结论，但应作为
 后续推理契约压缩或输出长度防护的固定回归样本。
+
+### 首次高风险回归运行无效（2026-10-11）
+
+冻结的 step 724 在旧版 `Aiera/finqa-verified` 资产上得到正确 `0/91`、解析 `90/91`。进一步检查确认这不是
+可用于判断 adapter 质量的结果：旧资产清单只要求 `question` 和 `answer`，没有 `pre_text`、`post_text` 或
+`table`。实际请求平均只有约 140 input tokens（范围 123～171），而完整 FinQA dev 平均约 1121 tokens
+（范围 441～2225）。模型收到的只有问题，没有计算所需的财报证据，因此输出中的数字主要是无依据猜测。
+旧 FP16 基线在同一资产上也是 `0/91`，进一步说明该门禁存在地板效应。
+
+本次 `0/91` 标记为 `invalid_for_quality_gate`，诊断见
+`out/quality_repair_7b_qlora_step724_high_risk/diagnosis.json`，不用于取消 step 724 的冻结状态，也不勾选
+高风险门禁。根因已在 `prepare_assets()` 修复：将 verified 问题按标准化文本匹配回原 FinQA test 行，补入
+`pre_text/post_text/table/qa`，并保留 verified 的核验答案；任何问题无法匹配时立即失败。服务器重新生成资产后，
+必须确认 manifest 的高风险 `required_fields` 已包含上下文字段，再重跑 91 条。
