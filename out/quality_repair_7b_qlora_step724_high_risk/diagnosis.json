@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "status": "invalid_for_quality_gate",
+  "observed_metrics": {
+    "total": 91,
+    "parsed": 90,
+    "correct": 0,
+    "parse_rate": 0.989010989010989,
+    "numeric_accuracy": 0.0
+  },
+  "root_cause": "The persisted high-risk regression asset contains only question and answer fields. It does not contain the FinQA financial context or table required to answer the questions.",
+  "evidence": {
+    "manifest_required_fields": ["question", "answer"],
+    "high_risk_mean_input_tokens": 139.81521739130434,
+    "full_dev_mean_input_tokens": 1120.8545659526494,
+    "high_risk_input_token_range": [123, 171],
+    "full_dev_input_token_range": [441, 2225],
+    "previous_baseline_correct": 0
+  },
+  "decision": "Do not use this run to accept or reject the frozen step 724 adapter. Rebuild the high-risk asset with contexts joined from the matching FinQA test rows, then rerun all 91 rows.",
+  "fix": "prepare_assets now enriches every Aiera verified row with pre_text, post_text, table, and qa from the matching FinQA test row and fails if any question cannot be matched."
+}

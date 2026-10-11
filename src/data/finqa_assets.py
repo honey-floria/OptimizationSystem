@@ -97,6 +97,38 @@ def _remove_regression_overlap(quality_test: Any, regression: Any) -> Any:
     )
 
 
+def _enrich_regression_rows(regression: Any, source_dataset: Any) -> Any:
+    source_by_question = {
+        normalize_question(_get_question(row)): dict(row)
+        for row in source_dataset
+    }
+    missing_questions = [
+        _get_question(row)
+        for row in regression
+        if normalize_question(_get_question(row)) not in source_by_question
+    ]
+    if missing_questions:
+        raise ValueError(
+            "High-risk regression questions are missing FinQA source context: "
+            f"{missing_questions[:3]}"
+        )
+
+    def enrich(row: dict[str, Any]) -> dict[str, Any]:
+        source = source_by_question[normalize_question(_get_question(row))]
+        source_qa = dict(source.get("qa") or {})
+        source_qa["question"] = _get_question(row)
+        if row.get("answer") is not None:
+            source_qa["answer"] = row["answer"]
+        return {
+            "pre_text": list(source.get("pre_text") or []),
+            "post_text": list(source.get("post_text") or []),
+            "table": list(source.get("table") or []),
+            "qa": source_qa,
+        }
+
+    return regression.map(enrich)
+
+
 def _finqa_data_files(revision: str) -> dict[str, str]:
     return {
         "train": FINQA_SOURCE_URL.format(revision=revision, split="train"),
@@ -137,6 +169,7 @@ def prepare_assets(
         split="test",
         cache_dir=str(cache_dir),
     )
+    verified = _enrich_regression_rows(verified, finqa["test"])
 
     quality_dev = finqa["validation"]
     quality_test = _remove_regression_overlap(finqa["test"], verified)
@@ -219,7 +252,14 @@ def prepare_assets(
                 "version": verified_revision or "~parquet",
                 "size": len(verified),
                 "sha256": hashes["high_risk_regression"],
-                "required_fields": ["question", "answer"],
+                "required_fields": [
+                    "question",
+                    "answer",
+                    "pre_text",
+                    "post_text",
+                    "table",
+                    "qa.question",
+                ],
             },
         },
         "metric_interface": {
