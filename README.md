@@ -1,5 +1,7 @@
 # 面向银行金融场景的模型量化、剪枝与跨硬件推理优化项目
 
+项目导航：[`TODO 与当前进度`](docs/TODO.md) · [`实施与实验记录`](docs/PROJECT_DOCUMENTATION.md) · [`文件结构说明`](docs/PROJECT_STRUCTURE.md)
+
 ## 1. 项目概述
 
 本项目面向银行及金融机构的私有化大模型部署场景，负责在既定业务数据、模型和评估集的基础上，完成模型量化、结构化剪枝、混合精度配置、质量退化定位以及 NVIDIA GPU 和华为昇腾硬件适配。
@@ -393,47 +395,20 @@ NVIDIA 和昇腾可以使用不同的最佳模型配置，只要业务质量约�
 ## 11. 项目目录结构
 
 ```text
-banking-llm-optimizer/
-├── configs/
-│   ├── business_scenarios.yaml
-│   ├── risk_levels.yaml
-│   ├── quantization.yaml
-│   ├── pruning.yaml
-│   └── hardware/
-│       ├── nvidia.yaml
-│       └── ascend.yaml
-├── inputs/
-│   ├── model_manifest.json
-│   ├── dataset_manifest.json
-│   └── evaluation_manifest.json
-├── src/
-│   ├── input_validation/
-│   ├── quantization/
-│   ├── pruning/
-│   ├── sensitivity/
-│   ├── backends/
-│   │   ├── nvidia/
-│   │   └── ascend/
-│   ├── evaluation/
-│   ├── benchmark/
-│   ├── cost_model/
-│   ├── reporting/
-│   └── pipeline.py
-├── scripts/
-│   ├── run_baseline.sh
-│   ├── run_quantization.sh
-│   ├── run_sensitivity.sh
-│   ├── run_pruning.sh
-│   ├── benchmark_nvidia.sh
-│   └── benchmark_ascend.sh
+OptimizationSystem/
+├── configs/          # 可复现实验配置
+├── inputs/           # 输入 manifest 示例
+├── scripts/          # 下载、QLoRA 训练和服务器评测入口
+├── src/              # 输入校验、基线、评测、Benchmark 和量化实现
 ├── tests/
-├── reports/
-├── Dockerfile.nvidia
-├── Dockerfile.ascend
-└── README.md
+├── notebooks/        # Colab 统一 Notebook
+├── docs/             # TODO、实施记录和结构说明
+└── out/              # 实验报告、日志、预测和验收结果
 ```
 
-`inputs/` 中只存放上游资产的 manifest 和路径，不在本项目中保存或处理原始业务数据。
+完整文件树、各源码模块和实验输出目录的用途见
+[`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md)。`models/` 和 `datasets/` 是本地大文件目录，
+已被 Git 忽略；`inputs/` 只存放上游资产的 manifest 示例，不保存原始业务数据。
 
 ## 12. 验收标准
 

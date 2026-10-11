@@ -1,4 +1,42 @@
-# 银行金融大模型优化项目 Todo
+# 银行金融大模型优化项目 TODO
+
+> 最后整理：2026-10-11<br>
+> 当前主线：完成 7B QLoRA 质量复测，通过 6.7.5 门禁后再启动第 7 章。
+
+## 0. 项目看板
+
+### 0.1 当前状态
+
+| 阶段 | 状态 | 结论 / 阻塞项 |
+|---|---|---|
+| 4. 上游输入 | 部分完成 | NVIDIA、模型和评测资产已验收；昇腾环境待提供 |
+| 5. 范围与基线 | NVIDIA 已完成 | 0.5B FP16 基线已冻结，但质量仅 `0.91%`，不能作为生产基线 |
+| 6.1～6.6 定制量化 | 已完成 | AWQ、GPTQ、INT8 已完成真实导出、质量与同硬件性能对比；当前均无部署收益 |
+| 6.7 基线质量修复 | 进行中 | 7B QLoRA step 700 与最终 step 724 pilot 并列 `37/80`（`46.25%`），解析率 `100%`；待完整 dev 决胜和重复验证 |
+| 7. 退化定位与混合精度 | 暂停 | 等待 6.7.5 新基线门禁通过 |
+| 8. 剪枝与组合优化 | 未开始 | 依赖第 7 章结论 |
+| 9. NVIDIA 部署适配 | 未开始 | 已有实验级 A100/4080 结果，尚未完成 vLLM/TensorRT-LLM 交付 |
+| 10. 昇腾适配 | 阻塞 | 缺少真实昇腾硬件与环境信息 |
+| 11. 工程化交付 | 未开始 | 依赖最终候选模型与双平台部署方案 |
+
+### 0.2 下一步执行队列
+
+按优先级执行；未满足上一项验收条件时，不扩展到后续大规模实验。
+
+1. 在完整 883 条 FinQA dev 上分别评测 QLoRA step 700 和最终 step 724，打破 pilot `37/80` 的并列结果。
+2. 选择完整 dev 正确数更高且解析率不低于 `99%` 的 adapter，并对胜出版本完整复跑一次确认波动。
+3. 对最佳 QLoRA adapter 按百分比、比率、平均、总和和多步计算分层分析。
+4. 补齐峰值显存和训练吞吐记录；修复训练 holdout `eval_loss=null` 后再开展新的训练实验。
+5. 运行 91 条高风险回归和最长上下文检查，完成 6.7.5 验收报告。
+6. 门禁通过后冻结新 FP16 基线，并重新运行 AWQ、GPTQ 和 INT8 质量对比。
+
+### 0.3 状态约定
+
+- `[x]`：已有可追溯产物或报告，且该任务本身已经完成。
+- `[ ]`：尚未执行、产物不完整，或尚未达到验收条件。
+- “延期 / 不适用 / 阻塞”必须在条目中写明原因，不能用 `[x]` 代替完成。
+- “代码已实现”与“真实实验已完成”分别记录；只有真实结果回传后才勾选实验项。
+- 详细实验过程追加到 [`PROJECT_DOCUMENTATION.md`](PROJECT_DOCUMENTATION.md)，本文件只保留状态、门禁和下一步。
 
 ## 1. 文档说明
 
@@ -15,20 +53,20 @@
 以上内容由数据、业务和评测团队提供。本项目负责校验输入资产是否满足接口要求，并使用这些资产进行模型优化和回归评估。
 
 除本 Todo 外的实施文档已按项目执行顺序合并为
-[`docs/PROJECT_DOCUMENTATION.md`](PROJECT_DOCUMENTATION.md)；原始专题文档保留用于单独引用。
+[`docs/PROJECT_DOCUMENTATION.md`](PROJECT_DOCUMENTATION.md)；已合并的原始专题文档不再单独维护。
 
 ## 2. 完成定义
 
 项目整体完成需要满足：
 
 - [ ] 至少一个银行金融业务场景完成端到端优化
-- [ ] 建立 FP16/BF16 基线并锁定环境
-- [ ] 完成至少两种量化方案对比
+- [x] 建立 FP16/BF16 基线并锁定环境（NVIDIA）
+- [x] 完成至少两种量化方案对比
 - [ ] 完成敏感层分析和混合精度配置
 - [ ] 完成结构化剪枝实验
 - [ ] 完成 NVIDIA GPU 部署和性能测试
 - [ ] 完成华为昇腾部署和性能测试
-- [ ] 能定位金额、利率、日期、条款等业务错误
+- [x] 能定位金额、利率、日期、条款等业务错误
 - [ ] 输出质量、性能、显存和成本对比报告
 - [ ] 支持模型和配置版本管理
 - [ ] 支持失败版本回滚
@@ -52,7 +90,7 @@
 
 ### 4.1 模型输入
 
-校验工具使用方式见 [`docs/MODEL_INPUTS.md`](MODEL_INPUTS.md)。真实模型验收使用
+校验工具使用方式见 [`总文档：模型输入`](PROJECT_DOCUMENTATION.md#2-模型输入)。真实模型验收使用
 `Qwen/Qwen2.5-0.5B-Instruct`，验收依据为
 [`out/model_input_real/model_manifest.json`](../out/model_input_real/model_manifest.json) 和
 [`out/model_input_real/reports/runtime.json`](../out/model_input_real/reports/runtime.json)。
@@ -66,7 +104,7 @@
 
 ### 4.2 评测资产输入
 
-校验工具使用方式见 [`docs/DATASET_INPUTS.md`](DATASET_INPUTS.md)。验收依据为
+校验工具使用方式见 [`总文档：评测资产输入`](PROJECT_DOCUMENTATION.md#3-评测资产输入)。验收依据为
 [`out/dataset_input/dataset_manifest.json`](../out/dataset_input/dataset_manifest.json) 和
 [`out/dataset_input/validation.json`](../out/dataset_input/validation.json)，九项自动检查均已通过。
 
@@ -82,7 +120,7 @@
 
 ### 4.3 硬件环境输入
 
-采集与校验工具使用方式见 [`docs/HARDWARE_INPUTS.md`](HARDWARE_INPUTS.md)。NVIDIA Colab
+采集与校验工具使用方式见 [`总文档：硬件环境输入`](PROJECT_DOCUMENTATION.md#5-硬件环境输入)。NVIDIA Colab
 环境已通过验收，依据为 [`out/hardware/nvidia_colab.json`](../out/hardware/nvidia_colab.json)
 和 [`out/hardware/nvidia_validation.json`](../out/hardware/nvidia_validation.json)。昇腾及双平台
 合并检查延后到真实昇腾机器执行。
@@ -112,7 +150,7 @@
 
 ### 5.2 基线服务
 
-基线服务与验收工具已实现，使用方式见 [`docs/BASELINE_SERVICE.md`](BASELINE_SERVICE.md)。
+基线服务与验收工具已实现，使用方式见 [`总文档：基线服务`](PROJECT_DOCUMENTATION.md#7-fp16bf16-基线服务)。
 已在 Tesla T4 上完成真实 FP16 推理验收，七项检查结果见
 [`out/baseline/validation.json`](../out/baseline/validation.json)。
 
@@ -126,7 +164,7 @@
 
 ### 5.3 Benchmark
 
-统一 Benchmark 与验收工具已实现，使用方式见 [`docs/BENCHMARK.md`](BENCHMARK.md)。
+统一 Benchmark 与验收工具已实现，使用方式见 [`总文档：统一 Benchmark`](PROJECT_DOCUMENTATION.md#9-统一-benchmark)。
 已在 Tesla T4 上完成真实 FP16 Benchmark，十一项检查结果见
 [`out/benchmark/validation.json`](../out/benchmark/validation.json)。
 
@@ -144,7 +182,7 @@
 
 ### 5.4 环境锁定
 
-环境锁定与验收工具已实现，使用方式见 [`docs/ENVIRONMENT_LOCK.md`](ENVIRONMENT_LOCK.md)。
+环境锁定与验收工具已实现，使用方式见 [`总文档：环境锁定`](PROJECT_DOCUMENTATION.md#10-环境锁定)。
 已完成 NVIDIA/T4 环境锁定，五项检查通过，结果见
 [`out/environment_lock/validation.json`](../out/environment_lock/validation.json)。昇腾、CANN 和
 真实容器构建按既定计划延后，当前三项保持 `not_run`。
@@ -161,7 +199,7 @@
 ### 5.5 阶段验收
 
 NVIDIA 基线阶段验收工具已实现，范围与证据说明见
-[`docs/STAGE5_ACCEPTANCE.md`](STAGE5_ACCEPTANCE.md)。完成状态以完整 FinQA dev 质量报告和
+[`总文档：第 5 章阶段验收`](PROJECT_DOCUMENTATION.md#11-第-5-章阶段验收)。完成状态以完整 FinQA dev 质量报告和
 `out/stage5/validation.json` 为准，报告拉回前暂不勾选。
 
 NVIDIA/T4 阶段验收已完成，五项检查和五项交付物均通过，结果见
@@ -188,11 +226,11 @@ NVIDIA/T4 阶段验收已完成，五项检查和五项交付物均通过，结�
 ### 6.1 量化框架接入
 
 统一量化配置、导出契约、日志契约和后端版本采集工具已实现，使用方式见
-[`docs/QUANTIZATION_FRAMEWORK.md`](QUANTIZATION_FRAMEWORK.md)。真实权重导出留到 6.2～6.4。
+[`总文档：量化框架接入`](PROJECT_DOCUMENTATION.md#12-量化框架接入)。真实权重导出留到 6.2～6.4。
 
 - [x] 接入 AWQ 流程
-- [ ] 接入 GPTQ 流程
-- [ ] 接入 SmoothQuant 或等价 INT8 流程
+- [x] 接入 GPTQ 流程
+- [x] 接入 SmoothQuant 或等价 INT8 流程
 - [x] 统一量化配置格式
 - [x] 统一模型导出格式
 - [x] 统一量化日志格式
@@ -201,8 +239,8 @@ NVIDIA/T4 阶段验收已完成，五项检查和五项交付物均通过，结�
 ### 6.2 AWQ 实验
 
 AWQ 实验配置、三种 group size 矩阵和真实导出入口已实现，使用说明见
-[`docs/AWQ_EXPERIMENT.md`](AWQ_EXPERIMENT.md)。导出后的质量、回归和性能评估入口见
-[`docs/AWQ_EVALUATION.md`](AWQ_EVALUATION.md)；真实评测证据需在 Colab 运行后再勾选。
+[`总文档：AWQ 实验`](PROJECT_DOCUMENTATION.md#13-awq-实验)。导出后的质量、回归和性能评估入口见
+[`总文档：AWQ 评估`](PROJECT_DOCUMENTATION.md#14-awq-质量回归与性能评估)；真实评测证据需在 Colab 运行后再勾选。
 
 - [x] 使用上游校准集运行 AWQ
 - [x] 测试 INT4 W4A16
@@ -218,7 +256,7 @@ AWQ 实验配置、三种 group size 矩阵和真实导出入口已实现，使�
 ### 6.3 GPTQ 实验
 
 GPTQ 导出与同硬件 AWQ 对比入口已实现，使用说明见
-[`docs/GPTQ_EXPERIMENT.md`](GPTQ_EXPERIMENT.md)。真实结果回传并验收后再勾选以下条目。
+[`总文档：GPTQ 实验`](PROJECT_DOCUMENTATION.md#15-gptq-实验)。真实结果回传并验收后再勾选以下条目。
 
 - [x] 使用相同校准集运行 GPTQ
 - [x] 使用与 AWQ 相同的 bit 数对比
@@ -235,7 +273,7 @@ g32/g64 通过解析率门槛，g128 的解析率为 0.9887、未通过 0.99 门
 ### 6.4 INT8/FP8 实验
 
 SmoothQuant INT8/FP8 配置、硬件能力采集和验收入口已实现，使用说明见
-[`docs/INT8_FP8_EXPERIMENT.md`](INT8_FP8_EXPERIMENT.md)。真实 INT8 导出和设备证据回传后再勾选。
+[`总文档：INT8/FP8 实验`](PROJECT_DOCUMENTATION.md#16-int8fp8-实验)。真实 INT8 导出和设备证据回传后再勾选。
 
 已在 NVIDIA A100-SXM4-40GB 上使用 NVIDIA ModelOpt 0.47.0 完成 1024 条校准样本的真实
 SmoothQuant W8A8 导出，证据见 [`out/int8_fp8/validation.json`](../out/int8_fp8/validation.json)。
@@ -257,7 +295,7 @@ A100 的真实 FP8 矩阵运算探测失败，因此 FP8 在当前 A100 目标�
 ### 6.5 量化结果整理
 
 统一对比生成器和使用说明见
-[`docs/QUANTIZATION_COMPARISON.md`](QUANTIZATION_COMPARISON.md)，当前报告见
+[`总文档：量化结果整理`](PROJECT_DOCUMENTATION.md#19-量化结果整理)，当前报告见
 [`out/quantization_comparison/comparison_report.md`](../out/quantization_comparison/comparison_report.md)。
 对比表、适用方案的质量变化、性能变化和风险标记已完成；FP8 已依据 A100 实测结果标记为
 不适用。FP16、INT8、AWQ 和 GPTQ 已在同一 A100 40GB 上完成统一 16 点 Benchmark。INT4
@@ -276,12 +314,12 @@ A100 的真实 FP8 矩阵运算探测失败，因此 FP8 在当前 A100 目标�
 
 ### 6.6 阶段验收
 
-阶段验收工具和证据口径见 [`docs/STAGE6_ACCEPTANCE.md`](STAGE6_ACCEPTANCE.md)，结果见
+阶段验收工具和证据口径见 [`总文档：第 6 章阶段验收`](PROJECT_DOCUMENTATION.md#20-第-6-章阶段验收)，结果见
 [`out/stage6/validation.json`](../out/stage6/validation.json)。AWQ、GPTQ 和 INT8 均完成真实
 导出；七个适用方案均完成同硬件、同矩阵、重复测量的 Benchmark，六个 INT4 方案完成
 883 条质量评测和 91 条高风险回归。这里的“稳定部署”表示技术上可加载并稳定执行，不代表
 金融生产质量通过。推荐初稿见
-[`docs/QUANTIZATION_RECOMMENDATION.md`](QUANTIZATION_RECOMMENDATION.md)，当前结论为暂不部署。
+[`总文档：量化方案推荐`](PROJECT_DOCUMENTATION.md#21-量化方案推荐)，当前结论为暂不部署。
 
 - [x] 至少两种量化方案可成功导出
 - [x] 至少一种量化方案可稳定部署
@@ -308,7 +346,7 @@ FP16 作为所有质量、延迟、吞吐和显存对比的必要基线保留；
 #### 6.7.1 评测与错误诊断
 
 诊断工具和人工复核流程见
-[`docs/BASELINE_QUALITY_DIAGNOSIS.md`](BASELINE_QUALITY_DIAGNOSIS.md)，自动诊断结果见
+[`总文档：FP16 基线质量诊断`](PROJECT_DOCUMENTATION.md#22-fp16-基线质量诊断)，自动诊断结果见
 [`out/baseline_quality_diagnosis/diagnosis_report.md`](../out/baseline_quality_diagnosis/diagnosis_report.md)。
 883 条冻结 FP16 预测已全部分类，并生成 50 条分层人工复核队列。基础数值归一化检查通过；
 自动诊断发现 32 条“后续数字包含标准答案”的潜在首数字抽取误判。已逐条复核 50 条，
@@ -324,7 +362,7 @@ FP16 作为所有质量、延迟、吞吐和显存对比的必要基线保留；
 #### 6.7.2 Prompt 与确定性计算
 
 工具、配置和 Colab 入口已实现，说明见
-[`docs/QUALITY_REPAIR_6_7_2.md`](QUALITY_REPAIR_6_7_2.md)，配置见
+[`总文档：Prompt 与确定性计算`](PROJECT_DOCUMENTATION.md#23-prompt-与确定性计算)，配置见
 [`configs/quality_repair.json`](../configs/quality_repair.json)。四组变体的真实 883 条 dev
 评测已执行过一轮；历史完整实验使用 `max_new_tokens=128`，当前小范围试跑进一步提高到
 `256` tokens，并支持嵌套 JSON。完整实验结果已记录在总文档中，当前先用固定 80 条样本筛选
@@ -345,12 +383,20 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 增加 `structured_json_compact` 紧凑方案，减少 evidence 和 Prompt 长度
 - [x] 将 pilot 生成长度提高到 `max_new_tokens=256`，验证 128 token 截断是否为主要问题
 - [x] 增加 Colab 运行进度显示，记录当前方案进度和全部方案总进度
-- [ ] 完成当前 80 条 pilot 对比，并根据结果决定是否恢复 883 条完整评测
+- [x] 完成当前 80 条 pilot 对比，并根据结果决定是否恢复 883 条完整评测
 
 #### 6.7.2.1 数值准确率优化
 
 当前 3B `structured_json` pilot 已达到约 95% 解析率，但数值准确率仍低于 20% 门槛，主要问题从格式失败
 转为表格证据选择、公式选择和数值计算错误。后续按以下顺序优化：
+
+当前最强结果已更新为 7B QLoRA `structured_json`：step 700 和最终 step 724 在固定 80 条 pilot 中均正确
+`37/80`（`46.25%`），解析率和结构化输出成功率均为 `100%`。证据见
+[`step 700 报告`](../out/quality_repair_7b_qlora_step700_pilot/comparison_report.json)和
+[`最终 adapter 报告`](../out/quality_repair_7b_qlora_v2_final_pilot/comparison_report.json)。
+两个 adapter 总分相同，但各有一题相对另一版本由错变对，因此仍需完整 dev 决胜。
+该结果仅代表 pilot，尚不能替代完整 883 条 dev、重复性和高风险回归门禁。
+以下清单保留已完成实验的追溯记录；未完成的 GPTQ/确定性计算优化作为备选路线，当前优先级低于 QLoRA 完整评测。
 
 - [x] 增加 `evidence_operation` 两阶段方案：模型只输出证据、操作数、操作类型和单位，不直接输出最终数值
 - [x] 使用安全 `Decimal` 计算器执行加减乘除、平均、比例和百分比变化
@@ -363,7 +409,6 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 在 4080 上复测带稳定 ID 和一致性校验的新方案
 - [x] 新增 `cell_ids_operation` 紧凑契约，只输出 cell_ids、operation 和 unit，由程序恢复 operands
 - [x] 在 4080 上复测 `structured_json` 与 `cell_ids_operation`
-- [ ] 为 cell_id 增加行名、列名和年份语义提示，减少模型按裸索引选错单元格
 - [x] 为 cell_id 增加行名、列名和年份语义提示，减少模型按裸索引选错单元格
 - [x] 增加 structured_json 回退策略，避免紧凑方案失败时丢失基线答案
 - [x] 增加题型路由提示：百分比、比率、平均、总和和变化题使用不同运算规则
@@ -371,12 +416,11 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 从模型输出的多个 JSON 候选中选择首个通过真实表格校验的候选
 - [x] 在固定 80 条 pilot 上运行 `routed_cell_ids_operation`，确认是否超过 structured_json 的 12/80
 - [x] 分析 v5 结果：`structured_json` 为 12/80，`cell_ids_operation` 为 11/80，路由方案为 8/80，暂不进入完整 883 条
-- [ ] 修正百分比变化、实体名含 average 的题型路由，并重新运行 routed pilot
 - [x] 修正百分比变化、实体名含 average 的题型路由，并重新运行 routed pilot
 - [x] v6 路由方案达到 12/80，但未超过 structured_json，停止继续堆叠 Prompt 路由
-- [ ] 在相同 80 条样本上评估 7B 或其他更强模型，比较是否突破 12/80
-- [ ] 下载并验证 `Qwen/Qwen2.5-7B-Instruct` 本地权重
-- [ ] 在相同 80 条样本上只运行 7B `structured_json` pilot，记录显存和 OOM 情况
+- [x] 在相同 80 条样本上评估 7B，确认结果突破 3B 的 12/80
+- [x] 下载并验证 `Qwen/Qwen2.5-7B-Instruct` 本地权重
+- [ ] 补齐未量化 7B `structured_json` pilot 的显存峰值和 OOM 记录
 - [x] 完成 7B AWQ INT4 `structured_json` pilot：18/80，数值准确率 22.50%
 - [x] 分析 AWQ pilot：准确率超过 20% 门槛，但解析率 96.25% 仍低于 99%，不能宣布质量门禁完成
 - [x] 完成 7B GPTQ INT4 `structured_json` pilot：19/80，数值准确率 23.75%
@@ -384,7 +428,6 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 排查 GPTQ 运行记录中合法 JSON 被标记为未解析的问题，并确认服务器代码版本
 - [x] GPTQ pilot 复跑确认：仍为 19/80、解析率 93.75%，5 条未解析可复现
 - [x] 核对服务器 commit 与 `quality_repair.py` SHA256，确认与当前仓库一致
-- [ ] 同步 ratio/multiple 单位兼容后复跑 GPTQ pilot
 - [x] 扩展 `times`/`multiple` 单位白名单、ratio 校验和 4080 Prompt 契约
 - [x] 增加 ratio 使用 `times` 单位的单元测试
 - [x] 分析 GPTQ v2：解析率 97.50%（78/80），数值准确率 21.25%（17/80），剩余 `mmboe` 和数字多余引号问题
@@ -402,23 +445,23 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 在同一 80 条 GPTQ pilot 上运行 `deterministic_cell_ids_operation`，与 `structured_json` 对照：10/80，解析率 93.75%
 - [x] 首次运行 `deterministic_steps_operation`：4/80，解析率 48.75%
 - [x] 修复多步方案的“subtract+divide”题型校验误拒绝，并允许显式数值常数参与步骤计算
-- [ ] 复跑修复后的确定性方案，确认解析率和数值准确率是否恢复
+- [x] 复跑修复后的确定性方案：cell-id 为 10/80，多步方案为 3/80，均未超过结构化基线
 - [ ] 检查确定性方案对百分比、平均、利息、多步题的分层收益
 - [x] 新增候选生成方案：最多生成 3 个 cell-id/operation 候选，由程序逐个校验并确定性计算
 - [x] 新增候选语义评分：结合问题年份、行名和列名选择候选
-- [ ] 在同一 80 条 GPTQ pilot 上运行 `candidate_cell_ids_operation`
+- [x] 在同一 80 条 GPTQ pilot 上运行 `candidate_cell_ids_operation`：9/80，解析率 88.75%
 - [x] 新增 FinQA train QLoRA 数据转换、4-bit NF4 加载和 LoRA adapter 保存脚本
 - [x] 新增 4080 入口 `--adapter-path` 与 `--load-in-4bit`，支持训练后质量复测
-- [ ] 在严格 train/holdout 切分上完成首轮 QLoRA 训练
-- [ ] 用同一 80 条 GPTQ/QLoRA pilot 对比数值准确率和解析率
+- [x] 在严格 train/holdout 切分上完成首轮 QLoRA 训练（5778 train / 305 eval）
+- [x] 用同一 80 条 GPTQ/QLoRA pilot 对比：QLoRA 33/80、解析率 100%，GPTQ 19/80、解析率 100%
+- [x] 完成 QLoRA v2 checkpoint 统一 pilot：step 200/300/400/500/600/700 分别为 `30/33/34/34/36/37`，最终 step 724 为 `37/80`，所有版本解析率均为 `100%`
+- [x] 根据 checkpoint 曲线停止继续追加训练步数：step 700 到最终 step 724 总分没有提升，后续资源用于完整 dev 决胜而非继续训练
 - [ ] 补齐 7B AWQ pilot 的显存峰值和吞吐记录
 - [ ] 在同一 7B FP16 或同源未量化模型上复测，分离模型规模收益与 AWQ 量化收益
-- [ ] 使用 FinQA train 执行 LoRA/QLoRA 微调前，先固定当前 3B `structured_json` 基线
 - [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
-- [ ] 对百分比、平均、总和和多步计算样本进行困难样本分层统计
-- [ ] 使用 FinQA train 构造“证据、操作数、操作、计算结果、单位”LoRA 监督数据
-- [ ] 严格隔离 train/dev/test，禁止使用 dev/test 答案进行 Prompt 或微调
-- [ ] pilot 同时改善解析率和正确数后，再使用 3B 在完整 883 条 dev 上复测
+- [x] 使用 FinQA train 构造结构化 LoRA 监督数据
+- [x] 严格隔离 train/dev/test，禁止使用 dev/test 答案进行 Prompt 或微调
+- [ ] 使用 7B QLoRA 在完整 883 条 dev 上评测，并至少重复一次
 
 #### 6.7.3 模型升级与选择
 
@@ -430,16 +473,22 @@ Prompt，确认有效后再恢复 883 条完整评测。
 
 #### 6.7.4 金融推理微调
 
-- [ ] 将 FinQA train 转换为“证据字段、公式、计算结果、最终答案”监督格式
+- [x] 将 FinQA train 转换为结构化监督格式
 - [ ] 按文档或公司划分训练与验证数据，检查并消除数据泄漏
-- [ ] 使用 LoRA 或等价参数高效方法执行监督微调
+- [x] 使用 QLoRA 执行首轮监督微调
+- [x] 根据用户于 2026-10-10 的执行记录，从 `finqa_qlora_7b_v2/checkpoint-100` 恢复训练到全局 `max_steps=724`，使用 `max_length=1024`、梯度累积 32、LoRA `r=16`、`alpha=32`
+- [x] 回传并核对 step 724 训练清单以及 step 100～700、724 的 `trainer_state.json` 和 adapter 配置；确认训练到 4 epoch，训练 loss 总体下降且无梯度爆炸
+- [x] 使用固定 80 条 pilot 分别评测 step 100～700 和最终 adapter；所有 v2 checkpoint 解析率均为 `100%`
+- [x] 确认 step 700 与最终 step 724 为并列候选：总分相同但正确样本不完全相同，不能按训练步数直接选最终版本
+- [ ] 在完整 883 条 dev 上比较并列最佳的 step 700 与最终 step 724，再按“正确数最高且解析率不低于 `99%`”选择最佳 adapter
+- [ ] 修复训练 holdout 的 `eval_loss=null`；当前训练状态无法用验证损失自动选择最佳 checkpoint
 - [x] QLoRA 使用 NF4 4-bit 加载基座模型，降低模型权重显存
 - [x] QLoRA 使用 `paged_adamw_8bit` 优化器，降低优化器状态显存峰值
 - [ ] 在 4080 上记录 `paged_adamw_8bit` 与普通 `AdamW` 的峰值显存、吞吐和收敛差异
 - [ ] 对金额、比例、利率、日期和多步计算样本进行均衡采样
 - [ ] 加入当前错误样本进行困难样本训练，但不使用 dev/test 答案训练
 - [ ] 保存训练配置、随机种子、数据版本、权重和训练日志
-- [ ] 对未微调模型、Prompt 优化模型和微调模型执行统一对比
+- [x] 在固定 80 条 pilot 上对 GPTQ 基座与 QLoRA 模型执行统一对比
 
 `paged_adamw_8bit` 是 bitsandbytes 提供的 8-bit 分页版 AdamW 优化器，名称可以拆成三部分理解：
 
@@ -462,10 +511,10 @@ Prompt，确认有效后再恢复 883 条完整评测。
 
 质量修复交付物：
 
-- [ ] FP16 错误分类报告
-- [ ] Prompt 与计算器消融报告
+- [x] FP16 错误分类报告
+- [x] Prompt 与计算器消融报告
 - [ ] 候选模型对比报告
-- [ ] 微调数据与训练配置
+- [x] 微调数据与训练配置
 - [ ] 新 FP16 基线质量和性能报告
 - [ ] 第 7 章准入验收报告
 
