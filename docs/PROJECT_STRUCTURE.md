@@ -207,6 +207,7 @@ README.md
 ```text
 out/
 ├── model_input_real/                 # 真实模型静态检查、加载检查和 manifest
+├── model_input_test/                 # 模型输入校验的测试产物
 ├── dataset_input/                    # 数据 manifest 和九项输入验收结果
 ├── hardware/                         # NVIDIA/Ascend 硬件采集与验证结果
 ├── environment_lock/                 # 环境清单、依赖冻结文件和验收结果
@@ -234,13 +235,9 @@ out/
 ├── quality_repair_7b_gptq_*_pilot*/  # 确定性计算和多候选历史实验
 ├── quality_repair_7b_qlora_*_pilot/  # 7B QLoRA checkpoint/最终 adapter 质量评测
 │
-├── quality_repair_7b_qlora_step724_full/
-│                                       # 冻结候选的完整 dev 评测
-├── quality_repair_7b_qlora_step724_high_risk/
-│                                       # 首次无效运行的诊断记录（仅保留 diagnosis.json）
-├── quality_repair_7b_qlora_step724_high_risk_contextual_fixed/
-│                                       # 修复后的 contextual 高风险评测
-└── finqa_qlora_7b_v2/                # 当前 QLoRA 正式训练与验收清单
+├── finqa_qlora_7b/                   # 首轮训练状态和日志
+├── finqa_qlora_7b_smoke/             # QLoRA 冒烟训练 manifest
+└── finqa_qlora_7b_v2/                # 当前 QLoRA 正式训练 manifest
 ```
 
 常见输出文件含义：
