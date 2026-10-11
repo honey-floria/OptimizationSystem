@@ -104,6 +104,22 @@ def _resolve_model_path(
     return candidate.expanduser().resolve()
 
 
+def _validate_dataset_context(dataset: Any, role: str) -> None:
+    if role != "high_risk_regression":
+        return
+    invalid_rows = []
+    for index, row in enumerate(dataset):
+        has_fields = all(field in row for field in ("pre_text", "post_text", "table", "qa"))
+        has_context = bool(row.get("pre_text") or row.get("post_text") or row.get("table"))
+        if not has_fields or not has_context:
+            invalid_rows.append(index)
+    if invalid_rows:
+        raise ValueError(
+            "高风险回归资产缺少 FinQA 财报上下文；请使用更新后的 prepare_assets() "
+            f"重新生成数据。无效行数：{len(invalid_rows)}/{len(dataset)}"
+        )
+
+
 def _build_quality_config(
     source: dict[str, Any],
     *,
@@ -285,6 +301,7 @@ def main() -> int:
         "high_risk_regression": assets.high_risk_regression,
     }
     evaluation_dataset = datasets_by_role[args.dataset_role]
+    _validate_dataset_context(evaluation_dataset, args.dataset_role)
 
     print(f"模型：{args.model_id}")
     print(f"模型目录：{model_path}")

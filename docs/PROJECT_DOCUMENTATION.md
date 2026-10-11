@@ -1485,3 +1485,11 @@ dev 的 `37.15%`；最长单条输入为 2225 tokens，对应 source index `543`
 高风险门禁。根因已在 `prepare_assets()` 修复：将 verified 问题按标准化文本匹配回原 FinQA test 行，补入
 `pre_text/post_text/table/qa`，并保留 verified 的核验答案；任何问题无法匹配时立即失败。服务器重新生成资产后，
 必须确认 manifest 的高风险 `required_fields` 已包含上下文字段，再重跑 91 条。
+
+第二次运行仍得到 `0/91`，报告继续记录旧资产 SHA256
+`81a6ba140d9806e36d6be5b8f4362a506ff710c853e8f3448889190942a31626`，输入长度仍为 123～171 tokens，
+说明服务器实际使用的 `datasets/` 没有被更新。复用同一个输出目录还使 `quality_service.jsonl` 从 92 条追加到
+184 条；报告本身是新生成的，但性能日志不能再直接汇总。该次运行同样无效。
+
+评测入口现增加硬保护：选择 `high_risk_regression` 时逐行检查 `pre_text/post_text/table/qa` 及非空上下文，
+旧资产会在模型加载和推理前直接抛错。下一次必须先同步修复代码、重建资产并核对 manifest，再使用新的输出目录。

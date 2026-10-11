@@ -11,6 +11,7 @@ from scripts.run_quality_repair_4080 import (
     _parse_args,
     _build_quantized_manifest,
     _resolve_model_path,
+    _validate_dataset_context,
 )
 
 
@@ -39,6 +40,28 @@ class QualityRepair4080CliTest(unittest.TestCase):
         args = _parse_args(["--dataset-role", "high_risk_regression", "--full"])
         self.assertEqual(args.dataset_role, "high_risk_regression")
         self.assertTrue(args.full)
+
+    def test_rejects_contextless_high_risk_dataset(self):
+        with self.assertRaisesRegex(ValueError, "缺少 FinQA 财报上下文"):
+            _validate_dataset_context(
+                [{"question": "question", "answer": "10"}],
+                "high_risk_regression",
+            )
+
+    def test_accepts_contextual_high_risk_dataset(self):
+        _validate_dataset_context(
+            [
+                {
+                    "question": "question",
+                    "answer": "10",
+                    "pre_text": ["context"],
+                    "post_text": [],
+                    "table": [],
+                    "qa": {"question": "question", "answer": "10"},
+                }
+            ],
+            "high_risk_regression",
+        )
 
     def test_builds_quantized_manifest_with_absolute_model_path(self):
         with tempfile.TemporaryDirectory() as temporary_dir:
