@@ -21,6 +21,7 @@ env/
 # Downloaded model weights
 models/
 datasets/
+out/*.pt
 
 # Test and tool caches
 .pytest_cache/
