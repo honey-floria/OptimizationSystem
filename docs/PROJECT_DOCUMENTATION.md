@@ -1707,3 +1707,45 @@ out/layer_sensitivity/
 逐样本状态迁移和自动排名。只有当所有 Transformer block 都具有可回溯的 INT4/INT8 误差及完整业务评测记录，
 且模型 manifest、配置、数据哈希、预测文件和排名能互相对应时，7.1 才可标记完成。任何失败、缺失或哈希不匹配的
 运行不得进入正式排名。
+
+### 7.1.1 前置冻结工具实现（2026-10-12）
+
+已新增 `configs/layer_sensitivity_setup.json`、`src/quantization/layer_sensitivity_setup.py`、
+`scripts/prepare_layer_sensitivity.py` 和 `tests/test_layer_sensitivity_setup.py`。工具将 7.1.1 拆成三个不会覆盖 6.7.5
+证据的命令：
+
+```bash
+# 1. 在 CPU 内存中加载 FP16 基座，合并冻结 adapter，导出模型和完整文件哈希
+python3 scripts/prepare_layer_sensitivity.py merge
+
+# 2. 冻结模型、tokenizer、数据、Prompt、评分器、五个样本子集和业务标签
+python3 scripts/prepare_layer_sensitivity.py freeze
+
+# 3. 对 merged FP16 执行独立 80 条评测，不传 adapter 也不使用 NF4
+python3 scripts/run_quality_repair_4080.py \
+  --model-path models/data/Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16 \
+  --model-id Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16 \
+  --dataset-dir datasets_contextual \
+  --output-dir out/layer_sensitivity/pilot_merged_fp16 \
+  --variants structured_json \
+  --batch-size 1 \
+  --max-new-tokens 256
+
+# 4. 将 merged FP16 与原有冻结 NF4 pilot 做逐样本配对对比
+python3 scripts/prepare_layer_sensitivity.py compare-pilot \
+  --reference-report out/quality_repair_7b_qlora_v2_final_pilot/comparison_report.json \
+  --candidate-report out/layer_sensitivity/pilot_merged_fp16/comparison_report.json
+```
+
+`merge` 在写入前会校验 step 724 adapter 权重 SHA256，目标目录非空时拒绝覆盖；合并后从实际模型
+实例自动发现 Transformer block 路径和层数。`freeze` 对基座、adapter 和 tokenizer 逐文件哈希，
+冻结 1024 条 calibration、80 条 pilot、883 条 dev、91 条 contextual 高风险和 89 条最长上下文清单，
+并对 dev 按问句关键词生成可重叠的金额、比例/利率、日期/期限标签。`compare-pilot` 要求两个报告
+的 80 条 source index 完全一致，并输出恢复、退化、稳定正确、稳定错误和原始输出变化数。
+
+当前本地环境没有 7B 基座、FinQA assets 及 PyTorch/Transformers/PEFT，因此真实合并、冻结产物和 pilot
+对比需在 4080/训练服务器执行。用户于 2026-10-12 确认训练服务器上
+`models/data/finqa_qlora_7b_v2/adapter_model.safetensors` 的 SHA256 为
+`771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`，与 6.7.5 冻结记录一致，可作为
+7.1.1 合并输入。仓库本地副本不参与本次服务器实验，不再视为执行阻塞。`merge` 命令仍会在服务器上
+对权重执行 SHA256 硬校验，避免路径误传或权重被后续覆盖。

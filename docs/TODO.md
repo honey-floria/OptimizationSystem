@@ -536,15 +536,18 @@ Transformer block 恢复为 INT8，测量该层带来的量化误差下降和金
 
 #### 7.1.1 实验口径与输入冻结
 
+- [x] 实现 `configs/layer_sensitivity_setup.json`、`src/quantization/layer_sensitivity_setup.py` 和 `scripts/prepare_layer_sensitivity.py`，提供 `merge/freeze/compare-pilot` 三个独立且不覆盖旧证据的命令
+- [x] 实现 7.1.1 单元测试，覆盖精度契约、层自动发现、目录哈希、pilot 索引哈希、多标签分类、长上下文选择和配对对比
+- [x] 根据用户于 2026-10-12 的服务器核对结果，确认训练服务器 `models/data/finqa_qlora_7b_v2/adapter_model.safetensors` SHA256 为 `771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`，与 6.7.5 冻结记录一致；本地副本不作为 7.1.1 输入
 - [ ] 记录 Qwen2.5-7B-Instruct 基座模型、step 724 adapter、tokenizer 和数据集的绝对路径、版本与 SHA256
 - [ ] 将冻结的 step 724 LoRA adapter 合并到 BF16/FP16 基座模型，导出专用的 7.1 实验母版和 manifest
 - [ ] 在固定 80 条 pilot 上核对 merged BF16/FP16 与已冻结 QLoRA/NF4 的输出和质量差异；不要覆盖 6.7.5 冻结证据
-- [ ] 明确 7.1 中 INT4 为 `W4A16 group_size=32`，INT8 为 `W8A16`，激活统一保持 FP16/BF16
-- [ ] 确认 7.1 不把 AWQ W4A16 与 SmoothQuant W8A8 直接作为逐层对照，避免同时改变量化算法和激活位宽
+- [x] 明确 7.1 中 INT4 为 `W4A16 group_size=32`，INT8 为 `W8A16`，激活统一保持 FP16/BF16，并写入可校验配置
+- [x] 明确 7.1 不把 AWQ W4A16 与 SmoothQuant W8A8 直接作为逐层对照，配置验证会拒绝丢失该限制的实验契约
 - [ ] 冻结 1024 条 calibration、80 条 pilot、883 条 FinQA dev、91 条 contextual 高风险集及最长 10% 上下文子集的样本清单与哈希
 - [ ] 冻结 `structured_json` Prompt、`max_new_tokens=256`、`do_sample=false`、`num_beams=1`、数值容差和评分器版本
 - [ ] 实验前生成并冻结金额、比例/利率、日期/期限的多标签样本分类，记录每类样本数
-- [ ] 从模型配置和实例自动发现 Transformer block 路径与层数，禁止在脚本中硬编码层数
+- [x] 实现从模型实例自动发现 Transformer block 路径与层数，禁止在脚本中硬编码层数；待服务器合并时回传实际路径和层数
 
 #### 7.1.2 工具与实验矩阵
 
