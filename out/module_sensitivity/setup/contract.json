@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "7.2.1",
   "status": "awaiting_model_inspection",
-  "created_at": "2026-10-12T11:27:15.025646+00:00",
+  "created_at": "2026-10-12T11:34:59.394259+00:00",
   "experiment_name": "finqa-module-sensitivity-contract",
   "upstream": {
     "status": "pass",
@@ -231,5 +231,5 @@
     "local_files_only": true,
     "trust_remote_code": false
   },
-  "contract_sha256": "eb03431429ccd0eec9117e1b348bb0ddb5ecf7025a872efd12be431ea97ab908"
+  "contract_sha256": "15d4f11aefe1b0063dcfa638c5179464e1dad7d0f0e19ba5e7e0ed77d3517688"
 }
