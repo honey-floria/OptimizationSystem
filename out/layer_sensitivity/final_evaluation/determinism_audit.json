@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.4",
+  "status": "pass",
+  "plans": {
+    "all_int4": {
+      "status": "pass",
+      "row_count": 80,
+      "exact_row_match": true,
+      "original_sha256": "4bcd0dac2343e532c14b7838d43d6d7dbe3cd7786542a41ef3490e7d6456c11b",
+      "repeat_sha256": "4bcd0dac2343e532c14b7838d43d6d7dbe3cd7786542a41ef3490e7d6456c11b"
+    },
+    "layer_22_int8": {
+      "status": "pass",
+      "row_count": 80,
+      "exact_row_match": true,
+      "original_sha256": "d1451160bf50691777e7b76625545394459e717355017bc5710a7a74981d7b56",
+      "repeat_sha256": "d1451160bf50691777e7b76625545394459e717355017bc5710a7a74981d7b56"
+    }
+  }
+}
