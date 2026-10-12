@@ -4,7 +4,11 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.run_module_sensitivity import _parse_args
-from src.quantization.layer_sensitivity_setup import canonical_json_sha256, write_json
+from src.quantization.layer_sensitivity_setup import (
+    canonical_json_sha256,
+    sha256_file,
+    write_json,
+)
 from src.quantization.module_sensitivity import (
     discover_module_inventory,
     inspect_kv_cache_capability,
@@ -13,6 +17,15 @@ from src.quantization.module_sensitivity import (
     validate_config,
     validate_upstream_contract,
     weights_are_tied,
+)
+from src.quantization.module_sensitivity_experiments import (
+    audit_combined_all_int8_equivalence,
+    build_experiment_plans,
+    effective_weight_assignment,
+    pending_plan_ids,
+    prepare_experiment_matrix,
+    validate_experiment_plans,
+    validate_plan_isolation,
 )
 
 
@@ -117,7 +130,12 @@ def _base_config(block_count=2):
             "all_int4_plan": "plan.json",
             "all_int4_result": "result.json",
             "all_int4_report": "report.json",
+            "all_int8_error": "all_int8_error.json",
+            "dataset_dir": "dataset",
+            "baseline_config": "baseline.json",
+            "quality_config": "quality.json",
             "output_root": "out",
+            "experiment_output_root": "experiments",
         },
         "expected_identity": {
             "adapter_weights_sha256": "adapter-weights",
@@ -194,6 +212,16 @@ def _base_config(block_count=2):
             "weight_fake_quant_allowed": False,
             "sensitivity_qdq_hook_allowed": True,
             "real_backend": {
+                "runtime_arguments": {
+                    "int8": {
+                        "cache_implementation": "quantized",
+                        "cache_config": {"backend": "hqq", "nbits": 8, "axis_key": 1, "axis_value": 1},
+                    },
+                    "int4": {
+                        "cache_implementation": "quantized",
+                        "cache_config": {"backend": "hqq", "nbits": 4, "axis_key": 1, "axis_value": 1},
+                    },
+                },
                 "supports_real_int8": False,
                 "supports_real_int4": False,
                 "performance_claims_allowed_before_runtime_probe": False,
@@ -204,6 +232,16 @@ def _base_config(block_count=2):
             "dtype": "float16",
             "local_files_only": True,
             "trust_remote_code": False,
+        },
+        "pilot_evaluation": {
+            "dataset_role": "evaluation_dev",
+            "variant": "structured_json",
+            "pilot_size": 80,
+            "pilot_seed": 1,
+            "batch_size": 1,
+            "max_new_tokens": 256,
+            "device": "cuda:0",
+            "dtype": "float16",
         },
     }
 
@@ -278,6 +316,10 @@ def _write_upstream(root, config):
                 }
             ],
         },
+    )
+    write_json(
+        root / "all_int8_error.json",
+        {"plan_id": "all_int8", "block_count": config["expected_identity"]["block_count"], "modules": []},
     )
 
 
@@ -354,6 +396,118 @@ class ModuleSensitivityContractTest(unittest.TestCase):
         args = _parse_args(["inspect-model", "--model-path", "/server/model"])
         self.assertEqual(args.command, "inspect-model")
         self.assertEqual(args.model_path, Path("/server/model"))
+
+    def test_builds_complete_tied_module_and_special_plan_matrix(self):
+        plans = build_experiment_plans(28, True)
+        self.assertEqual(len(plans), 69)
+        self.assertEqual(sum(bool(plan["runnable"]) for plan in plans), 67)
+        validate_experiment_plans(plans, 28, True)
+        validate_plan_isolation(plans, 28, True)
+        kinds = {plan["kind"] for plan in plans}
+        self.assertIn("shared_embedding_lm_head_quantized", kinds)
+        self.assertNotIn("embedding_quantized", kinds)
+
+    def test_untied_matrix_uses_independent_embedding_and_lm_head_plans(self):
+        plans = build_experiment_plans(2, False)
+        self.assertEqual(len(plans), 19)
+        validate_plan_isolation(plans, 2, False)
+        kinds = {plan["kind"] for plan in plans}
+        self.assertIn("embedding_quantized", kinds)
+        self.assertIn("lm_head_quantized", kinds)
+        self.assertNotIn("shared_embedding_lm_head_quantized", kinds)
+
+    def test_layer_module_assignment_changes_only_the_target_family(self):
+        plans = build_experiment_plans(2, False)
+        baseline = effective_weight_assignment(plans[0], 2, False)
+        attention = next(plan for plan in plans if plan["plan_id"] == "layer_01_attn_int8")
+        assignment = effective_weight_assignment(attention, 2, False)
+        changed = {key for key in baseline if baseline[key] != assignment[key]}
+        self.assertEqual(
+            changed,
+            {
+                "model.layers.1.self_attn.q_proj",
+                "model.layers.1.self_attn.k_proj",
+                "model.layers.1.self_attn.v_proj",
+                "model.layers.1.self_attn.o_proj",
+            },
+        )
+
+    def test_prepares_experiment_matrix_only_after_real_inspection_validation(self):
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            config = _base_config(block_count=2)
+            _write_upstream(root, config)
+            contract = prepare_contract(root, config)
+            inventory = discover_module_inventory(
+                _FakeModel(block_count=2), config["module_groups"]
+            )
+            write_json(root / "out" / "module_inventory.json", inventory)
+            write_json(root / "out" / "kv_cache_capability.json", {"status": "sensitivity_only"})
+            write_json(
+                root / "out" / "validation.json",
+                {
+                    "status": "pass",
+                    "contract_sha256": contract["contract_sha256"],
+                    "module_inventory_sha256": sha256_file(root / "out" / "module_inventory.json"),
+                },
+            )
+            manifest = prepare_experiment_matrix(root, config)
+            self.assertEqual(manifest["status"], "matrix_prepared")
+            self.assertEqual(manifest["plan_count"], 19)
+            self.assertTrue((root / "experiments" / "layer_00_attn_int8" / "plan.json").is_file())
+
+    def test_pending_treats_unsupported_kv_cache_as_terminal(self):
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            config = _base_config(block_count=1)
+            output = root / "experiments"
+            plans = build_experiment_plans(1, False)
+            write_json(output / "experiment_manifest.json", {"status": "matrix_prepared", "plans": plans})
+            write_json(output / "kv_cache_int8" / "result.json", {"status": "unsupported"})
+            pending = pending_plan_ids(root, config)
+            self.assertNotIn("kv_cache_int8", pending)
+            self.assertIn("kv_cache_int4", pending)
+
+    def test_cli_exposes_experiment_matrix_and_plan_execution(self):
+        self.assertEqual(_parse_args(["prepare-experiments"]).command, "prepare-experiments")
+        self.assertEqual(_parse_args(["pending"]).command, "pending")
+        args = _parse_args(["run-plan", "--plan-id", "attn_all_int8"])
+        self.assertEqual(args.command, "run-plan")
+        self.assertEqual(args.plan_id, "attn_all_int8")
+        probe = _parse_args(["probe-kv-cache", "--precision", "int4"])
+        self.assertEqual(probe.command, "probe-kv-cache")
+        self.assertEqual(probe.precision, "int4")
+
+    def test_combined_attention_mlp_audit_matches_layer_all_int8(self):
+        metric = {
+            "bits": 8,
+            "group_size": None,
+            "numel": 4,
+            "mse": 0.1,
+            "nmse": 0.2,
+            "cosine_similarity": 0.9,
+            "max_abs_error": 0.3,
+            "saturation_rate": 0.1,
+        }
+        module_report = {
+            "modules": [
+                {
+                    **metric,
+                    "layer_index": 0,
+                    "module": "model.layers.0.self_attn.q_proj",
+                    "family": "attention",
+                }
+            ]
+        }
+        layer_report = {
+            "plan_id": "all_int8",
+            "modules": [
+                {**metric, "layer_index": 0, "module": "self_attn.q_proj"}
+            ],
+        }
+        result = audit_combined_all_int8_equivalence(module_report, layer_report)
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["matched_module_count"], 1)
 
 
 if __name__ == "__main__":

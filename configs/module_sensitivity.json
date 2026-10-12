@@ -9,6 +9,7 @@
     "all_int4_plan": "out/layer_sensitivity/matrix/all_int4/plan.json",
     "all_int4_result": "out/layer_sensitivity/matrix/all_int4/result.json",
     "all_int4_report": "out/layer_sensitivity/matrix/all_int4/comparison_report.json",
+    "all_int8_error": "out/layer_sensitivity/matrix/all_int8/quantization_error.json",
     "dataset_dir": "datasets_contextual",
     "baseline_config": "configs/baseline.json",
     "quality_config": "configs/quality_repair_4080.json",

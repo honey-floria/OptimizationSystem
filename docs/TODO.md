@@ -625,6 +625,7 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 
 #### 7.2.2 Attention 与 MLP 受控恢复矩阵
 
+- [x] 实现 7.2.2/7.2.3 共用实验框架：自动按实际 tied-weight 状态生成 69（tied）或 71（untied）个计划，其中包含 59 个 Attention/MLP 可运行计划；支持合同哈希、隔离校验、单计划独立进程、断点续跑和 `unsupported` 终态，待服务器完成 7.2.1 后生成真实矩阵
 - [ ] 生成 `ATTN-ALL-I8`：所有层仅 Attention 的 `q/k/v/o_proj` 恢复为 INT8，全部 MLP Linear 保持 INT4，用于测量 Attention 模块族的总体恢复量
 - [ ] 生成 `MLP-ALL-I8`：所有层仅 MLP 的 `gate/up/down_proj` 恢复为 INT8，全部 Attention Linear 保持 INT4，用于测量 MLP 模块族的总体恢复量
 - [ ] 为全部 28 个 block 分别生成 `L-i-ATTN-I8`：仅第 `i` 层 Attention 恢复为 INT8，其余受量化 Linear 保持与 `ALL-I4` 完全一致
@@ -636,6 +637,7 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 
 #### 7.2.3 Embedding、Norm、lm_head 与 KV Cache 降精度实验
 
+- [x] 实现特殊模块计划与运行路径：根据实际 tied-weight 状态生成独立或联合 Embedding/`lm_head` 计划，区分 block/final Norm，并为 KV Cache 提供 HQQ INT8/INT4 runtime probe、能力门禁和明确的 `unsupported` 结果；真实质量与性能结论待服务器运行
 - [ ] 对 Embedding 分别执行 INT8 和 INT4 单模块降精度实验，其余模块固定为 `ALL-I4` 配置；记录质量损失、量化误差和实际参数/存储占比
 - [ ] 对 `lm_head` 分别执行 INT8 和 INT4 单模块降精度实验，其余模块固定；除业务指标外记录 logits MSE、top-1/top-k token 一致率和目标数值 token 的排名变化
 - [ ] 对 Norm 执行 FP16、INT8 和 INT4 对比；至少区分 block 内 input/post-attention Norm 与最终 Norm，并记录 scale/range、异常值和 NaN/Inf，避免将 Qwen 的 RMSNorm 错标为 LayerNorm

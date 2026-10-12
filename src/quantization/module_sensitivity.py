@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import inspect
+import importlib.util
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -178,6 +180,20 @@ def validate_precision_contract(precision: dict[str, Any], backend: dict[str, An
     real_backend = kv_cache.get("real_backend", {})
     if real_backend.get("performance_claims_allowed_before_runtime_probe") is not False:
         raise ValueError("KV Cache performance claims require a successful runtime probe.")
+    runtime_arguments = real_backend.get("runtime_arguments", {})
+    for precision, bits in (("int8", 8), ("int4", 4)):
+        arguments = runtime_arguments.get(precision, {})
+        cache_config = arguments.get("cache_config", {})
+        if (
+            arguments.get("cache_implementation") != "quantized"
+            or str(cache_config.get("backend", "")).lower() != "hqq"
+            or cache_config.get("nbits") != bits
+            or cache_config.get("axis_key") != 1
+            or cache_config.get("axis_value") != 1
+        ):
+            raise ValueError(
+                f"KV Cache {precision} must use the frozen Transformers HQQ contract."
+            )
 
 
 def validate_config(config: dict[str, Any]) -> None:
@@ -190,7 +206,12 @@ def validate_config(config: dict[str, Any]) -> None:
         "all_int4_plan",
         "all_int4_result",
         "all_int4_report",
+        "all_int8_error",
+        "dataset_dir",
+        "baseline_config",
+        "quality_config",
         "output_root",
+        "experiment_output_root",
     }
     missing = sorted(required_paths - set(config.get("paths", {})))
     if missing:
@@ -201,6 +222,17 @@ def validate_config(config: dict[str, Any]) -> None:
         config.get("weight_backend", {}),
         config.get("kv_cache", {}),
     )
+    pilot = config.get("pilot_evaluation", {})
+    frozen = config.get("evaluation_contract", {})
+    if (
+        pilot.get("dataset_role") != "evaluation_dev"
+        or pilot.get("variant") != frozen.get("variant")
+        or pilot.get("pilot_size") != frozen.get("pilot_size")
+        or pilot.get("pilot_seed") != frozen.get("pilot_seed")
+        or pilot.get("max_new_tokens")
+        != frozen.get("generation", {}).get("max_new_tokens")
+    ):
+        raise ValueError("Pilot evaluation must reuse the frozen 7.1 evaluation contract.")
 
 
 def _structured_variant(report: dict[str, Any]) -> dict[str, Any]:
@@ -445,7 +477,128 @@ def inspect_kv_cache_capability(model: Any, contract: dict[str, Any], transforme
         "weight_fake_quant_allowed": False,
         "deployment_performance_claims_allowed": False,
         "runtime_probe_completed": False,
+        "runtime_verified_precisions": [],
     }
+
+
+def probe_kv_cache_runtime(
+    project_root: str | Path,
+    config: dict[str, Any],
+    *,
+    precisions: list[str] | None = None,
+    model_path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Execute a short real generation probe for configured low-bit KV caches."""
+
+    root = Path(project_root).resolve()
+    output_root = resolve_project_path(root, config["paths"]["output_root"])
+    validation_path = output_root / "validation.json"
+    capability_path = output_root / "kv_cache_capability.json"
+    if not validation_path.is_file() or load_json(validation_path).get("status") != "pass":
+        raise ValueError("Run a passing 7.2.1 inspect-model before probing KV Cache.")
+    capability = load_json(capability_path)
+    requested = precisions or ["int8", "int4"]
+    if not requested or any(value not in {"int8", "int4"} for value in requested):
+        raise ValueError("KV Cache runtime probe precisions must be int8 and/or int4.")
+    try:
+        import torch
+        import transformers
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+    except ImportError as exc:
+        raise RuntimeError("KV Cache runtime probing requires torch and transformers.") from exc
+    merged = load_json(resolve_project_path(root, config["paths"]["merged_manifest"]))
+    resolved_model_path = Path(model_path or merged["merged_model"]["path"]).expanduser().resolve()
+    if not resolved_model_path.is_dir():
+        raise ValueError(f"Merged model directory is unavailable: {resolved_model_path}")
+    runtime = config["pilot_evaluation"]
+    dtype = {"float16": torch.float16, "bfloat16": torch.bfloat16}.get(runtime["dtype"])
+    if dtype is None:
+        raise ValueError("pilot_evaluation.dtype must be float16 or bfloat16.")
+    tokenizer = AutoTokenizer.from_pretrained(
+        str(resolved_model_path), local_files_only=True, trust_remote_code=False
+    )
+    model = AutoModelForCausalLM.from_pretrained(
+        str(resolved_model_path), local_files_only=True, trust_remote_code=False,
+        dtype=dtype, low_cpu_mem_usage=True,
+    )
+    model.to(runtime["device"])
+    model.eval()
+    encoded = tokenizer("KV cache runtime capability probe.", return_tensors="pt")
+    encoded = {name: tensor.to(runtime["device"]) for name, tensor in encoded.items()}
+    backend = config["kv_cache"]["real_backend"]
+    probes = dict(capability.get("runtime_probes", {}))
+    verified = set(capability.get("runtime_verified_precisions", []))
+    for precision in requested:
+        arguments = backend.get("runtime_arguments", {}).get(precision)
+        probe = {
+            "precision": precision,
+            "status": "unsupported",
+            "runtime_arguments": arguments,
+            "transformers_version": getattr(transformers, "__version__", None),
+        }
+        if not isinstance(arguments, dict):
+            probe["reason"] = "No runtime arguments are configured."
+            probes[precision] = probe
+            continue
+        dependency = arguments.get("cache_config", {}).get("backend")
+        if dependency and importlib.util.find_spec(str(dependency).lower()) is None:
+            probe["reason"] = f"Required KV Cache backend is not installed: {dependency}"
+            probes[precision] = probe
+            continue
+        started = time.perf_counter()
+        try:
+            if runtime["device"].startswith("cuda"):
+                torch.cuda.empty_cache()
+                torch.cuda.reset_peak_memory_stats()
+            with torch.inference_mode():
+                pad_token_id = tokenizer.pad_token_id
+                if pad_token_id is None:
+                    pad_token_id = tokenizer.eos_token_id
+                outputs = model.generate(
+                    **encoded,
+                    do_sample=False,
+                    num_beams=1,
+                    max_new_tokens=8,
+                    pad_token_id=pad_token_id,
+                    **arguments,
+                )
+            if runtime["device"].startswith("cuda"):
+                torch.cuda.synchronize()
+                peak_memory = int(torch.cuda.max_memory_allocated())
+            else:
+                peak_memory = None
+            probe.update(
+                {
+                    "status": "pass",
+                    "duration_seconds": time.perf_counter() - started,
+                    "output_token_ids_sha256": canonical_json_sha256(outputs.detach().cpu().tolist()),
+                    "peak_cuda_memory_bytes": peak_memory,
+                    "low_bit_cache_residency_verified": False,
+                    "performance_claims_allowed": False,
+                }
+            )
+            verified.add(precision)
+        except Exception as exc:  # Runtime/backend errors are evidence, not silent fallback.
+            probe.update(
+                {
+                    "status": "unsupported",
+                    "duration_seconds": time.perf_counter() - started,
+                    "reason": f"{type(exc).__name__}: {exc}",
+                }
+            )
+            verified.discard(precision)
+        probes[precision] = probe
+    capability.update(
+        {
+            "runtime_probe_completed": True,
+            "runtime_probe_completed_at": datetime.now(timezone.utc).isoformat(),
+            "runtime_verified_precisions": sorted(verified),
+            "runtime_probes": probes,
+            "deployment_performance_claims_allowed": False,
+        }
+    )
+    write_json(capability_path, capability)
+    return capability
 
 
 def prepare_contract(project_root: str | Path, config: dict[str, Any]) -> dict[str, Any]:

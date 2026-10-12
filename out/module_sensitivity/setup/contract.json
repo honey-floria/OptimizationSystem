@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "7.2.1",
   "status": "awaiting_model_inspection",
-  "created_at": "2026-10-12T10:12:09.798757+00:00",
+  "created_at": "2026-10-12T11:27:15.025646+00:00",
   "experiment_name": "finqa-module-sensitivity-contract",
   "upstream": {
     "status": "pass",
@@ -202,7 +202,27 @@
       "implementation": "runtime_probe_required",
       "supports_real_int8": false,
       "supports_real_int4": false,
-      "performance_claims_allowed_before_runtime_probe": false
+      "performance_claims_allowed_before_runtime_probe": false,
+      "runtime_arguments": {
+        "int8": {
+          "cache_implementation": "quantized",
+          "cache_config": {
+            "backend": "hqq",
+            "nbits": 8,
+            "axis_key": 1,
+            "axis_value": 1
+          }
+        },
+        "int4": {
+          "cache_implementation": "quantized",
+          "cache_config": {
+            "backend": "hqq",
+            "nbits": 4,
+            "axis_key": 1,
+            "axis_value": 1
+          }
+        }
+      }
     }
   },
   "runtime_inspection": {
@@ -211,5 +231,5 @@
     "local_files_only": true,
     "trust_remote_code": false
   },
-  "contract_sha256": "8afd42c78b3ce44fcfc2acb3a77fa9b529f6df2749aa44db9a4885e7fa936eb5"
+  "contract_sha256": "eb03431429ccd0eec9117e1b348bb0ddb5ecf7025a872efd12be431ea97ab908"
 }

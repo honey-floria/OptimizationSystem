@@ -2492,3 +2492,222 @@ layer 22 不进入保护集合。它在 full-dev 恢复和退化各 15 题、净
 `MLP-ALL-I8` 判断总体上是哪类子模块贡献恢复，再执行逐层 Attention/MLP 隔离计划；完整 dev 晋级规则必须在
 看到结果前冻结。7.2 和 7.3 完成后，7.4 至少比较 `ALL-I4`、只保护 layer 23、同时保护 layer 23+10 三种
 层级组合，并继续测试模块级保护方案。不得假设 layer 23 与 layer 10 的单层收益可以线性相加。
+
+## 7.2 模块敏感性分析实现设计（2026-10-12）
+
+### 7.2 与 7.1 的区别
+
+7.1 把一个完整 Transformer block 当作最小实验单位。它能回答“第几层值得从 INT4 恢复到 INT8”，但不能
+解释收益究竟来自该层的 Attention 还是 MLP，也没有触碰 Embedding、Norm、`lm_head` 和 KV Cache。
+
+7.2 将问题进一步拆开，但仍保持 7.1 的受控变量原则：模型母版、`ALL-I4`、80 条 pilot、Prompt、生成参数、
+评分器和逐样本顺序全部复用，只有计划中声明的模块允许改变。这样，候选和基线的差异才可以归因到目标模块，
+而不是数据重新抽样、Prompt 改动或另一种量化算法。
+
+7.2 包含两种方向相反的实验：
+
+| 实验类型 | 起点 | 唯一变量 | 主要问题 |
+| --- | --- | --- | --- |
+| Attention/MLP 恢复实验 | Transformer Linear 全部为 `ALL-I4` | 目标模块从 INT4 恢复为 INT8 | 提高哪个模块的精度最能挽回质量 |
+| 特殊模块退化实验 | `ALL-I4`，特殊模块仍为 FP16 | Embedding、Norm、`lm_head` 或 KV Cache 单独降精度 | 哪些特殊模块可以安全量化，哪些必须保护 |
+
+因此两类实验不能混成一个分数榜。恢复实验希望 `net_correct_gain` 越大越好；退化实验首先要求
+`net_correct_change` 不低于质量门禁，然后才能讨论参数、显存或速度收益。
+
+### 7.2.2 Attention 与 MLP 受控恢复矩阵
+
+#### 模块边界
+
+每个 Qwen2.5 decoder block 被拆成两组二维 Linear 权重：
+
+- Attention：`q_proj`、`k_proj`、`v_proj`、`o_proj`；
+- MLP：`gate_proj`、`up_proj`、`down_proj`。
+
+Attention 负责构造 query/key/value、建立 token 间的信息交互并输出注意力结果；MLP 在每个 token 位置执行
+高维非线性变换，通常占 block 中更大的参数比例。两组模块承担的功能和参数规模不同，量化误差对业务输出的
+影响也不一定相同，所以不能只用整个 block 的平均误差推断它们的敏感性。
+
+#### 为什么从 ALL-I4 恢复到 INT8
+
+如果分别从 FP16 出发，只量化 Attention 或只量化 MLP，那么两个候选面对的其余权重环境不同于最终计划使用的
+INT4 模型，结论不一定能指导混合精度部署。当前实现统一从 `ALL-I4` 开始：所有 block 的七个 Linear 都先按
+W4A16 g32 量化，然后只把计划指定的模块改为 W8A16。候选与基线之间只存在一组精度差异。
+
+恢复量定义为：
+
+```text
+quality_recovery(plan) = accuracy(plan) - accuracy(ALL-I4)
+net_correct_gain       = recovered_count - regressed_count
+```
+
+其中 `recovered` 表示同一道题在 `ALL-I4` 下错误、候选下正确；`regressed` 表示 `ALL-I4` 下正确、候选下
+错误。只比较总正确数会掩盖“恢复很多题、同时又破坏很多题”的候选，因此实现同时保存完整逐题转移。
+
+#### 计划矩阵
+
+实现生成以下 59 个 Attention/MLP 可运行计划：
+
+| 数量 | 计划 | 含义 |
+| ---: | --- | --- |
+| 1 | `attn_all_int8` | 28 层 Attention 全部为 INT8，MLP 保持 INT4 |
+| 1 | `mlp_all_int8` | 28 层 MLP 全部为 INT8，Attention 保持 INT4 |
+| 28 | `layer_00_attn_int8`～`layer_27_attn_int8` | 仅目标层四个 Attention Linear 恢复 INT8 |
+| 28 | `layer_00_mlp_int8`～`layer_27_mlp_int8` | 仅目标层三个 MLP Linear 恢复 INT8 |
+| 1 | `attn_mlp_all_int8_audit` | Attention 与 MLP 全部恢复 INT8，只用于复现 7.1 `ALL-I8` 的实现审计 |
+
+全局计划用于回答“总体上保护 Attention 还是 MLP 更有效”；逐层计划用于回答“哪一层的哪一类子模块最敏感”。
+两者都需要，因为全局收益不是 28 个单层收益的简单相加：量化扰动经过多层传播后会发生放大、抵消和生成边界
+跳变。
+
+`attn_mlp_all_int8_audit` 不用于排名。它会把 196 个 Transformer Linear 的 bits、group size、numel、MSE、
+NMSE、cosine、最大误差和饱和率与 7.1 的 `ALL-I8` 逐模块精确比较。任何字段不一致都说明 7.2 的模块选择或量化
+实现偏离 7.1，程序会立即失败，后续排名不可信。
+
+#### 量化数学与误差指标
+
+Linear INT4 沿每个输出行的输入维度按 32 个权重分组，每组独立计算 scale；INT8 按输出通道计算 scale。
+两者都使用对称量化，零点固定为 0：
+
+```text
+qmax  = 2^(bits - 1) - 1
+scale = max(abs(w)) / qmax
+q     = clip(round(w / scale), -qmax, qmax)
+w_hat = q * scale
+```
+
+当前权重路径把 `w_hat` 写回 FP16 tensor，是量化—反量化 fake-quant。它真实注入了舍入和裁剪误差，适合比较
+质量敏感性，但 tensor 最终仍按 FP16 存储和计算，所以不能用来声称模型文件、显存或延迟已经下降。
+
+每个 Linear 保存参数量、MSE、normalized MSE、cosine similarity、最大绝对误差和饱和率；层级和模块族汇总
+按 `numel` 加权，避免小矩阵和大矩阵被不合理地赋予相同权重。业务侧则在固定 80 条 pilot 上保存准确率、
+解析率、结构化输出率、格式重试和逐样本恢复/退化。
+
+#### 隔离和续跑保障
+
+每个计划在写入磁盘前都会生成完整的生效精度映射。逐层 Attention 计划必须恰好改变四个 Linear，逐层 MLP
+计划必须恰好改变三个 Linear；缺层、重复层、越界层和额外模块变化都会被拒绝。`plan.json` 包含父
+`ALL-I4` 引用、精度合同、生效映射和合同 SHA256，执行时重新计算哈希，防止准备后被手工修改。
+
+每个计划由独立 Python 进程重新加载同一个 merged FP16 母版，再施加该计划的完整量化分配，不继承上一个
+计划已经修改的权重。`result.json status=completed` 或经过能力审计的 `status=unsupported` 都属于终态；
+中断后重新执行会跳过终态计划，只继续缺失或失败项。
+
+### 7.2.3 Embedding、Norm、lm_head 与 KV Cache
+
+#### 为什么这些对象单独测试
+
+这些对象在 7.1 中被刻意保持为 FP16：
+
+- Embedding 是所有 token 的输入查表矩阵，一次扰动会影响后续全部 block；
+- `lm_head` 直接把最终 hidden state 映射为词表 logits，细小误差可能改变下一个 token 的 argmax；
+- RMSNorm 参数量很小，但它控制每层激活缩放，压缩收益有限且可能数值敏感；
+- KV Cache 是推理过程中动态生成的 key/value activation，不是静态模型权重，不能使用权重 fake-quant 代替。
+
+因此特殊模块实验保持 Transformer Linear 为相同的 `ALL-I4`，再把一个特殊对象从 FP16 单独降为 INT8 或
+INT4。其正确解释是“降精度造成多少损失”，不是“恢复了多少质量”。结果使用
+`degraded_from_fp16_component_baseline`、`recovered_from_fp16_component_baseline` 和
+`net_correct_change`，避免与 7.2.2 的恢复分数混淆。
+
+#### Embedding 与 lm_head
+
+Embedding INT4 沿 embedding dimension 使用 g32 对称分组，INT8 按 embedding row；`lm_head` INT4 沿输入
+维度使用 g32，INT8 按输出通道。程序不假设二者一定独立，而是读取真实模型参数对象和底层 storage：
+
+- 未共享时，生成 `embedding_int8/int4` 与 `lm_head_int8/int4` 四个独立计划；
+- 共享时，只生成 `shared_embedding_lm_head_int8/int4` 两个联合计划，禁止把同一矩阵重复量化后宣称两个独立
+  因果结论。
+
+这也是总计划数存在两种情况的原因：tied weights 时共 69 个计划、67 个可运行；untied weights 时共 71 个
+计划、69 个可运行。两个不可运行项是复用已有证据的 `all_int4_ref` 和 `kv_cache_fp16_ref`。
+
+当前实现已记录 Embedding/`lm_head` 权重误差和完整业务质量变化。`lm_head` 的 logits MSE、top-1/top-k token
+一致率及目标数值 token 排名仍属于待补充的专项 probe；在这些指标生成前，不能仅凭权重 MSE 解释具体 token
+为什么发生变化。
+
+#### Block Norm 与最终 Norm
+
+Qwen2.5 使用 RMSNorm，因此文档和产物统一称为 Norm，不把它误标成 LayerNorm。实现把 Norm 分为：
+
+- 28 层内的 `input_layernorm` 与 `post_attention_layernorm`，对应 `block_norm_int8/int4`；
+- 模型输出前的最终 Norm，对应 `final_norm_int8/int4`。
+
+Norm 权重是一维向量，不适用 Linear 的 per-output-channel/g32 规则。当前使用对称 per-tensor INT8/INT4，零点
+固定为 0，并单独实现一维量化路径。两组 Norm 分开测试，是为了避免“所有 Norm 一起变化”后无法判断风险来自
+层内缩放还是最终输出缩放。真实运行还需结合 NaN/Inf、激活范围和输出误差审计后才能决定是否允许量化；考虑
+到 Norm 参数量很小，即使质量无损，也必须证明存在实际工程收益才值得降低精度。
+
+#### KV Cache 为什么必须走真实后端
+
+KV Cache 保存每一层历史 token 的 key/value。上下文增长时，其容量大致随层数、序列长度、batch、KV head
+数量、head dimension 和每元素字节数线性增长。把 cache 从 FP16 降到 INT8/INT4 理论上能够降低动态显存，
+但还会引入每步量化/反量化成本；短上下文下甚至可能变慢。因此 KV Cache 不能使用“改一份静态权重再测质量”
+的方式模拟。
+
+当前实现使用 Transformers `cache_implementation="quantized"`，并通过 HQQ 分别请求 `nbits=8` 和 `nbits=4`；
+HQQ 的 key/value 推荐量化轴固定为 1。依据是
+[Transformers KV Cache 官方说明](https://huggingface.co/docs/transformers/main/kv_cache)。运行分为两道门禁：
+
+1. `inspect-model` 检查模型 forward 是否支持 `use_cache`、`past_key_values`，以及当前 Transformers 是否暴露
+   QuantizedCache API；
+2. `probe-kv-cache` 在真实模型和设备上执行短生成，检查 HQQ 依赖、INT8/INT4 参数及后端实际可运行性。
+
+只有 probe 成功的位宽才允许进入 80 条业务评测。缺少 HQQ、版本不支持或运行失败时，计划写入
+`status=unsupported` 和原始错误，不静默回退为 FP16，也不阻塞其他权重计划。短 probe 成功只证明接口可运行，
+不等于已经证明低比特 cache 在请求期间持续驻留，也不允许直接声称显存或性能收益；后续仍需记录
+cache bytes/token、峰值显存、TTFT、TPOT、端到端延迟和吞吐，并审计真实 cache residency。
+
+### 当前实现文件、执行顺序与产物
+
+实现文件如下：
+
+```text
+configs/module_sensitivity.json
+src/quantization/module_sensitivity.py
+src/quantization/module_sensitivity_experiments.py
+scripts/run_module_sensitivity.py
+scripts/run_module_sensitivity_pilot.sh
+tests/test_module_sensitivity.py
+```
+
+服务器执行顺序：
+
+```bash
+# 7.2.1：真实模型模块发现和能力登记
+python3 scripts/run_module_sensitivity.py inspect-model
+
+# 7.2.3：真实 KV Cache 后端短探测；不支持时会留下 unsupported 证据
+python3 scripts/run_module_sensitivity.py probe-kv-cache
+
+# 7.2.2/7.2.3：生成矩阵并逐计划执行固定 80 条 pilot
+bash scripts/run_module_sensitivity_pilot.sh
+
+# 查看仍缺少结果的可运行计划
+python3 scripts/run_module_sensitivity.py pending
+```
+
+如服务器模型路径与 7.1 manifest 中记录的路径不同，可在 `inspect-model`、`probe-kv-cache` 和单独的
+`run-plan` 命令中使用 `--model-path`。一键脚本默认使用 manifest 路径；需要改路径时应先修正服务器上的冻结
+manifest 或逐计划调用入口，不能让不同计划加载不同母版。
+
+准备完成后的目录结构为：
+
+```text
+out/module_sensitivity/
+├── setup/
+│   ├── contract.json
+│   ├── module_inventory.json
+│   ├── kv_cache_capability.json
+│   └── validation.json
+└── pilot/
+    ├── experiment_manifest.json
+    ├── <plan_id>/plan.json
+    ├── <plan_id>/quantization_error.json
+    ├── <plan_id>/comparison_report.json
+    ├── <plan_id>/structured_json/predictions.jsonl
+    └── <plan_id>/result.json
+```
+
+截至当前，合同、矩阵生成、隔离 fake-quant、KV Cache runtime probe、单计划业务评测、逐样本转移、
+`ALL-I8` 一致性审计、断点续跑和 `unsupported` 门禁已经实现并通过自动化测试。尚未完成的是服务器真实矩阵
+结果、模块输出 activation probe、`lm_head` logits 专项指标，以及 KV Cache 的正式显存/时延/吞吐和 residency
+审计。这些未完成项继续保持 TODO 未勾选，不能把“代码入口已实现”写成“真实实验已完成”。
