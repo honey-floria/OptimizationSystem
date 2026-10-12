@@ -40,9 +40,13 @@
     },
     "structured_output_rate": 1.0,
     "predictions_sha256": "4bcd0dac2343e532c14b7838d43d6d7dbe3cd7786542a41ef3490e7d6456c11b",
-    "quantization_error_sha256": "26bf43dda95077154597f5b1c422c06bdc3ab1d97d9c19dce5672ce3f80f2fa8",
-    "weighted_nmse": 0.010137710939269946,
-    "duration_seconds": 171.32796234893613
+    "quantization_error_sha256": "2b9c65ad955cce41d52b699c077fa78f73d87e6016b9d750b84130329f8558cb",
+    "weighted_nmse": 0.010137710540054103,
+    "duration_seconds": 171.32796234893613,
+    "original_quantization_error_sha256": "26bf43dda95077154597f5b1c422c06bdc3ab1d97d9c19dce5672ce3f80f2fa8",
+    "quantization_error_metrics_schema_version": 2,
+    "quantization_error_recomputed_at": "2026-10-12T03:44:30.999826+00:00",
+    "previous_quantization_error_sha256": "26bf43dda95077154597f5b1c422c06bdc3ab1d97d9c19dce5672ce3f80f2fa8"
   },
   "all_int8": {
     "schema_version": 1,
@@ -72,9 +76,13 @@
     },
     "structured_output_rate": 0.9875,
     "predictions_sha256": "609f9a94974226e6d46d9be5b4456fffe6c551842ef38e24269c0609354269cf",
-    "quantization_error_sha256": "e961e051cb1cd80a992bbe315a7f6d8a4952a697373b385806b0fa4805751d18",
-    "weighted_nmse": 0.0001309179087966406,
-    "duration_seconds": 168.99013992398977
+    "quantization_error_sha256": "7779eff9e632d6b58a1f008c046a6a15499c4a6f2e13c1bd9aeb0aeb49ae3874",
+    "weighted_nmse": 0.00013091790388376212,
+    "duration_seconds": 168.99013992398977,
+    "original_quantization_error_sha256": "e961e051cb1cd80a992bbe315a7f6d8a4952a697373b385806b0fa4805751d18",
+    "quantization_error_metrics_schema_version": 2,
+    "quantization_error_recomputed_at": "2026-10-12T03:45:56.809363+00:00",
+    "previous_quantization_error_sha256": "e961e051cb1cd80a992bbe315a7f6d8a4952a697373b385806b0fa4805751d18"
   },
   "ranking_preview": [
     {
@@ -108,9 +116,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "3394f8d12d9ff4a48a23fd18b0f69479186c47702ff4d6d75b7648e3e3e1696e",
-      "quantization_error_sha256": "985334be176c7114f53b93ae7fd007aefcb645d064e7ab8bc72ecd30e1e3b330",
-      "weighted_nmse": 0.009784684734730969,
+      "quantization_error_sha256": "124911d9fdc9b9428283f4fd5229b354fec6ae35a8b18f2ba1f88552ebeffffe",
+      "weighted_nmse": 0.009784684336473141,
       "duration_seconds": 164.0119082510937,
+      "original_quantization_error_sha256": "985334be176c7114f53b93ae7fd007aefcb645d064e7ab8bc72ecd30e1e3b330",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:59:49.908935+00:00",
+      "previous_quantization_error_sha256": "985334be176c7114f53b93ae7fd007aefcb645d064e7ab8bc72ecd30e1e3b330",
       "transitions": {
         "recovered": 3,
         "regressed": 1,
@@ -122,7 +134,7 @@
       "regressed_count": 1,
       "net_correct_gain": 2,
       "correct_gain": 2,
-      "quantization_error_recovery": 0.0003530262045389771,
+      "quantization_error_recovery": 0.0003530262035809622,
       "rank": 1
     },
     {
@@ -156,9 +168,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "d1451160bf50691777e7b76625545394459e717355017bc5710a7a74981d7b56",
-      "quantization_error_sha256": "7f5439d7fa8f46e17af7cfeec26b5a9f679eda8062bca521a2dd37f787d39cbd",
-      "weighted_nmse": 0.009779743162911973,
+      "quantization_error_sha256": "1938b4cb0a6643dc21b2e25cdcfcb61bd3ec1c2b093ddfb6ea472d1974a7e637",
+      "weighted_nmse": 0.0097797427643487,
       "duration_seconds": 172.1567373140715,
+      "original_quantization_error_sha256": "7f5439d7fa8f46e17af7cfeec26b5a9f679eda8062bca521a2dd37f787d39cbd",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:14:45.610652+00:00",
+      "previous_quantization_error_sha256": "7f5439d7fa8f46e17af7cfeec26b5a9f679eda8062bca521a2dd37f787d39cbd",
       "transitions": {
         "recovered": 2,
         "regressed": 0,
@@ -170,7 +186,7 @@
       "regressed_count": 0,
       "net_correct_gain": 2,
       "correct_gain": 2,
-      "quantization_error_recovery": 0.0003579677763579734,
+      "quantization_error_recovery": 0.0003579677757054034,
       "rank": 2
     },
     {
@@ -204,9 +220,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "5ca67af4ff411ef5a6f05c14215866501a0d4364e17140d343d9a000df561981",
-      "quantization_error_sha256": "6fa525f7cc5553d5d85785e566b0146114c7fd16acafabdda2290d2d48ddecef",
-      "weighted_nmse": 0.009789489349058038,
+      "quantization_error_sha256": "d8de67445c630809e302c33f1ad8147977492eec406a9b293c166ca987888bde",
+      "weighted_nmse": 0.009789488978785767,
       "duration_seconds": 172.24438981106505,
+      "original_quantization_error_sha256": "6fa525f7cc5553d5d85785e566b0146114c7fd16acafabdda2290d2d48ddecef",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:16:00.214940+00:00",
+      "previous_quantization_error_sha256": "6fa525f7cc5553d5d85785e566b0146114c7fd16acafabdda2290d2d48ddecef",
       "transitions": {
         "recovered": 2,
         "regressed": 0,
@@ -218,7 +238,7 @@
       "regressed_count": 0,
       "net_correct_gain": 2,
       "correct_gain": 2,
-      "quantization_error_recovery": 0.0003482215902119081,
+      "quantization_error_recovery": 0.0003482215612683366,
       "rank": 3
     },
     {
@@ -252,9 +272,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "69b976d8985a0e1652408ab67a2c42a011019d2b95f97583b384c47590bc59ef",
-      "quantization_error_sha256": "945eb0fee04bc2c602e7f37148502ff19fc7db33ac5edbc2278427e197557d2f",
-      "weighted_nmse": 0.00977058515113403,
+      "quantization_error_sha256": "e79ade85a1f56eeafcf88d93b1df047db7cb1c0008d35524c5b4b2c3c1bd81e2",
+      "weighted_nmse": 0.009770584753560073,
       "duration_seconds": 166.04276803904213,
+      "original_quantization_error_sha256": "945eb0fee04bc2c602e7f37148502ff19fc7db33ac5edbc2278427e197557d2f",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:04:55.881794+00:00",
+      "previous_quantization_error_sha256": "945eb0fee04bc2c602e7f37148502ff19fc7db33ac5edbc2278427e197557d2f",
       "transitions": {
         "recovered": 2,
         "regressed": 1,
@@ -266,7 +290,7 @@
       "regressed_count": 1,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.0003671257881359153,
+      "quantization_error_recovery": 0.00036712578649403076,
       "rank": 4
     },
     {
@@ -300,9 +324,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "f4a08f47a97048cfbb17c919e9bfe2671fa487040ea15db328871a8c83456d65",
-      "quantization_error_sha256": "9e956b22dee615189652dc4578b615d9c9029d35e0c94be4870c967036f7b66e",
-      "weighted_nmse": 0.009785848338080714,
+      "quantization_error_sha256": "2d8b23f2e01f8cfb19fa8179d44bc6ff6a2ac7b911372a665f06748c306797f3",
+      "weighted_nmse": 0.009785847988187936,
       "duration_seconds": 174.4076413048897,
+      "original_quantization_error_sha256": "9e956b22dee615189652dc4578b615d9c9029d35e0c94be4870c967036f7b66e",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:53:32.328777+00:00",
+      "previous_quantization_error_sha256": "9e956b22dee615189652dc4578b615d9c9029d35e0c94be4870c967036f7b66e",
       "transitions": {
         "recovered": 2,
         "regressed": 1,
@@ -314,7 +342,7 @@
       "regressed_count": 1,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.00035186260118923174,
+      "quantization_error_recovery": 0.000351862551866167,
       "rank": 5
     },
     {
@@ -348,9 +376,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "74cab95dbbefc4da35aed14269e25c8bead0f0d0a6050743d120f3ee82e614bd",
-      "quantization_error_sha256": "4faa7681e4e4a56fa8ed674e8276ceb5d4ba3970240e6f767b74cc5c4da5d31a",
-      "weighted_nmse": 0.009791872362554715,
+      "quantization_error_sha256": "e29645e06ce5ce53481c9a155355df6314487a0ce4478a7ed7080f0fa13f7df4",
+      "weighted_nmse": 0.009791871976225101,
       "duration_seconds": 171.42336185090244,
+      "original_quantization_error_sha256": "4faa7681e4e4a56fa8ed674e8276ceb5d4ba3970240e6f767b74cc5c4da5d31a",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:18:25.783100+00:00",
+      "previous_quantization_error_sha256": "4faa7681e4e4a56fa8ed674e8276ceb5d4ba3970240e6f767b74cc5c4da5d31a",
       "transitions": {
         "recovered": 2,
         "regressed": 1,
@@ -362,7 +394,7 @@
       "regressed_count": 1,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.0003458385767152305,
+      "quantization_error_recovery": 0.00034583856382900194,
       "rank": 6
     },
     {
@@ -396,9 +428,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "4450c43dec39d1282a04a89d3dd088c80d2dc7b99f9771e4b28252acb9c9cd37",
-      "quantization_error_sha256": "7582560260d7b113d698cfc0523893f4bee297b14ed32a7535e0fe2ed5c89ccf",
-      "weighted_nmse": 0.00977376204053017,
+      "quantization_error_sha256": "17a213aa23026d24c1432b940ce20c883a1fe9cb4904b80b244b1325cc93ec18",
+      "weighted_nmse": 0.009773761637105865,
       "duration_seconds": 165.45475638401695,
+      "original_quantization_error_sha256": "7582560260d7b113d698cfc0523893f4bee297b14ed32a7535e0fe2ed5c89ccf",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:08:37.706915+00:00",
+      "previous_quantization_error_sha256": "7582560260d7b113d698cfc0523893f4bee297b14ed32a7535e0fe2ed5c89ccf",
       "transitions": {
         "recovered": 1,
         "regressed": 0,
@@ -410,7 +446,7 @@
       "regressed_count": 0,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.0003639488987397764,
+      "quantization_error_recovery": 0.0003639489029482381,
       "rank": 7
     },
     {
@@ -444,9 +480,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "4b243cdd6e75ad72ca13cfdfcdd549f9bfe9611daa2c9f4e7ab0f5565fcae199",
-      "quantization_error_sha256": "b7e4f52ad4408301ce125227231f9ad976e586a3ab3cf02ebb6f402fb0b6a139",
-      "weighted_nmse": 0.00977828920201713,
+      "quantization_error_sha256": "1f95048d02af6b7d2a26bc30bcd79febf91928ba2bac72814bcd40ca259c5d98",
+      "weighted_nmse": 0.009778288825369442,
       "duration_seconds": 165.0671380709391,
+      "original_quantization_error_sha256": "b7e4f52ad4408301ce125227231f9ad976e586a3ab3cf02ebb6f402fb0b6a139",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:13:33.362860+00:00",
+      "previous_quantization_error_sha256": "b7e4f52ad4408301ce125227231f9ad976e586a3ab3cf02ebb6f402fb0b6a139",
       "transitions": {
         "recovered": 1,
         "regressed": 0,
@@ -458,7 +498,7 @@
       "regressed_count": 0,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.0003594217372528165,
+      "quantization_error_recovery": 0.0003594217146846608,
       "rank": 8
     },
     {
@@ -492,9 +532,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "46cb1e4cb348ca9174d848b97b6d1e37091ec07625ec0d20e867a35baca2429c",
-      "quantization_error_sha256": "d0db30d7585d01c4bdb6e491f22d0e1fa5200e28b3d7c59ae5f537fb8ad5bc7b",
-      "weighted_nmse": 0.009782043056623179,
+      "quantization_error_sha256": "aa21b372db6198335ee4af6898bbe7d206446d3e56e65c54617d1bb150f13389",
+      "weighted_nmse": 0.00978204266363368,
       "duration_seconds": 165.75787561386824,
+      "original_quantization_error_sha256": "d0db30d7585d01c4bdb6e491f22d0e1fa5200e28b3d7c59ae5f537fb8ad5bc7b",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:20:49.384239+00:00",
+      "previous_quantization_error_sha256": "d0db30d7585d01c4bdb6e491f22d0e1fa5200e28b3d7c59ae5f537fb8ad5bc7b",
       "transitions": {
         "recovered": 1,
         "regressed": 0,
@@ -506,7 +550,7 @@
       "regressed_count": 0,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.0003556678826467669,
+      "quantization_error_recovery": 0.00035566787642042283,
       "rank": 9
     },
     {
@@ -540,9 +584,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "439d39254168bbc4b1a18d2b9cd5948453edd911a27a959865bd16231af673be",
-      "quantization_error_sha256": "56ba601b5638fa25586e3b81818f9131ad43c8b9f2a2b58909447b279e36577c",
-      "weighted_nmse": 0.009783497137829797,
+      "quantization_error_sha256": "8774be988e111ba9b98fb40541427235b4a869f8581013e1f78bcc9ebc720fbb",
+      "weighted_nmse": 0.009783496774796051,
       "duration_seconds": 163.9423031208571,
+      "original_quantization_error_sha256": "56ba601b5638fa25586e3b81818f9131ad43c8b9f2a2b58909447b279e36577c",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:57:18.974641+00:00",
+      "previous_quantization_error_sha256": "56ba601b5638fa25586e3b81818f9131ad43c8b9f2a2b58909447b279e36577c",
       "transitions": {
         "recovered": 1,
         "regressed": 0,
@@ -554,7 +602,7 @@
       "regressed_count": 0,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.0003542138014401494,
+      "quantization_error_recovery": 0.00035421376525805216,
       "rank": 10
     },
     {
@@ -588,9 +636,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "8a2c404f683d967a6d8e85864879e05f94f0a4bd5fec50e15f31fc4822ee83f0",
-      "quantization_error_sha256": "9ac49bf468f31dc011509a53cd11caeef837efabaddf0b13c5fa41488872dc10",
-      "weighted_nmse": 0.009790693860954686,
+      "quantization_error_sha256": "3cdab3703c3e940c1a4b7c866cfcdf4e843d69539d7c3294dce19369b7951d5d",
+      "weighted_nmse": 0.009790693486035014,
       "duration_seconds": 171.71836897497997,
+      "original_quantization_error_sha256": "9ac49bf468f31dc011509a53cd11caeef837efabaddf0b13c5fa41488872dc10",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:19:38.812769+00:00",
+      "previous_quantization_error_sha256": "9ac49bf468f31dc011509a53cd11caeef837efabaddf0b13c5fa41488872dc10",
       "transitions": {
         "recovered": 1,
         "regressed": 0,
@@ -602,7 +654,7 @@
       "regressed_count": 0,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.00034701707831526034,
+      "quantization_error_recovery": 0.00034701705401908936,
       "rank": 11
     },
     {
@@ -636,9 +688,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "8511151f608cbed7debe689d17885a7da560eb2f2ff2d3e03b6ad22d6d443638",
-      "quantization_error_sha256": "de144d5db8dcfe3b6d60cd6096330498a23b002353cb80b67564dd373a90acc0",
-      "weighted_nmse": 0.009792897036223809,
+      "quantization_error_sha256": "614b3ea8006aae6a7041ae85a47fc6d862e7b5cecc205f6cefe0d31fac4f7c90",
+      "weighted_nmse": 0.009792896643574946,
       "duration_seconds": 165.24681357783265,
+      "original_quantization_error_sha256": "de144d5db8dcfe3b6d60cd6096330498a23b002353cb80b67564dd373a90acc0",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:17:13.205756+00:00",
+      "previous_quantization_error_sha256": "de144d5db8dcfe3b6d60cd6096330498a23b002353cb80b67564dd373a90acc0",
       "transitions": {
         "recovered": 1,
         "regressed": 0,
@@ -650,7 +706,7 @@
       "regressed_count": 0,
       "net_correct_gain": 1,
       "correct_gain": 1,
-      "quantization_error_recovery": 0.00034481390304613724,
+      "quantization_error_recovery": 0.00034481389647915764,
       "rank": 12
     },
     {
@@ -684,9 +740,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "e28845fd7bf8eed8d8fdb6bbbae110fe59e9c9e311882fc511614f4ac05254f9",
-      "quantization_error_sha256": "e4ff7ee4fa87f69a7beaf102472c305b2e0e860974f097f51f2061e009f6a1e1",
-      "weighted_nmse": 0.009773912375479447,
+      "quantization_error_sha256": "bb0824b653b887464260220486a7f410e7b64bf1b9bdd9a1465cab7f7349043b",
+      "weighted_nmse": 0.009773912001924193,
       "duration_seconds": 165.04123516310938,
+      "original_quantization_error_sha256": "e4ff7ee4fa87f69a7beaf102472c305b2e0e860974f097f51f2061e009f6a1e1",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:12:20.093191+00:00",
+      "previous_quantization_error_sha256": "e4ff7ee4fa87f69a7beaf102472c305b2e0e860974f097f51f2061e009f6a1e1",
       "transitions": {
         "recovered": 1,
         "regressed": 1,
@@ -698,7 +758,7 @@
       "regressed_count": 1,
       "net_correct_gain": 0,
       "correct_gain": 0,
-      "quantization_error_recovery": 0.0003637985637904989,
+      "quantization_error_recovery": 0.00036379853812991067,
       "rank": 13
     },
     {
@@ -732,9 +792,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "6db6325c8d43c3ab1414792e07c9c1bae0000b9969087976ee004739250f5a9f",
-      "quantization_error_sha256": "ff3474feec5c2eb9246eec03d2c810501a32c99664cbc9287647ec24a9ce5e7e",
-      "weighted_nmse": 0.009777112733770136,
+      "quantization_error_sha256": "64900a3e7582fe500905aab9f40a2ee5c8e70ee918444af83bf656b2cb174a9f",
+      "weighted_nmse": 0.009777112362264953,
       "duration_seconds": 167.15572684910148,
+      "original_quantization_error_sha256": "ff3474feec5c2eb9246eec03d2c810501a32c99664cbc9287647ec24a9ce5e7e",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:11:07.301897+00:00",
+      "previous_quantization_error_sha256": "ff3474feec5c2eb9246eec03d2c810501a32c99664cbc9287647ec24a9ce5e7e",
       "transitions": {
         "recovered": 1,
         "regressed": 1,
@@ -746,7 +810,7 @@
       "regressed_count": 1,
       "net_correct_gain": 0,
       "correct_gain": 0,
-      "quantization_error_recovery": 0.00036059820549981005,
+      "quantization_error_recovery": 0.0003605981777891499,
       "rank": 14
     },
     {
@@ -780,9 +844,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "9b1110d4a8e2a7d29b7daad85fe407f6492166d7bbb4aa844bd74a1b336173eb",
-      "quantization_error_sha256": "a7c5f32faec34a8939cb6f738f2f6de1f18532d1fd24c10526c0dcb93bdfc9e1",
-      "weighted_nmse": 0.00978161786111372,
+      "quantization_error_sha256": "26f60c7b68b579d699d92497857c8bd8e2524463270ab258a936295e3d3d985d",
+      "weighted_nmse": 0.009781617488038854,
       "duration_seconds": 176.63612446794286,
+      "original_quantization_error_sha256": "a7c5f32faec34a8939cb6f738f2f6de1f18532d1fd24c10526c0dcb93bdfc9e1",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:54:49.400080+00:00",
+      "previous_quantization_error_sha256": "a7c5f32faec34a8939cb6f738f2f6de1f18532d1fd24c10526c0dcb93bdfc9e1",
       "transitions": {
         "recovered": 1,
         "regressed": 1,
@@ -794,7 +862,7 @@
       "regressed_count": 1,
       "net_correct_gain": 0,
       "correct_gain": 0,
-      "quantization_error_recovery": 0.0003560930781562263,
+      "quantization_error_recovery": 0.0003560930520152498,
       "rank": 15
     },
     {
@@ -828,9 +896,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "6b972628c2a3e1ec8184019a97a5ee767dab32775387c27072bb96c0a4bcb388",
-      "quantization_error_sha256": "af70c8a8bbf0a8c54fbb898705aaa2d7f8cc31450458805bad42bda00aa03bb7",
-      "weighted_nmse": 0.009784526710605793,
+      "quantization_error_sha256": "684e55f6289480f6722bacf7b2cc95a0f37b02b27f6643287e762ef45208ec17",
+      "weighted_nmse": 0.009784526322782351,
       "duration_seconds": 164.43960798718035,
+      "original_quantization_error_sha256": "af70c8a8bbf0a8c54fbb898705aaa2d7f8cc31450458805bad42bda00aa03bb7",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:01:11.106141+00:00",
+      "previous_quantization_error_sha256": "af70c8a8bbf0a8c54fbb898705aaa2d7f8cc31450458805bad42bda00aa03bb7",
       "transitions": {
         "recovered": 1,
         "regressed": 1,
@@ -842,7 +914,7 @@
       "regressed_count": 1,
       "net_correct_gain": 0,
       "correct_gain": 0,
-      "quantization_error_recovery": 0.000353184228664153,
+      "quantization_error_recovery": 0.0003531842172717521,
       "rank": 16
     },
     {
@@ -876,9 +948,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "8dafb8773b997eeadc173f5242b1e589e4f36949b7e89134675f8633d27530b1",
-      "quantization_error_sha256": "4e09e47425b72c96304f99ef07b1a1585c98489fa37b3c7a2ddb70e9503233a1",
-      "weighted_nmse": 0.009789249411388359,
+      "quantization_error_sha256": "efe87fafe62ecfdca2b91861d896107c21513a71d01b54a689f83dde7d08dc19",
+      "weighted_nmse": 0.009789249026830761,
       "duration_seconds": 178.8588149540592,
+      "original_quantization_error_sha256": "4e09e47425b72c96304f99ef07b1a1585c98489fa37b3c7a2ddb70e9503233a1",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:47:21.096053+00:00",
+      "previous_quantization_error_sha256": "4e09e47425b72c96304f99ef07b1a1585c98489fa37b3c7a2ddb70e9503233a1",
       "transitions": {
         "recovered": 1,
         "regressed": 1,
@@ -890,7 +966,7 @@
       "regressed_count": 1,
       "net_correct_gain": 0,
       "correct_gain": 0,
-      "quantization_error_recovery": 0.00034846152788158696,
+      "quantization_error_recovery": 0.00034846151322334186,
       "rank": 17
     },
     {
@@ -924,9 +1000,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "ce29cc036a49ba456ef49696fbbd3cd95272ec74b2d7a5b76a1d4d9450f34dc0",
-      "quantization_error_sha256": "7909aca24d89061bad8d822dafa22a588537d8502ea26de41dc7cdfebb0b0891",
-      "weighted_nmse": 0.009783334625095313,
+      "quantization_error_sha256": "9590feda437752a2a2c7769a13d90886a1b73dd540ddded5fc18db4404e52ba6",
+      "weighted_nmse": 0.009783334241993055,
       "duration_seconds": 164.73319043708034,
+      "original_quantization_error_sha256": "7909aca24d89061bad8d822dafa22a588537d8502ea26de41dc7cdfebb0b0891",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:52:15.411542+00:00",
+      "previous_quantization_error_sha256": "7909aca24d89061bad8d822dafa22a588537d8502ea26de41dc7cdfebb0b0891",
       "transitions": {
         "recovered": 0,
         "regressed": 0,
@@ -938,7 +1018,7 @@
       "regressed_count": 0,
       "net_correct_gain": 0,
       "correct_gain": 0,
-      "quantization_error_recovery": 0.0003543763141746325,
+      "quantization_error_recovery": 0.00035437629806104806,
       "rank": 18
     },
     {
@@ -972,9 +1052,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "dcc1ff5adb4ca739021dad6c634d033e2942e8334e39407de66a2dae1360bdb4",
-      "quantization_error_sha256": "03cdfad4ce46ad4a688769ea9df774c56ae4291ca4ac3c95dddcffb88c9e39d5",
-      "weighted_nmse": 0.0097756954906313,
+      "quantization_error_sha256": "9dbce7ec7fb2b21786b8f71b5d28b5922fb0e46cde5a9d37bf01d8e3645d53b2",
+      "weighted_nmse": 0.009775695091148737,
       "duration_seconds": 170.84379176283255,
+      "original_quantization_error_sha256": "03cdfad4ce46ad4a688769ea9df774c56ae4291ca4ac3c95dddcffb88c9e39d5",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:02:23.208807+00:00",
+      "previous_quantization_error_sha256": "03cdfad4ce46ad4a688769ea9df774c56ae4291ca4ac3c95dddcffb88c9e39d5",
       "transitions": {
         "recovered": 2,
         "regressed": 3,
@@ -986,7 +1070,7 @@
       "regressed_count": 3,
       "net_correct_gain": -1,
       "correct_gain": -1,
-      "quantization_error_recovery": 0.0003620154486386456,
+      "quantization_error_recovery": 0.00036201544890536626,
       "rank": 19
     },
     {
@@ -1020,9 +1104,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "b4db237c32c5da0cab3466ce0cd217e06b34071b797d72e4419375fd84864fe2",
-      "quantization_error_sha256": "065539387bece909ce18978d32c55cfb9e3e0b8d7879280ee720e0c2c7b0bb48",
-      "weighted_nmse": 0.009777590237394789,
+      "quantization_error_sha256": "8bc4778fc5c67460ea77670179bc4d7e7f41bf7182ef94b7e12d3415fef4787f",
+      "weighted_nmse": 0.009777589841924948,
       "duration_seconds": 167.86754167708568,
+      "original_quantization_error_sha256": "065539387bece909ce18978d32c55cfb9e3e0b8d7879280ee720e0c2c7b0bb48",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:56:03.453621+00:00",
+      "previous_quantization_error_sha256": "065539387bece909ce18978d32c55cfb9e3e0b8d7879280ee720e0c2c7b0bb48",
       "transitions": {
         "recovered": 1,
         "regressed": 2,
@@ -1034,7 +1122,7 @@
       "regressed_count": 2,
       "net_correct_gain": -1,
       "correct_gain": -1,
-      "quantization_error_recovery": 0.0003601207018751572,
+      "quantization_error_recovery": 0.0003601206981291554,
       "rank": 20
     },
     {
@@ -1068,9 +1156,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "e8e78bcdac4210686416ad75141a9b7c217552a93498d6de4c522695b00528cc",
-      "quantization_error_sha256": "510550cb71bb03823c0cdf38445c2707f822357b5256a78ce1535e85018cc433",
-      "weighted_nmse": 0.009778788081364256,
+      "quantization_error_sha256": "4ba64dc1509e7adc8a88d204d6f1a985dc475e05c890785d7b878e9e832ae340",
+      "weighted_nmse": 0.009778787689955633,
       "duration_seconds": 177.38018173910677,
+      "original_quantization_error_sha256": "510550cb71bb03823c0cdf38445c2707f822357b5256a78ce1535e85018cc433",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:03:38.071492+00:00",
+      "previous_quantization_error_sha256": "510550cb71bb03823c0cdf38445c2707f822357b5256a78ce1535e85018cc433",
       "transitions": {
         "recovered": 1,
         "regressed": 2,
@@ -1082,7 +1174,7 @@
       "regressed_count": 2,
       "net_correct_gain": -1,
       "correct_gain": -1,
-      "quantization_error_recovery": 0.0003589228579056903,
+      "quantization_error_recovery": 0.00035892285009847015,
       "rank": 21
     },
     {
@@ -1116,9 +1208,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "cc09873c2e69bb36fd5f8fc5af801723220e89aa755b677b066d4d575b775616",
-      "quantization_error_sha256": "fd59134ef8c60a4ba52a3baa29c8d6fc89d187428e76ecee8d2c9d8d126de457",
-      "weighted_nmse": 0.009783473377223396,
+      "quantization_error_sha256": "751e0fc78245cac09b9dd99f5f148e1a71a61ca3288eaa48be2036571d3cac05",
+      "weighted_nmse": 0.009783473002315475,
       "duration_seconds": 169.5616540031042,
+      "original_quantization_error_sha256": "fd59134ef8c60a4ba52a3baa29c8d6fc89d187428e76ecee8d2c9d8d126de457",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:51:01.818285+00:00",
+      "previous_quantization_error_sha256": "fd59134ef8c60a4ba52a3baa29c8d6fc89d187428e76ecee8d2c9d8d126de457",
       "transitions": {
         "recovered": 1,
         "regressed": 2,
@@ -1130,7 +1226,7 @@
       "regressed_count": 2,
       "net_correct_gain": -1,
       "correct_gain": -1,
-      "quantization_error_recovery": 0.00035423756204655023,
+      "quantization_error_recovery": 0.00035423753773862823,
       "rank": 22
     },
     {
@@ -1164,9 +1260,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "83d3c2f9738430a656601f9eb6155d7ab6e691cd14feb3c2b1291f6c3f10a97d",
-      "quantization_error_sha256": "84268e2cbfdb6fd94490587294b5800d7b4fdfb8ba38981c045bff91ef9fb898",
-      "weighted_nmse": 0.009757887359639552,
+      "quantization_error_sha256": "e095ed774cb3ce296070738aa9952b35d2800441b09eac35e1edcd2d78e08ed6",
+      "weighted_nmse": 0.009757886965332686,
       "duration_seconds": 167.7463479670696,
+      "original_quantization_error_sha256": "84268e2cbfdb6fd94490587294b5800d7b4fdfb8ba38981c045bff91ef9fb898",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:48:35.751389+00:00",
+      "previous_quantization_error_sha256": "84268e2cbfdb6fd94490587294b5800d7b4fdfb8ba38981c045bff91ef9fb898",
       "transitions": {
         "recovered": 0,
         "regressed": 1,
@@ -1178,7 +1278,7 @@
       "regressed_count": 1,
       "net_correct_gain": -1,
       "correct_gain": -1,
-      "quantization_error_recovery": 0.00037982357963039365,
+      "quantization_error_recovery": 0.00037982357472141764,
       "rank": 23
     },
     {
@@ -1212,9 +1312,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "85225e42ce847a08ab414a63abf1ac137c5bc3c9bf80a1dfd3e6b5d98592af4e",
-      "quantization_error_sha256": "f8b07564b923aa826f45ea19ec65d458906585f6c42c4ee07223dca433ecae33",
-      "weighted_nmse": 0.009771149809812377,
+      "quantization_error_sha256": "3d14a8038ddaa3ef6950e765c5935f11b75d1936f01d5477c01a2721b3cf0335",
+      "weighted_nmse": 0.009771149435037707,
       "duration_seconds": 166.382715706015,
+      "original_quantization_error_sha256": "f8b07564b923aa826f45ea19ec65d458906585f6c42c4ee07223dca433ecae33",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:09:54.136834+00:00",
+      "previous_quantization_error_sha256": "f8b07564b923aa826f45ea19ec65d458906585f6c42c4ee07223dca433ecae33",
       "transitions": {
         "recovered": 0,
         "regressed": 1,
@@ -1226,7 +1330,7 @@
       "regressed_count": 1,
       "net_correct_gain": -1,
       "correct_gain": -1,
-      "quantization_error_recovery": 0.0003665611294575693,
+      "quantization_error_recovery": 0.00036656110501639624,
       "rank": 24
     },
     {
@@ -1260,9 +1364,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "6a5b5d7053e97cd45bbcd78ed4e7a5260aae6cf2e072e898c485e9a7f37d1b2b",
-      "quantization_error_sha256": "da7d879b315ee32bbf69392e315c7d9857c4d28648c1942865a20003358cad4f",
-      "weighted_nmse": 0.009773523691745861,
+      "quantization_error_sha256": "1419e7b09b72e56cdaa1edea30679570696fe393b7fc547c5bbb844e3fc6e1b8",
+      "weighted_nmse": 0.009773523313748865,
       "duration_seconds": 163.27754513919353,
+      "original_quantization_error_sha256": "da7d879b315ee32bbf69392e315c7d9857c4d28648c1942865a20003358cad4f",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:49:48.951331+00:00",
+      "previous_quantization_error_sha256": "da7d879b315ee32bbf69392e315c7d9857c4d28648c1942865a20003358cad4f",
       "transitions": {
         "recovered": 0,
         "regressed": 1,
@@ -1274,7 +1382,7 @@
       "regressed_count": 1,
       "net_correct_gain": -1,
       "correct_gain": -1,
-      "quantization_error_recovery": 0.00036418724752408475,
+      "quantization_error_recovery": 0.00036418722630523863,
       "rank": 25
     },
     {
@@ -1308,9 +1416,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "32334e3ebd0af8d6bd20bb31a83425e95e80b743a811d00efdb7a45b21a5b4c9",
-      "quantization_error_sha256": "3ee7fbd501b7803cf43e6baf6232d6ed9058a33265fe770853222fc9bed62674",
-      "weighted_nmse": 0.009785844966889685,
+      "quantization_error_sha256": "2072d98489dea7f797974fdc7d1897fd447be1922dcd2bc7373a4b874731c3f7",
+      "weighted_nmse": 0.009785844567308922,
       "duration_seconds": 173.10265055391937,
+      "original_quantization_error_sha256": "3ee7fbd501b7803cf43e6baf6232d6ed9058a33265fe770853222fc9bed62674",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T03:58:33.887450+00:00",
+      "previous_quantization_error_sha256": "3ee7fbd501b7803cf43e6baf6232d6ed9058a33265fe770853222fc9bed62674",
       "transitions": {
         "recovered": 1,
         "regressed": 3,
@@ -1322,7 +1434,7 @@
       "regressed_count": 3,
       "net_correct_gain": -2,
       "correct_gain": -2,
-      "quantization_error_recovery": 0.0003518659723802612,
+      "quantization_error_recovery": 0.0003518659727451811,
       "rank": 26
     },
     {
@@ -1356,9 +1468,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "6445c4cbd5928b10d03ef8db3c02047be204d51e518c6ba7cbe98bf546af810d",
-      "quantization_error_sha256": "a539697824c1de181b1be6e24560abd2e08c1b662ec37fa25642e99d3cd6595f",
-      "weighted_nmse": 0.00977299275952923,
+      "quantization_error_sha256": "08c4e5bad32baede90880bfea0214d149c428161338e5d9d38fbc5f05bf8cff3",
+      "weighted_nmse": 0.009772992363629971,
       "duration_seconds": 171.08490778901614,
+      "original_quantization_error_sha256": "a539697824c1de181b1be6e24560abd2e08c1b662ec37fa25642e99d3cd6595f",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:06:09.206302+00:00",
+      "previous_quantization_error_sha256": "a539697824c1de181b1be6e24560abd2e08c1b662ec37fa25642e99d3cd6595f",
       "transitions": {
         "recovered": 1,
         "regressed": 4,
@@ -1370,7 +1486,7 @@
       "regressed_count": 4,
       "net_correct_gain": -3,
       "correct_gain": -3,
-      "quantization_error_recovery": 0.00036471817974071535,
+      "quantization_error_recovery": 0.00036471817642413223,
       "rank": 27
     },
     {
@@ -1404,9 +1520,13 @@
       },
       "structured_output_rate": 1.0,
       "predictions_sha256": "90e4ee9f691116c0a8a3d3835970a2400fc815c9f47beac3030fdcbd1d50b1b3",
-      "quantization_error_sha256": "c0f6a6f4e5a36d2d051bca249e363aed09a2b25c260a29de2f1f33c814112ee6",
-      "weighted_nmse": 0.009779008344752737,
+      "quantization_error_sha256": "38345dc6267e55a4b95b95bf85f0aa643c78d40e9f1a29080232c5330831792c",
+      "weighted_nmse": 0.009779007943011734,
       "duration_seconds": 173.29883594485,
+      "original_quantization_error_sha256": "c0f6a6f4e5a36d2d051bca249e363aed09a2b25c260a29de2f1f33c814112ee6",
+      "quantization_error_metrics_schema_version": 2,
+      "quantization_error_recomputed_at": "2026-10-12T04:07:23.772316+00:00",
+      "previous_quantization_error_sha256": "c0f6a6f4e5a36d2d051bca249e363aed09a2b25c260a29de2f1f33c814112ee6",
       "transitions": {
         "recovered": 0,
         "regressed": 3,
@@ -1418,7 +1538,7 @@
       "regressed_count": 3,
       "net_correct_gain": -3,
       "correct_gain": -3,
-      "quantization_error_recovery": 0.0003587025945172087,
+      "quantization_error_recovery": 0.00035870259704236934,
       "rank": 28
     }
   ],

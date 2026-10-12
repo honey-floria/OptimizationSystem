@@ -29,7 +29,11 @@
   },
   "structured_output_rate": 1.0,
   "predictions_sha256": "8511151f608cbed7debe689d17885a7da560eb2f2ff2d3e03b6ad22d6d443638",
-  "quantization_error_sha256": "de144d5db8dcfe3b6d60cd6096330498a23b002353cb80b67564dd373a90acc0",
-  "weighted_nmse": 0.009792897036223809,
-  "duration_seconds": 165.24681357783265
+  "quantization_error_sha256": "614b3ea8006aae6a7041ae85a47fc6d862e7b5cecc205f6cefe0d31fac4f7c90",
+  "weighted_nmse": 0.009792896643574946,
+  "duration_seconds": 165.24681357783265,
+  "original_quantization_error_sha256": "de144d5db8dcfe3b6d60cd6096330498a23b002353cb80b67564dd373a90acc0",
+  "quantization_error_metrics_schema_version": 2,
+  "quantization_error_recomputed_at": "2026-10-12T04:17:13.205756+00:00",
+  "previous_quantization_error_sha256": "de144d5db8dcfe3b6d60cd6096330498a23b002353cb80b67564dd373a90acc0"
 }
