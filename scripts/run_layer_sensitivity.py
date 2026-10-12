@@ -13,8 +13,10 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.quantization.layer_sensitivity import (
+    audit_error_reports,
     pending_plan_ids,
     prepare_matrix,
+    recompute_plan_error,
     run_plan,
     summarize_matrix,
 )
@@ -34,8 +36,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     subparsers.add_parser("prepare", help="Validate 7.1.1 and create all plan contracts.")
     subparsers.add_parser("pending", help="List runnable plans without completed results.")
     subparsers.add_parser("summarize", help="Pair completed plans with ALL-I4 and build a preview ranking.")
+    subparsers.add_parser(
+        "audit-errors",
+        help="Validate all error reports, schema versions, hashes, and cosine ranges.",
+    )
     run = subparsers.add_parser("run-plan", help="Run one isolated fake-quant plan.")
     run.add_argument("--plan-id", required=True)
+    repair = subparsers.add_parser(
+        "recompute-error",
+        help="Recompute one plan's error metrics without repeating quality inference.",
+    )
+    repair.add_argument("--plan-id", required=True)
     return parser.parse_args(argv)
 
 
@@ -49,6 +60,12 @@ def main(argv: list[str] | None = None) -> int:
         payload = {"pending": pending_plan_ids(root, config)}
     elif args.command == "summarize":
         payload = summarize_matrix(root, config)
+    elif args.command == "audit-errors":
+        payload = audit_error_reports(root, config)
+    elif args.command == "recompute-error":
+        payload = recompute_plan_error(
+            project_root=root, config=config, plan_id=args.plan_id
+        )
     else:
         payload = run_plan(
             project_root=root, config=config, plan_id=args.plan_id

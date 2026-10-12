@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import math
+import shutil
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,8 @@ from src.quantization.layer_sensitivity_setup import (
 
 REFERENCE_KINDS = {"ref_fp", "ref_nf4"}
 RUNNABLE_KINDS = {"all_int4", "all_int8", "layer_int8"}
+ERROR_METRICS_SCHEMA_VERSION = 2
+ERROR_METRICS_CHUNK_SIZE = 1_048_576
 
 
 def build_plan_matrix(block_count: int) -> list[dict[str, Any]]:
@@ -132,6 +135,58 @@ def aggregate_error_metrics(records: Iterable[dict[str, Any]]) -> dict[str, Any]
     return {"module_count": len(rows), "numel": total, **weighted}
 
 
+def _stable_error_statistics(
+    source: Any,
+    measured: Any,
+    *,
+    torch_module: Any,
+    chunk_size: int = ERROR_METRICS_CHUNK_SIZE,
+) -> dict[str, float]:
+    """Accumulate large-vector error statistics in bounded FP64 chunks."""
+
+    if source.shape != measured.shape:
+        raise ValueError("Error statistics require tensors with identical shapes.")
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be positive.")
+    source_flat = source.reshape(-1)
+    measured_flat = measured.reshape(-1)
+    dot = 0.0
+    source_square_sum = 0.0
+    measured_square_sum = 0.0
+    error_square_sum = 0.0
+    max_abs_error = 0.0
+    for start in range(0, source_flat.numel(), chunk_size):
+        stop = min(start + chunk_size, source_flat.numel())
+        left = source_flat[start:stop].to(dtype=torch_module.float64)
+        right = measured_flat[start:stop].to(dtype=torch_module.float64)
+        difference = right - left
+        dot += float(torch_module.sum(left * right).item())
+        source_square_sum += float(torch_module.sum(left * left).item())
+        measured_square_sum += float(torch_module.sum(right * right).item())
+        error_square_sum += float(torch_module.sum(difference * difference).item())
+        if difference.numel():
+            max_abs_error = max(
+                max_abs_error, float(difference.abs().max().item())
+            )
+    numel = source_flat.numel()
+    if numel <= 0:
+        raise ValueError("Error statistics require at least one value.")
+    denominator = math.sqrt(source_square_sum * measured_square_sum)
+    if denominator > 0:
+        raw_cosine = dot / denominator
+        cosine = min(1.0, max(-1.0, raw_cosine))
+    else:
+        cosine = 1.0 if source_square_sum == measured_square_sum else 0.0
+    source_power = source_square_sum / numel
+    mse = error_square_sum / numel
+    return {
+        "source_power": source_power,
+        "mse": mse,
+        "cosine_similarity": cosine,
+        "max_abs_error": max_abs_error,
+    }
+
+
 def _fake_quantize_weight(
     weight: Any, *, bits: int, group_size: int | None, torch_module: Any
 ) -> tuple[Any, dict[str, float]]:
@@ -159,29 +214,52 @@ def _fake_quantize_weight(
     restored = (quantized * scale).reshape(rows, padded_columns)[:, :columns]
     stored = restored.to(dtype=original_dtype)
     measured = stored.to(dtype=torch_module.float32)
-    difference = measured - source
-    source_power = torch_module.mean(source * source).item()
-    mse = torch_module.mean(difference * difference).item()
-    source_flat = source.reshape(-1)
-    restored_flat = measured.reshape(-1)
-    denominator = torch_module.linalg.vector_norm(source_flat) * torch_module.linalg.vector_norm(restored_flat)
-    cosine = (
-        float(torch_module.dot(source_flat, restored_flat).item() / denominator.item())
-        if denominator.item() > 0
-        else 1.0
+    statistics = _stable_error_statistics(
+        source,
+        measured,
+        torch_module=torch_module,
     )
     quantized_unpadded = quantized.reshape(rows, padded_columns)[:, :columns]
     saturation = float(
         (quantized_unpadded.abs() == qmax).to(torch_module.float32).mean().item()
     )
     metrics = {
-        "mse": float(mse),
-        "nmse": float(mse / source_power) if source_power > 0 else 0.0,
-        "cosine_similarity": cosine,
-        "max_abs_error": float(difference.abs().max().item()),
+        "mse": statistics["mse"],
+        "nmse": (
+            statistics["mse"] / statistics["source_power"]
+            if statistics["source_power"] > 0
+            else 0.0
+        ),
+        "cosine_similarity": statistics["cosine_similarity"],
+        "max_abs_error": statistics["max_abs_error"],
         "saturation_rate": saturation,
     }
     return stored, metrics
+
+
+def validate_quantization_error_report(report: dict[str, Any]) -> None:
+    if report.get("error_metrics_schema_version") != ERROR_METRICS_SCHEMA_VERSION:
+        raise ValueError("Quantization error report uses an obsolete metrics schema.")
+    records = [
+        *report.get("modules", []),
+        *report.get("layers", []),
+        report.get("aggregate", {}),
+    ]
+    if not report.get("modules") or not report.get("layers"):
+        raise ValueError("Quantization error report is missing module or layer records.")
+    for record in records:
+        for field in ("mse", "nmse", "cosine_similarity", "max_abs_error", "saturation_rate"):
+            value = float(record[field])
+            if not math.isfinite(value):
+                raise ValueError(f"Non-finite quantization metric: {field}")
+        cosine = float(record["cosine_similarity"])
+        if not -1.0 <= cosine <= 1.0:
+            raise ValueError("Quantization cosine similarity must be in [-1, 1].")
+        if float(record["mse"]) < 0 or float(record["nmse"]) < 0:
+            raise ValueError("Quantization MSE and NMSE must be non-negative.")
+        saturation = float(record["saturation_rate"])
+        if not 0.0 <= saturation <= 1.0:
+            raise ValueError("Quantization saturation rate must be in [0, 1].")
 
 
 def quantize_model_for_plan(
@@ -229,7 +307,15 @@ def quantize_model_for_plan(
                 **aggregate_error_metrics(layer_modules),
             }
         )
-    return {
+    report = {
+        "error_metrics_schema_version": ERROR_METRICS_SCHEMA_VERSION,
+        "metric_accumulation": {
+            "strategy": "chunked_sum",
+            "accumulator_dtype": "float64",
+            "input_dtype": "float32",
+            "chunk_size": ERROR_METRICS_CHUNK_SIZE,
+            "cosine_clamped_to_valid_range": True,
+        },
         "block_path": block_path,
         "block_count": len(blocks),
         "plan_id": plan["plan_id"],
@@ -239,6 +325,8 @@ def quantize_model_for_plan(
         "modules": module_records,
         "aggregate": aggregate_error_metrics(module_records),
     }
+    validate_quantization_error_report(report)
+    return report
 
 
 def apply_plan_with_callback(
@@ -412,6 +500,161 @@ def pending_plan_ids(project_root: str | Path, config: dict[str, Any]) -> list[s
     return pending
 
 
+def _evaluation_dtype(torch_module: Any, name: str) -> Any:
+    dtype = {
+        "float16": torch_module.float16,
+        "bfloat16": torch_module.bfloat16,
+    }.get(name)
+    if dtype is None:
+        raise ValueError("Evaluation dtype must be float16 or bfloat16.")
+    return dtype
+
+
+def _validate_runtime_blocks(
+    error_report: dict[str, Any], experiment: dict[str, Any]
+) -> None:
+    if (
+        error_report["block_path"] != experiment["block_path"]
+        or error_report["block_count"] != experiment["block_count"]
+    ):
+        raise ValueError("Runtime block discovery differs from the prepared matrix.")
+
+
+def recompute_plan_error(
+    *, project_root: str | Path, config: dict[str, Any], plan_id: str
+) -> dict[str, Any]:
+    """Repair one error report without repeating the GPU quality evaluation."""
+
+    root = Path(project_root).resolve()
+    plan, plan_dir, experiment = load_prepared_plan(root, config, plan_id)
+    result_path = plan_dir / "result.json"
+    if not result_path.is_file():
+        raise ValueError(f"Plan {plan_id} has no completed result to repair.")
+    result = load_json(result_path)
+    if result.get("status") != "completed" or result.get("plan") != plan:
+        raise ValueError(f"Plan {plan_id} result is not a matching completed run.")
+    report = load_json(plan_dir / "comparison_report.json")
+    variant = _structured_variant(report)
+    predictions_path = plan_dir / variant["predictions_file"]
+    predictions_sha256 = sha256_file(predictions_path)
+    if (
+        predictions_sha256 != result.get("predictions_sha256")
+        or predictions_sha256 != variant.get("predictions_sha256")
+    ):
+        raise ValueError(f"Plan {plan_id} prediction evidence changed before repair.")
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM
+    except ImportError as exc:
+        raise RuntimeError("Error recomputation requires torch and transformers.") from exc
+
+    evaluation = config["evaluation"]
+    dtype = _evaluation_dtype(torch, evaluation["dtype"])
+    merged_manifest = load_json(
+        resolve_project_path(root, config["paths"]["merged_manifest"])
+    )
+    model_path = Path(merged_manifest["merged_model"]["path"]).resolve()
+    started = time.perf_counter()
+    model = AutoModelForCausalLM.from_pretrained(
+        str(model_path),
+        local_files_only=True,
+        trust_remote_code=False,
+        dtype=dtype,
+        low_cpu_mem_usage=True,
+    )
+    error_report = quantize_model_for_plan(
+        model, plan, config["precision"], torch
+    )
+    _validate_runtime_blocks(error_report, experiment)
+    error_path = plan_dir / "quantization_error.json"
+    previous_error_sha256 = sha256_file(error_path) if error_path.is_file() else None
+    backup_path = plan_dir / "quantization_error.schema_v1.json"
+    previous_error = load_json(error_path) if error_path.is_file() else {}
+    if (
+        error_path.is_file()
+        and previous_error.get("error_metrics_schema_version")
+        != ERROR_METRICS_SCHEMA_VERSION
+        and not backup_path.exists()
+    ):
+        shutil.copy2(error_path, backup_path)
+    write_json(error_path, error_report)
+    repaired_at = datetime.now(timezone.utc).isoformat()
+    if "original_quantization_error_sha256" not in result:
+        result["original_quantization_error_sha256"] = previous_error_sha256
+    result.update(
+        {
+            "quantization_error_sha256": sha256_file(error_path),
+            "quantization_error_metrics_schema_version": ERROR_METRICS_SCHEMA_VERSION,
+            "quantization_error_recomputed_at": repaired_at,
+            "previous_quantization_error_sha256": previous_error_sha256,
+            "weighted_nmse": error_report["aggregate"]["nmse"],
+        }
+    )
+    write_json(result_path, result)
+    return {
+        "schema_version": 1,
+        "stage": "7.1.2",
+        "status": "quantization_error_recomputed",
+        "plan_id": plan_id,
+        "predictions_preserved": True,
+        "predictions_sha256": predictions_sha256,
+        "previous_quantization_error_sha256": previous_error_sha256,
+        "quantization_error_sha256": result["quantization_error_sha256"],
+        "error_metrics_schema_version": ERROR_METRICS_SCHEMA_VERSION,
+        "weighted_nmse": result["weighted_nmse"],
+        "duration_seconds": time.perf_counter() - started,
+    }
+
+
+def audit_error_reports(
+    project_root: str | Path, config: dict[str, Any]
+) -> dict[str, Any]:
+    root = Path(project_root).resolve()
+    output_root = resolve_project_path(root, config["paths"]["output_root"])
+    experiment = load_json(output_root / "experiment_manifest.json")
+    invalid = []
+    checked = 0
+    cosines = []
+    for plan in experiment["plans"]:
+        if not plan.get("runnable"):
+            continue
+        plan_id = plan["plan_id"]
+        plan_dir = output_root / plan_id
+        error_path = plan_dir / "quantization_error.json"
+        result_path = plan_dir / "result.json"
+        try:
+            if not error_path.is_file() or not result_path.is_file():
+                raise ValueError("missing quantization_error.json or result.json")
+            error_report = load_json(error_path)
+            result = load_json(result_path)
+            validate_quantization_error_report(error_report)
+            if (
+                result.get("quantization_error_metrics_schema_version")
+                != ERROR_METRICS_SCHEMA_VERSION
+            ):
+                raise ValueError("result does not declare the current metrics schema")
+            if result.get("quantization_error_sha256") != sha256_file(error_path):
+                raise ValueError("result quantization-error SHA256 does not match")
+            cosines.extend(
+                float(record["cosine_similarity"])
+                for record in error_report["modules"]
+            )
+            checked += 1
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            invalid.append({"plan_id": plan_id, "reason": str(exc)})
+    return {
+        "schema_version": 1,
+        "stage": "7.1.2",
+        "status": "pass" if not invalid else "fail",
+        "error_metrics_schema_version": ERROR_METRICS_SCHEMA_VERSION,
+        "expected_runnable_plans": experiment["runnable_plan_count"],
+        "valid_plans": checked,
+        "invalid_plans": invalid,
+        "module_cosine_min": min(cosines) if cosines else None,
+        "module_cosine_max": max(cosines) if cosines else None,
+    }
+
+
 def run_plan(
     *, project_root: str | Path, config: dict[str, Any], plan_id: str
 ) -> dict[str, Any]:
@@ -460,9 +703,7 @@ def run_plan(
         },
     }
     write_json(plan_dir / "model_manifest.json", model_manifest)
-    dtype = {"float16": torch.float16, "bfloat16": torch.bfloat16}.get(evaluation["dtype"])
-    if dtype is None:
-        raise ValueError("Evaluation dtype must be float16 or bfloat16.")
+    dtype = _evaluation_dtype(torch, evaluation["dtype"])
     started = time.perf_counter()
     tokenizer = AutoTokenizer.from_pretrained(
         str(model_path), local_files_only=True, trust_remote_code=False
@@ -471,14 +712,13 @@ def run_plan(
         str(model_path),
         local_files_only=True,
         trust_remote_code=False,
-        torch_dtype=dtype,
+        dtype=dtype,
         low_cpu_mem_usage=True,
     )
     error_report = quantize_model_for_plan(
         model, plan, config["precision"], torch
     )
-    if error_report["block_path"] != experiment["block_path"] or error_report["block_count"] != experiment["block_count"]:
-        raise ValueError("Runtime block discovery differs from the prepared matrix.")
+    _validate_runtime_blocks(error_report, experiment)
     write_json(plan_dir / "quantization_error.json", error_report)
     model.to(evaluation["device"])
     model.eval()
@@ -523,6 +763,7 @@ def run_plan(
         "structured_output_rate": variant.get("structured_output_rate"),
         "predictions_sha256": variant.get("predictions_sha256"),
         "quantization_error_sha256": sha256_file(plan_dir / "quantization_error.json"),
+        "quantization_error_metrics_schema_version": ERROR_METRICS_SCHEMA_VERSION,
         "weighted_nmse": error_report["aggregate"]["nmse"],
         "duration_seconds": time.perf_counter() - started,
     }

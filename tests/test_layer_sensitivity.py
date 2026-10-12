@@ -4,6 +4,8 @@ from pathlib import Path
 
 from scripts.run_layer_sensitivity import _parse_args
 from src.quantization.layer_sensitivity import (
+    ERROR_METRICS_SCHEMA_VERSION,
+    _stable_error_statistics,
     aggregate_error_metrics,
     apply_plan_with_callback,
     build_plan_matrix,
@@ -14,11 +16,62 @@ from src.quantization.layer_sensitivity import (
     rank_completed_results,
     validate_plan_isolation,
     validate_plan_matrix,
+    validate_quantization_error_report,
 )
 from src.quantization.layer_sensitivity_setup import write_json
 
 
 class LayerSensitivityMatrixTest(unittest.TestCase):
+    class _FakeScalar:
+        def __init__(self, value):
+            self.value = value
+
+        def item(self):
+            return self.value
+
+    class _FakeTensor:
+        def __init__(self, values):
+            self.values = list(values)
+            self.shape = (len(self.values),)
+
+        def reshape(self, *_shape):
+            return self
+
+        def to(self, dtype=None):
+            return self
+
+        def numel(self):
+            return len(self.values)
+
+        def __getitem__(self, item):
+            values = self.values[item]
+            return LayerSensitivityMatrixTest._FakeTensor(
+                values if isinstance(values, list) else [values]
+            )
+
+        def __sub__(self, other):
+            return LayerSensitivityMatrixTest._FakeTensor(
+                left - right for left, right in zip(self.values, other.values)
+            )
+
+        def __mul__(self, other):
+            return LayerSensitivityMatrixTest._FakeTensor(
+                left * right for left, right in zip(self.values, other.values)
+            )
+
+        def abs(self):
+            return LayerSensitivityMatrixTest._FakeTensor(abs(value) for value in self.values)
+
+        def max(self):
+            return LayerSensitivityMatrixTest._FakeScalar(max(self.values))
+
+    class _FakeTorch:
+        float64 = "float64"
+
+        @staticmethod
+        def sum(tensor, dtype=None):
+            return LayerSensitivityMatrixTest._FakeScalar(sum(tensor.values))
+
     def test_builds_two_references_two_global_and_one_plan_per_layer(self):
         plans = build_plan_matrix(28)
         self.assertEqual(len(plans), 32)
@@ -73,6 +126,47 @@ class LayerSensitivityMatrixTest(unittest.TestCase):
         self.assertEqual(aggregate["mse"], 4.0)
         self.assertEqual(aggregate["nmse"], 5.0)
         self.assertEqual(aggregate["max_abs_error"], 3.0)
+
+    def test_quantization_error_validation_rejects_invalid_cosine(self):
+        metric = {
+            "numel": 4,
+            "mse": 0.1,
+            "nmse": 0.2,
+            "cosine_similarity": 0.9,
+            "max_abs_error": 0.3,
+            "saturation_rate": 0.1,
+        }
+        report = {
+            "error_metrics_schema_version": ERROR_METRICS_SCHEMA_VERSION,
+            "modules": [{**metric, "module": "q_proj"}],
+            "layers": [{**metric, "layer_index": 0}],
+            "aggregate": metric,
+        }
+        validate_quantization_error_report(report)
+        report["modules"][0]["cosine_similarity"] = 1.0001
+        with self.assertRaisesRegex(ValueError, "cosine similarity"):
+            validate_quantization_error_report(report)
+
+    def test_error_statistics_use_chunked_stable_accumulation(self):
+        source = self._FakeTensor([1.0, 2.0, 3.0, 4.0])
+        measured = self._FakeTensor([1.0, 2.0, 3.0, 3.0])
+        metrics = _stable_error_statistics(
+            source,
+            measured,
+            torch_module=self._FakeTorch,
+            chunk_size=2,
+        )
+        self.assertAlmostEqual(metrics["source_power"], 7.5)
+        self.assertAlmostEqual(metrics["mse"], 0.25)
+        self.assertAlmostEqual(metrics["max_abs_error"], 1.0)
+        self.assertGreaterEqual(metrics["cosine_similarity"], -1.0)
+        self.assertLessEqual(metrics["cosine_similarity"], 1.0)
+
+    def test_quantization_error_validation_rejects_obsolete_schema(self):
+        with self.assertRaisesRegex(ValueError, "obsolete"):
+            validate_quantization_error_report(
+                {"error_metrics_schema_version": 1, "modules": [], "layers": []}
+            )
 
     def test_pending_skips_only_completed_results(self):
         with tempfile.TemporaryDirectory() as temporary_dir:
@@ -223,8 +317,12 @@ class LayerSensitivityMatrixTest(unittest.TestCase):
         self.assertEqual(_parse_args(["prepare"]).command, "prepare")
         self.assertEqual(_parse_args(["pending"]).command, "pending")
         self.assertEqual(_parse_args(["summarize"]).command, "summarize")
+        self.assertEqual(_parse_args(["audit-errors"]).command, "audit-errors")
         args = _parse_args(["run-plan", "--plan-id", "layer_03_int8"])
         self.assertEqual(args.plan_id, "layer_03_int8")
+        repair = _parse_args(["recompute-error", "--plan-id", "all_int4"])
+        self.assertEqual(repair.command, "recompute-error")
+        self.assertEqual(repair.plan_id, "all_int4")
 
 
 if __name__ == "__main__":

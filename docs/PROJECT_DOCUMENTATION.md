@@ -1646,6 +1646,33 @@ Embedding、LayerNorm、lm_head 和 KV Cache 在本节保持不变，它们的�
 和 `gate_proj/up_proj/down_proj` 的明细，便于 7.2 直接复用。固定 calibration 样本还需采集层输出激活的
 MSE、normalized MSE 和 cosine similarity。
 
+#### Cosine similarity 的含义与计算口径
+
+权重 cosine similarity 比较量化前权重向量 `x` 与量化后再反量化权重向量 `y` 的方向，计算公式为：
+
+```text
+cosine_similarity = dot(x, y) / (norm(x) * norm(y))
+```
+
+计算前将一个 Linear 权重矩阵展平成一维向量。结果接近 `1` 表示量化前后方向基本一致，接近 `0` 表示
+方向相关性弱，接近 `-1` 表示方向相反。cosine 不直接衡量误差幅度：若 `y = c*x` 且 `c > 0`，即使
+权重整体缩放，cosine 仍为 `1`。因此该指标必须与 MSE/NMSE 一起解释，不能单独替代量化误差或业务评测。
+
+数学上 cosine 必须位于 `[-1, 1]`。旧实现直接对超大 FP32 权重向量分别计算点积和两个范数，再用这些
+近似结果相除。数百万项的 FP32 归约会累计舍入误差，而且分子的点积与分母的范数沿不同路径累计，误差
+不会完全抵消，浮点结果因而可能不再严格满足柯西—施瓦茨不等式。出现大于 `1` 的值表示指标计算失真，
+不表示量化后的权重“比完全相同还相似”，也不表示量化权重本身异常。
+
+schema v2 将向量按最多 `1,048,576` 个元素分块，输入保持 FP32，点积、两侧平方和与误差平方和使用
+FP64 accumulator 求和，再在 Python 双精度标量中合并各块。cosine 由同一组累计量计算，最后仅将微小的
+浮点越界钳制到 `[-1, 1]`；钳制只是边界保险，不能代替高精度累计。两个向量均为零时约定 cosine 为
+`1`，仅一侧为零时约定为 `0`。报告写出前还会验证 cosine 范围、MSE/NMSE 非负、饱和率范围以及所有
+指标的有限性，非法报告直接失败。
+
+层级和全模型的 `cosine_similarity` 当前定义为“按权重元素数加权的模块 cosine 平均值”，而不是把
+所有模块拼成一个向量后重新计算的全局 cosine。两种口径都合法但含义不同，引用本实验结果时必须使用
+前一种表述。MSE、NMSE 和饱和率同样按元素数加权，`max_abs_error` 则取模块最大值。
+
 业务评测以 `ALL-I4` 为配对基准，对每个 `L-i-I8` 记录：
 
 - 数值准确率、正确数、解析率和 structured output rate；
@@ -1958,3 +1985,91 @@ python3 scripts/run_layer_sensitivity.py summarize
 `prepare` 完成后应报告 `block_count=28`、`plan_count=32`、`runnable_plan_count=30`，并把已有
 merged FP16 `37/80` 注册为 `REF-FP`、把 QLoRA/NF4 `37/80` 注册为 `REF-NF4`。在 30 个可运行计划
 全部回传之前，7.1.2 的模型矩阵仍保持未验收状态，不提前勾选服务器执行项。
+
+### 7.1.2 Pilot 矩阵结果与审计（2026-10-12）
+
+服务器已完成并回传全部 30 个可运行计划。`matrix_summary.json` 状态为 `complete`，记录
+`completed_runnable_plans=30`、`expected_runnable_plans=30`、`pending=[]`。其中 28 个单层计划覆盖
+`layer_00_int8` 到 `layer_27_int8`，没有缺层或重复层。30 个结果均为 `completed`、均包含 80 条预测，
+样本索引 SHA256 均为
+`cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61`。逐一重新计算预测文件和
+`quantization_error.json` 的 SHA256 后未发现不匹配；128 项本地单元测试全部通过。30 个计划总运行时间约
+84.59 分钟，平均每个计划 169.17 秒。
+
+全局参考结果如下：
+
+| 计划 | 正确数 | 解析数 | 数值准确率 | structured output rate | weighted NMSE |
+|---|---:|---:|---:|---:|---:|
+| `REF-FP` | 37/80 | 80/80 | 46.25% | 100% | 不适用 |
+| `REF-NF4` | 37/80 | 80/80 | 46.25% | 100% | 不适用 |
+| `ALL-I4` | 36/80 | 80/80 | 45.00% | 100% | 0.010137711 |
+| `ALL-I8` | 36/80 | 79/80 | 45.00% | 98.75% | 0.000130918 |
+
+INT8 的权重 NMSE 比 INT4 低约 77.44 倍，即降低约 98.71%，但 `ALL-I8` 与 `ALL-I4` 的正确数相同。
+两者仍有 43 条原始预测不同，其中 3 条恢复、3 条退化。`ALL-I8` 唯一未解析样本为 source index 656：
+模型在合法 JSON 前增加了 `Here is the correct response:`，违反“只输出 JSON 对象”的协议。该结果说明
+更小的静态权重误差不会单调转换成更高的生成任务准确率，不能用 MSE/NMSE 代替业务评测。
+
+以 `ALL-I4` 的 36/80 为基准，28 个单层 INT8 计划按净正确数变化可分为：
+
+| 净正确数变化 | 层 | 解释 |
+|---:|---|---|
+| +2 | 10、22、23 | 38/80，当前 pilot 第一梯队 |
+| +1 | 14、5、25、17、21、27、8、26、24 | 37/80，第二梯队 |
+| 0 | 20、19、6、11、0、4 | 36/80，与 `ALL-I4` 同分 |
+| -1 | 12、7、13、3、1、18、2 | 35/80 |
+| -2 | 9 | 34/80 |
+| -3 | 15、16 | 33/80 |
+
+前三名的配对变化并不完全相同：layer 10 恢复 3 条、退化 1 条；layer 22 恢复 2 条且无退化；layer 23
+恢复 2 条且无退化。因此按现有 tie-break，layer 10 因恢复数更多排名第一；如果策略优先避免新增错误，
+layer 22 和 23 是更保守的候选。净增 1 的层中，17、21、27、8、26、24 均为恢复 1 条且无退化，
+也比“恢复 2 条、退化 1 条”的 14、5、25 更稳定。
+
+不过，所有 28 个单层计划的恢复只集中在 4 个 source index：31、191、402、611。其中 191 和 402
+分别被 11 个层恢复，611 被 8 个层恢复，31 只被 layer 23 恢复；退化集中在另外 8 个样本。这说明 80 条
+pilot 的名次由极少数边界样本驱动，单题就会改变 1.25 个百分点，当前差异不足以形成稳定的最终层级排序。
+尤其不能把单层结果相加推断多层组合：同时把 10、22、23 恢复为 INT8 未必能获得 +6 个正确数，必须建立
+新的组合计划实测。`ALL-I8` 没有优于 `ALL-I4` 也进一步证明层间扰动存在非线性相互作用。
+
+量化误差恢复量与 `net_correct_gain` 的 Pearson 相关系数为 -0.393，Spearman 相关系数为 -0.442；在当前
+28 层、80 条 pilot 的离散结果上，它们呈中等负相关而非预期的正相关。该值只能作为“静态权重误差不能
+预测业务质量”的描述性证据，不能作显著性或因果结论。业务排名继续以逐样本正确性转移为主，NMSE 仅作
+辅助 tie-break。
+
+审计同时发现旧版 cosine 指标存在数值稳定性缺陷：`ALL-I4` 的 196 个 Linear 模块中有 84 个记录的
+`cosine_similarity > 1`，最大为 1.009051，违反余弦相似度的数学范围。根因是超大权重矩阵使用 FP32
+点积和范数累计造成误差，不是量化结果本身异常。当前排名没有使用 cosine，只使用业务正确数和 NMSE，
+因此已生成的 pilot 正确性排名不受影响。计算代码现已修复，但已经落盘的 schema v1 报告不会自动更新，
+全部计划重新生成 schema v2 误差记录并通过审计前，cosine 证据仍不得验收。
+
+代码已将误差统计升级为 schema v2：每次最多处理 1,048,576 个元素，输入保持 FP32、点积/平方和/
+误差平方和使用 FP64 累计，并在写入前强制校验所有模块、层和全局汇总的 cosine 均在 `[-1,1]`、误差
+非负、饱和率在 `[0,1]`。新模型加载参数同时由弃用的 `torch_dtype` 更新为 `dtype`。新增
+`recompute-error` 只重算某个计划的 CPU fake-quant 误差，不移动模型到 GPU、不重复 80 条质量推理，并在
+覆盖前把原始文件保留为 `quantization_error.schema_v1.json`；它会校验并保留原预测 SHA256，再更新
+`result.json` 中的误差 schema、哈希和 weighted NMSE。修复 30 个计划后使用 `audit-errors` 校验 schema、
+文件哈希和 cosine 范围：
+
+```bash
+python3 scripts/run_layer_sensitivity.py recompute-error --plan-id all_int4
+python3 scripts/run_layer_sensitivity.py recompute-error --plan-id all_int8
+
+for i in $(seq -w 0 27); do
+  python3 scripts/run_layer_sensitivity.py recompute-error \
+    --plan-id "layer_${i}_int8" || break
+done
+
+python3 scripts/run_layer_sensitivity.py audit-errors
+python3 scripts/run_layer_sensitivity.py summarize
+```
+
+只有当 `audit-errors` 返回 `status=pass`、`valid_plans=30`、`invalid_plans=[]`，且
+`module_cosine_min/module_cosine_max` 都位于 `[-1,1]` 时，才可勾选 7.1.3 的完整权重误差采集。重新
+`summarize` 后需要以 schema v2 NMSE 更新相关系数和同分层的辅助排序；业务预测及 recovered/regressed
+不会改变。
+
+综上，7.1.2 的 32 项矩阵定义、30 项服务器执行、身份一致性和 pilot 配对结果可以验收；当前输出仍应称为
+`ranking_preview`。建议保护层候选为第一梯队 `{10, 22, 23}`，其中 `{22, 23}` 是零退化的保守子集，
+但在完成 cosine 报告重算、确定性复跑、候选组合实测、业务子集/高风险评测和完整 883 条 dev 前，不把该集合
+升级为 7.4 的最终保护层输入。

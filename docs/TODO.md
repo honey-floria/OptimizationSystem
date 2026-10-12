@@ -568,27 +568,27 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 - [x] 新增 `configs/layer_sensitivity.json`，定义模型、位宽、group size、数据子集、生成参数、排名规则和输出路径
 - [x] 新增 `src/quantization/layer_sensitivity.py` 和 `scripts/run_layer_sensitivity.py`，支持模型身份校验、逐层精度替换、误差采集、评测、断点续跑、配对转移和预览排名汇总
 - [x] 新增 `tests/test_layer_sensitivity.py`，覆盖矩阵完整性、单层替换、加权误差、身份与参考组校验、断点续跑、配对转移、失败排除和排名 tie-break
-- [ ] 生成 `REF-FP`：merged BF16/FP16 数学参考
-- [ ] 保留 `REF-NF4`：6.7.5 冻结 QLoRA/NF4 业务参考
-- [ ] 生成 `ALL-I4`：所有 Transformer block 使用 W4A16 g32
-- [ ] 生成 `ALL-I8`：所有 Transformer block 使用 W8A16
-- [ ] 为每个第 `i` 层生成 `L-i-I8`：仅第 `i` 层使用 W8A16，其余 Transformer block 使用 W4A16 g32
-- [ ] 确认每个 `L-i-I8` 除目标层位宽外的权重、校准统计、Prompt、生成参数和评分路径完全一致
+- [x] 注册 `REF-FP`：merged FP16 数学参考，固定 pilot 为 `37/80`、解析 `80/80`
+- [x] 注册 `REF-NF4`：6.7.5 冻结 QLoRA/NF4 业务参考，固定 pilot 为 `37/80`、解析 `80/80`
+- [x] 生成 `ALL-I4`：所有 Transformer block 使用 W4A16 g32；结果为 `36/80`、解析 `80/80`
+- [x] 生成 `ALL-I8`：所有 Transformer block 使用 W8A16；结果为 `36/80`、解析 `79/80`
+- [x] 为全部 28 个第 `i` 层生成 `L-i-I8`：仅第 `i` 层使用 W8A16，其余 Transformer block 使用 W4A16 g32；无缺层、重复层或失败计划
+- [x] 确认每个 `L-i-I8` 除目标层位宽外的权重、Prompt、生成参数、80 条样本哈希和评分路径完全一致
 - [x] 完成后端不支持真实混合位宽时的 symmetric fake-quant 敏感性路径：INT4 使用 W4A16 g32，INT8 使用 per-output-channel W8A16，manifest 明确禁止声称真实存储、显存、延迟或吞吐收益
 
 #### 7.1.3 量化误差采集
 
-- [ ] 逐层记录权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例
-- [ ] 按权重元素数对层内 Linear 误差加权汇总，不对大小不同的矩阵做简单平均
-- [ ] 保留 `q_proj/k_proj/v_proj/o_proj` 和 `gate_proj/up_proj/down_proj` 明细，但 7.1 排名仅以完整 block 为单位
+- [ ] 逐层记录权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例；已实现 schema v2 FP64 分块累计、范围校验、`recompute-error` 无推理修复和 `audit-errors` 审计，待服务器重算 30 个计划并确认 `status=pass`、`valid_plans=30` 后验收
+- [x] 按权重元素数对层内 Linear 误差加权汇总，不对大小不同的矩阵做简单平均；28 层均有 7 个 Linear、全模型共 196 个模块
+- [x] 保留 `q_proj/k_proj/v_proj/o_proj` 和 `gate_proj/up_proj/down_proj` 明细，但 7.1 排名仅以完整 block 为单位
 - [ ] 使用固定 calibration 样本采集层输出激活 MSE、normalized MSE 和 cosine similarity
-- [ ] 单独报告量化误差与业务质量的相关性，不用权重 MSE 直接代替业务敏感度
+- [x] 单独报告量化误差与业务质量的相关性：pilot 中误差恢复量对净正确数的 Pearson=-0.393、Spearman=-0.442，仅作描述，不用权重误差代替业务敏感度
 
 #### 7.1.4 两阶段业务评测
 
-- [ ] 先在固定 80 条 pilot 上执行 `REF-FP/REF-NF4/ALL-I4/ALL-I8` 和全部 `L-i-I8`，排查实验口径、失败层和明显异常
-- [ ] 对每个层候选记录数值准确率、正确数、解析率、structured output rate、format retry 次数和运行时间
-- [ ] 逐样本记录 `ALL-I4` 错→`L-i-I8` 对的 `recovered`、`ALL-I4` 对→`L-i-I8` 错的 `regressed` 及净正确数变化
+- [x] 在固定 80 条 pilot 上完成 `REF-FP/REF-NF4/ALL-I4/ALL-I8` 和全部 `L-i-I8`；30/30 个可运行计划完成且无 pending
+- [x] 对每个层候选记录数值准确率、正确数、解析率、structured output rate、format retry 次数和运行时间；30 个计划总耗时约 84.59 分钟
+- [x] 逐样本记录 `ALL-I4` 错→`L-i-I8` 对的 `recovered`、`ALL-I4` 对→`L-i-I8` 错的 `regressed` 及净正确数变化
 - [ ] 在金额、比例/利率、日期/期限子集上同时报告“正确数/总数”和比例；小样本类别不仅报百分比
 - [ ] 记录最长 10% 上下文子集和 91 条 contextual 高风险集的恢复数、退化数、解析率和结构化输出变化
 - [ ] 至少重复运行 `ALL-I4` 和一个哨兵层，确认确定性生成可逐条复现
@@ -596,7 +596,7 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 
 #### 7.1.5 排名、产物与验收
 
-- [ ] 定义 `quality_recovery_i = accuracy(L-i-I8) - accuracy(ALL-I4)`，并同时保留 `recovered_count/regressed_count/net_correct_gain`
+- [x] 定义 `quality_recovery_i = accuracy(L-i-I8) - accuracy(ALL-I4)`，并同时保留 `recovered_count/regressed_count/net_correct_gain`；pilot 第一梯队为 layer 10/22/23，均净增 2 题
 - [ ] 排名优先级固定为：`net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、normalized quantization error、层号
 - [ ] 为质量恢复量生成 bootstrap 置信区间，并在大量并列或区间高度重叠时降低排名结论强度
 - [ ] 输出 `experiment_manifest.json`、`layer_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`
