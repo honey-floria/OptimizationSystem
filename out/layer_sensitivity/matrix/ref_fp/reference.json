@@ -1,0 +1,21 @@
+{
+  "plan": {
+    "plan_id": "ref_fp",
+    "kind": "ref_fp",
+    "runnable": false,
+    "description": "Merged FP16 mathematical reference."
+  },
+  "status": "reference_registered",
+  "report": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/pilot_merged_fp16/comparison_report.json",
+  "report_sha256": "927eac51f8f748c5f0c44f5f8bf33fdc4c00b82b94bdbff897c10f843bcf04cb",
+  "predictions_sha256": "bb83e18897e7ec7dc27b388671e88460391b2be0656bf74decbd8589e6809069",
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 37,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.4625
+  },
+  "structured_output_rate": 1.0,
+  "normalized_runtime_quantization": "none"
+}

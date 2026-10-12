@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.2",
+  "plan": {
+    "plan_id": "layer_22_int8",
+    "kind": "layer_int8",
+    "runnable": true,
+    "layer_index": 22,
+    "default_precision": "int4",
+    "overrides": {
+      "22": "int8"
+    }
+  },
+  "precision_vector": [
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int8",
+    "int4",
+    "int4",
+    "int4",
+    "int4",
+    "int4"
+  ],
+  "precision_contract": {
+    "int4": {
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 32,
+      "scheme": "symmetric_groupwise",
+      "label": "W4A16-g32"
+    },
+    "int8": {
+      "weight_bits": 8,
+      "activation_bits": 16,
+      "group_size": null,
+      "scheme": "symmetric_per_output_channel",
+      "label": "W8A16"
+    },
+    "excluded_modules": [
+      "embedding",
+      "layernorm",
+      "lm_head",
+      "kv_cache"
+    ]
+  },
+  "backend": {
+    "name": "symmetric_fake_quant",
+    "artifact_kind": "ephemeral_dequantized_weights",
+    "deployment_performance_claims_allowed": false,
+    "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+  },
+  "plan_sha256": "5162bb7b972a817fc41f122cd17db67df9bad07faad88f2c453b7123e22784aa"
+}
