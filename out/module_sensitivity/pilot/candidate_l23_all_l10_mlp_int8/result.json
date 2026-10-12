@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.2",
+  "status": "completed",
+  "completed_at": "2026-10-12T14:31:37.304160+00:00",
+  "plan": {
+    "plan_id": "candidate_l23_all_l10_mlp_int8",
+    "kind": "candidate_mixed_int8",
+    "runnable": true,
+    "comparison": "recovery",
+    "int8_attention_layers": [
+      23
+    ],
+    "int8_mlp_layers": [
+      10,
+      23
+    ],
+    "selection_basis": "7.1 full-dev selected layers 23/10; 7.2 pilot attributes layer 23 gains to both families and layer 10 net gain to MLP"
+  },
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 38,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.475
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 1,
+  "predictions_sha256": "6af62dc9fbce3bc675680f9485f7bf6b981bc1eee8ab3381010caa5d8fa2832d",
+  "quantization_error_sha256": "444ba1f5817d7239d6a3fa8f5e174e883397284c6d18611d5dce06c1705f86a8",
+  "transition_semantics": "recovery",
+  "transitions_vs_all_int4": {
+    "recovered": 2,
+    "regressed": 0,
+    "net_correct_gain": 2,
+    "stable_correct": 36,
+    "stable_wrong": 42,
+    "changed_raw_predictions": 18
+  },
+  "duration_seconds": 163.32451643515378,
+  "kv_cache_runtime_arguments": null,
+  "all_int8_equivalence": null,
+  "deployment_performance_claims_allowed": false
+}
