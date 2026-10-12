@@ -592,17 +592,17 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 - [ ] 在金额、比例/利率、日期/期限子集上同时报告“正确数/总数”和比例；已实现从完整 dev 预测按冻结多标签派生计数、比例和配对转移，待服务器完整 dev 结果生成后验收
 - [ ] 记录最长 10% 上下文子集和 91 条 contextual 高风险集的恢复数、退化数、解析率和结构化输出变化；已实现 89 条长上下文派生统计及独立 91 条高风险 suite，待服务器运行
 - [ ] 至少重复运行 `ALL-I4` 和一个哨兵层，确认确定性生成可逐条复现；已冻结 `ALL-I4 + layer-22` 哨兵复跑及逐行/文件 SHA256 完全一致验收，待服务器运行
-- [ ] pilot 通过后对全部 `L-i-I8` 执行完整 883 条 FinQA dev；已实现 `ALL-I4/ALL-I8 + 28` 个单层计划的 full-dev suite、断点续跑和严格审计，待服务器完成 30/30
+- [ ] 对 pilot 第一梯队 `L-10-I8/L-22-I8/L-23-I8` 执行完整 883 条 FinQA dev；2026-10-12 经用户确认改为候选子集验证，复用已完成的 `ALL-I4/ALL-I8` full-dev 参考，不再等待其余 25 层，结果不得表述为 28 层完整排名
 
 #### 7.1.5 排名、产物与验收
 
 - [x] 定义 `quality_recovery_i = accuracy(L-i-I8) - accuracy(ALL-I4)`，并同时保留 `recovered_count/regressed_count/net_correct_gain`；pilot 第一梯队为 layer 10/22/23，均净增 2 题
-- [ ] 排名优先级固定为：`net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、normalized quantization error、层号；规则已写入 final contract，待结果生成后验收排序
+- [ ] 候选排名优先级固定为：`net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、normalized quantization error、层号；规则已写入 final contract，仅在 10/22/23 三层内排序
 - [ ] 为质量恢复量生成 bootstrap 置信区间，并在大量并列或区间高度重叠时降低排名结论强度；已实现 10,000 次确定性配对 percentile bootstrap 和结论强度降级，待完整 dev 预测输入
-- [ ] 输出 `experiment_manifest.json`、`layer_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`；`finalize` 已实现全部产物及 62 次运行的身份/哈希/数据规模审计，待服务器运行后验收
+- [ ] 输出 `experiment_manifest.json`、`layer_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`；候选合同共审计 11 次运行（determinism 2、full-dev 5、high-risk 4），其中已有结果可幂等复用，待服务器完成剩余 7 次后验收
 - [x] 验收时确认所有 Transformer block 均有 INT4/INT8 误差和业务评测记录；30/30 schema v2 计划通过范围、文件哈希与结果引用审计，无失败或缺失运行进入排名
 - [x] 验收时确认每个 pilot 排名结论都能回溯到模型 manifest、量化配置、固定样本哈希、逐样本预测和逐层/模块误差记录；原始 schema v1 证据亦保留用于 lineage 核对
-- [ ] 将最终 layer sensitivity ranking 及推荐保护层集合写入项目总文档，作为 7.4 混合精度候选生成的唯一输入
+- [ ] 将三层候选验证排名及推荐保护层集合写入项目总文档，作为 7.4 混合精度候选生成输入；明确它不是 28 层完整 layer sensitivity ranking
 
 ### 7.2 模块敏感性分析
 

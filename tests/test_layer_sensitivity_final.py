@@ -209,7 +209,7 @@ class LayerSensitivityFinalTest(unittest.TestCase):
             ):
                 for plan in plans:
                     rows = [dict(row) for row in baseline]
-                    if plan["plan_id"] == "layer_00_int8":
+                    if plan["plan_id"] == "layer_10_int8":
                         rows[1]["correct"] = True
                         rows[1]["raw_prediction"] = "recovered"
                     _write_prediction_run(
@@ -240,20 +240,25 @@ class LayerSensitivityFinalTest(unittest.TestCase):
                 setup / "frozen_subsets.json",
                 {"long_context": [{"index": index} for index in range(89)]},
             )
+            candidate_plan_ids = [
+                "layer_10_int8",
+                "layer_22_int8",
+                "layer_23_int8",
+            ]
             suites = {
                 "full_dev": {
                     "dataset_role": "evaluation_dev",
                     "expected_size": 883,
                     "frozen_subset": "evaluation_dev",
-                    "plans": "all_runnable",
-                    "plan_ids": [plan["plan_id"] for plan in plans],
+                    "plans": ["all_int4", "all_int8", *candidate_plan_ids],
+                    "plan_ids": ["all_int4", "all_int8", *candidate_plan_ids],
                 },
                 "high_risk": {
                     "dataset_role": "high_risk_regression",
                     "expected_size": 91,
                     "frozen_subset": "contextual_high_risk",
-                    "plans": "all_runnable",
-                    "plan_ids": [plan["plan_id"] for plan in plans],
+                    "plans": ["all_int4", *candidate_plan_ids],
+                    "plan_ids": ["all_int4", *candidate_plan_ids],
                 },
                 "determinism": {
                     "dataset_role": "evaluation_dev",
@@ -280,7 +285,18 @@ class LayerSensitivityFinalTest(unittest.TestCase):
                 "require_nonnegative_high_risk_gain": True,
                 "require_nonnegative_long_context_gain": True,
             }
+            analysis_scope = {
+                "mode": "candidate_subset",
+                "candidate_layer_indices": [10, 22, 23],
+                "candidate_plan_ids": candidate_plan_ids,
+                "candidate_layer_count": 3,
+                "total_model_layers": 28,
+                "complete_layer_coverage": False,
+                "full_layer_ranking_claim_allowed": False,
+                "selection_basis": "pilot top three",
+            }
             contract = {
+                "analysis_scope": analysis_scope,
                 "suites": suites,
                 "runtime_contract": {
                     "evaluation": {},
@@ -306,6 +322,12 @@ class LayerSensitivityFinalTest(unittest.TestCase):
                 "backend": {},
                 "final_evaluation": {
                     "output_root": "final",
+                    "analysis_scope": {
+                        "mode": "candidate_subset",
+                        "candidate_layer_indices": [10, 22, 23],
+                        "selection_basis": "pilot top three",
+                        "full_layer_ranking_claim_allowed": False,
+                    },
                     "suites": {
                         name: {key: value for key, value in suite.items() if key != "plan_ids"}
                         for name, suite in suites.items()
@@ -317,11 +339,17 @@ class LayerSensitivityFinalTest(unittest.TestCase):
             }
             result = finalize_layer_sensitivity(root, config)
             self.assertEqual(result["validation"]["status"], "pass")
-            self.assertEqual(result["validation"]["ranked_layers"], 28)
-            self.assertEqual(result["ranking"]["ranking"][0]["layer_index"], 0)
+            self.assertEqual(result["validation"]["ranked_layers"], 3)
+            self.assertFalse(
+                result["validation"]["analysis_scope"][
+                    "full_layer_ranking_claim_allowed"
+                ]
+            )
+            self.assertEqual(result["ranking"]["status"], "candidate_subset_final")
+            self.assertEqual(result["ranking"]["ranking"][0]["layer_index"], 10)
             self.assertEqual(
                 result["ranking"]["recommendation"]["recommended_protected_layers"],
-                [0],
+                [10],
             )
             for name in (
                 "experiment_manifest.json",

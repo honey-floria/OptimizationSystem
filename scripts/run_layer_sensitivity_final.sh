@@ -14,15 +14,14 @@ done
 "$PYTHON_RUNNER" "$ENTRYPOINT" pending-final --suite determinism
 "$PYTHON_RUNNER" "$ENTRYPOINT" audit-determinism
 
-for suite in full_dev high_risk; do
-  for plan_id in all_int4 all_int8; do
-    "$PYTHON_RUNNER" "$ENTRYPOINT" run-final-plan \
-      --suite "$suite" --plan-id "$plan_id"
-  done
-  for layer_index in $(seq -w 0 27); do
-    "$PYTHON_RUNNER" "$ENTRYPOINT" run-final-plan \
-      --suite "$suite" --plan-id "layer_${layer_index}_int8"
-  done
+for plan_id in all_int4 all_int8 layer_10_int8 layer_22_int8 layer_23_int8; do
+  "$PYTHON_RUNNER" "$ENTRYPOINT" run-final-plan \
+    --suite full_dev --plan-id "$plan_id"
+done
+
+for plan_id in all_int4 layer_10_int8 layer_22_int8 layer_23_int8; do
+  "$PYTHON_RUNNER" "$ENTRYPOINT" run-final-plan \
+    --suite high_risk --plan-id "$plan_id"
 done
 
 "$PYTHON_RUNNER" "$ENTRYPOINT" pending-final

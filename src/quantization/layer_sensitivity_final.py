@@ -86,6 +86,65 @@ def _suite_plan_ids(
     return plan_ids
 
 
+def _analysis_scope(
+    experiment: dict[str, Any], settings: dict[str, Any], suites: dict[str, Any]
+) -> dict[str, Any]:
+    layer_plans = {
+        int(plan["layer_index"]): plan["plan_id"]
+        for plan in experiment["plans"]
+        if plan.get("runnable") and plan.get("kind") == "layer_int8"
+    }
+    configured = settings.get("analysis_scope", {"mode": "full_layer_ranking"})
+    mode = configured.get("mode")
+    if mode == "full_layer_ranking":
+        indices = sorted(layer_plans)
+        claim_allowed = True
+    elif mode == "candidate_subset":
+        raw_indices = configured.get("candidate_layer_indices")
+        if not isinstance(raw_indices, list) or not raw_indices:
+            raise ValueError(
+                "candidate_subset requires non-empty candidate_layer_indices."
+            )
+        indices = [int(index) for index in raw_indices]
+        if len(indices) != len(set(indices)):
+            raise ValueError("candidate_layer_indices contains duplicates.")
+        unknown = sorted(set(indices) - set(layer_plans))
+        if unknown:
+            raise ValueError(f"Unknown candidate layer indices: {unknown}")
+        claim_allowed = False
+        if configured.get("full_layer_ranking_claim_allowed") is True:
+            raise ValueError(
+                "A candidate subset cannot allow a full-layer ranking claim."
+            )
+    else:
+        raise ValueError(f"Unsupported final evaluation analysis scope: {mode}")
+
+    candidate_plan_ids = [layer_plans[index] for index in indices]
+    for suite_name in ("full_dev", "high_risk"):
+        missing = sorted(set(candidate_plan_ids) - set(suites[suite_name]["plan_ids"]))
+        if missing:
+            raise ValueError(
+                f"Suite {suite_name} is missing scoped candidate plans: {missing}"
+            )
+    for suite_name in ("full_dev", "high_risk"):
+        if "all_int4" not in suites[suite_name]["plan_ids"]:
+            raise ValueError(f"Suite {suite_name} must include the all_int4 baseline.")
+
+    return {
+        "mode": mode,
+        "candidate_layer_indices": indices,
+        "candidate_plan_ids": candidate_plan_ids,
+        "candidate_layer_count": len(indices),
+        "total_model_layers": len(layer_plans),
+        "complete_layer_coverage": len(indices) == len(layer_plans),
+        "full_layer_ranking_claim_allowed": claim_allowed,
+        "selection_basis": configured.get(
+            "selection_basis",
+            "all runnable layer plans" if mode == "full_layer_ranking" else None,
+        ),
+    }
+
+
 def prepare_final_evaluation(
     *, project_root: str | Path, config: dict[str, Any]
 ) -> dict[str, Any]:
@@ -111,6 +170,7 @@ def prepare_final_evaluation(
             **contract,
             "plan_ids": _suite_plan_ids(suite, matrix, settings),
         }
+    analysis_scope = _analysis_scope(matrix, settings, suites)
     runtime_contract = {
         "evaluation": config["evaluation"],
         "precision": config["precision"],
@@ -128,6 +188,7 @@ def prepare_final_evaluation(
         "subset_hashes": freeze["subset_hashes"],
         "business_labels_sha256": freeze["business_labels_sha256"],
         "business_label_counts": freeze["business_label_counts"],
+        "analysis_scope": analysis_scope,
         "suites": suites,
         "runtime_contract": runtime_contract,
         "bootstrap": settings["bootstrap"],
@@ -136,6 +197,7 @@ def prepare_final_evaluation(
     }
     manifest["contract_sha256"] = canonical_json_sha256(
         {
+            "analysis_scope": analysis_scope,
             "suites": suites,
             "runtime_contract": runtime_contract,
             "bootstrap": settings["bootstrap"],
@@ -165,8 +227,10 @@ def _load_final_manifest(root: Path, config: dict[str, Any]) -> dict[str, Any]:
         }
         for name, contract in settings["suites"].items()
     }
+    current_scope = _analysis_scope(matrix, settings, current_suites)
     expected_contract = canonical_json_sha256(
         {
+            "analysis_scope": current_scope,
             "suites": current_suites,
             "runtime_contract": {
                 "evaluation": config["evaluation"],
@@ -180,6 +244,8 @@ def _load_final_manifest(root: Path, config: dict[str, Any]) -> dict[str, Any]:
     )
     if manifest.get("contract_sha256") != expected_contract:
         raise ValueError("Final evaluation contract changed after preparation.")
+    if manifest.get("analysis_scope") != current_scope:
+        raise ValueError("Final evaluation analysis scope changed after preparation.")
     return manifest
 
 
@@ -692,10 +758,13 @@ def finalize_layer_sensitivity(
     layer_metrics = []
     transition_rows = []
     bootstrap_settings = settings["bootstrap"]
+    scoped_plan_ids = set(manifest["analysis_scope"]["candidate_plan_ids"])
     layer_plans = [
         plan for plan in load_json(matrix_root / "experiment_manifest.json")["plans"]
-        if plan.get("kind") == "layer_int8"
+        if plan.get("kind") == "layer_int8" and plan["plan_id"] in scoped_plan_ids
     ]
+    if len(layer_plans) != manifest["analysis_scope"]["candidate_layer_count"]:
+        raise ValueError("Scoped candidate layer plans are incomplete in the matrix.")
     for plan in layer_plans:
         plan_id = plan["plan_id"]
         layer_index = int(plan["layer_index"])
@@ -784,7 +853,12 @@ def finalize_layer_sensitivity(
     ranking_payload = {
         "schema_version": FINAL_SCHEMA_VERSION,
         "stage": "7.1.5",
-        "status": "final",
+        "status": (
+            "final"
+            if manifest["analysis_scope"]["complete_layer_coverage"]
+            else "candidate_subset_final"
+        ),
+        "analysis_scope": manifest["analysis_scope"],
         "ranking_tie_break": settings["ranking_tie_break"],
         "ranking_conclusion_strength": conclusion_strength,
         "top_two_bootstrap_intervals_overlap": intervals_overlap,
@@ -802,7 +876,11 @@ def finalize_layer_sensitivity(
         "pending": pending,
         "invalid_runs": invalid_runs,
         "determinism": determinism,
-        "expected_layers": 28,
+        "analysis_scope": manifest["analysis_scope"],
+        "expected_candidate_layers": manifest["analysis_scope"][
+            "candidate_layer_count"
+        ],
+        "total_model_layers": manifest["analysis_scope"]["total_model_layers"],
         "ranked_layers": len(ranking),
         "full_dev_size": len(full_baseline),
         "high_risk_size": len(risk_baseline),
@@ -820,11 +898,36 @@ def finalize_layer_sensitivity(
         f"{row['high_risk']['recovered']} | {row['long_context']['recovered']} |"
         for row in ranking[:10]
     ]
+    scope = manifest["analysis_scope"]
+    scope_lines = [
+        f"- Analysis scope: `{scope['mode']}`",
+        f"- Evaluated candidate layers: `{scope['candidate_layer_indices']}`",
+        f"- Candidate coverage: {scope['candidate_layer_count']}/{scope['total_model_layers']} layers",
+    ]
+    if not scope["full_layer_ranking_claim_allowed"]:
+        scope_lines.append(
+            "- Claim boundary: candidate validation only; this is not a complete "
+            f"{scope['total_model_layers']}-layer ranking"
+        )
+    report_title = (
+        "# TODO 7.1 Final Layer Sensitivity Report"
+        if scope["complete_layer_coverage"]
+        else "# TODO 7.1 Layer Sensitivity Candidate Validation Report"
+    )
+    ranking_heading = (
+        "## Layer ranking"
+        if scope["complete_layer_coverage"]
+        else "## Candidate ranking"
+    )
     report = "\n".join(
         [
-            "# TODO 7.1 Final Layer Sensitivity Report",
+            report_title,
             "",
             f"Generated: {datetime.now(timezone.utc).isoformat()}",
+            "",
+            "## Analysis scope",
+            "",
+            *scope_lines,
             "",
             "## Validation",
             "",
@@ -834,7 +937,7 @@ def finalize_layer_sensitivity(
             "- Determinism reruns: exact match",
             f"- Ranking conclusion strength: {conclusion_strength}",
             "",
-            "## Top 10",
+            ranking_heading,
             "",
             "| Rank | Layer | Full dev | Recovered | Regressed | High-risk recovered | Long-context recovered |",
             "| ---: | ---: | ---: | ---: | ---: | ---: | ---: |",

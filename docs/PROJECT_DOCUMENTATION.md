@@ -2264,8 +2264,10 @@ Spearman 为 `-0.19978`。这些结果共同表明静态权重误差、动态激
 ### 7.1.4–7.1.5 剩余业务评测与最终验收实现
 
 激活探针完成后，7.1 尚不能直接给出最终保护层。80 条 pilot 中一题等于 1.25 个百分点，而且已观察到大量
-并列和少数边界样本驱动排名。最终阶段必须扩大到完整 883 条 FinQA dev，并补充业务类别、长上下文、独立
-高风险集及确定性证据。实现新增 `src/quantization/layer_sensitivity_final.py`，由原有
+并列和少数边界样本驱动排名。2026-10-12 经用户确认，最终阶段从“28 层全量正式排名”调整为 pilot 第一梯队
+layer 10/22/23 的候选验证：三层扩大到完整 883 条 FinQA dev，并补充业务类别、长上下文、独立高风险集及
+确定性证据。该选择把剩余机时从约 20 小时压缩到约 2～2.5 小时，但结论只覆盖三个候选，不能声称形成了
+28 层完整排名。实现位于 `src/quantization/layer_sensitivity_final.py`，由原有
 `scripts/run_layer_sensitivity.py` 统一提供以下命令，`tests/test_layer_sensitivity_final.py` 覆盖分组计数、
 配对 bootstrap、排名顺序、保护层过滤和 CLI 合同：
 
@@ -2280,12 +2282,66 @@ final contract 定义三个 suite：
 | Suite | 数据 | 计划 | 用途 |
 | --- | ---: | ---: | --- |
 | `determinism` | 固定 80 条 pilot | `ALL-I4`、`layer-22` | 与原 pilot 逐行及 SHA256 完全复现 |
-| `full_dev` | 完整 883 条 dev | `ALL-I4/ALL-I8 + 28 L-i-I8` | 最终业务排名与 bootstrap |
-| `high_risk` | 91 条 contextual 高风险集 | `ALL-I4/ALL-I8 + 28 L-i-I8` | 独立恢复/退化和格式稳定性 |
+| `full_dev` | 完整 883 条 dev | `ALL-I4/ALL-I8 + layer 10/22/23` | 三个候选的业务排名与 bootstrap |
+| `high_risk` | 91 条 contextual 高风险集 | `ALL-I4 + layer 10/22/23` | 候选独立恢复/退化和格式稳定性 |
 
 contract SHA256 还覆盖完整 evaluation 参数、W4A16-g32/W8A16 精度合同和 symmetric fake-quant 后端；
 `prepare-final` 后若有人修改 dtype、batch size、生成长度、位宽、group size、排除模块或后端，后续命令会拒绝
 混用旧 manifest，必须重新明确准备实验。
+
+#### 这次实现具体做了什么
+
+第一步是把“还要跑什么”从人工约定变成机器可校验合同。`prepare-final` 读取已经冻结的 input freeze、
+`frozen_subsets.json`、业务标签、7.1.2 matrix manifest 和当前量化配置，重新校验它们的 SHA256，然后把三套
+suite、每套允许的 plan ID、bootstrap 参数、排名顺序和保护层准入规则写入新的
+`final_evaluation/experiment_manifest.json`。manifest 中的 `contract_sha256` 同时覆盖数据、推理参数、精度和
+后端；后续命令每次都会重算合同，防止部分运行偷偷使用了不同 batch、生成长度或量化口径。
+
+第二步是提供统一的单计划执行器 `run-final-plan`。它不会复用上一个进程里已经修改过的模型，而是每次从同一
+merged FP16 母版重新加载权重，根据 plan 独立执行 W4A16-g32/W8A16 fake quant，再运行指定 suite。这样
+`L-i-I8` 之间只改变目标层，不会发生 layer 0 的修改残留到 layer 1 等交叉污染。执行前还会把实际 Dataset
+逐行重新生成 fingerprint，与冻结的 883 条 dev 或 91 条高风险清单比较；数据顺序、问题内容或行数变化都会
+直接失败。每次运行保存 effective baseline/quality 配置、逐样本预测、comparison report 和 result 摘要。
+
+第三步是先设置一个低成本的确定性闸门。`determinism` 只重跑原 80 条 pilot 的 `ALL-I4` 和保守哨兵
+layer 22，然后 `audit-determinism` 同时比较 80 行完整 JSON 记录和预测文件 SHA256。仅比较最终正确数是不够
+的，因为“恢复一题、退化另一题”仍可能保持相同总分；这里要求逐行完全一致。审计失败会写出
+`determinism_audit.json` 并以错误退出，一键脚本因此不会继续消耗十几个小时运行完整矩阵。
+
+第四步执行候选质量计划。full dev 包含 `ALL-I4/ALL-I8` 和 layer 10/22/23 共 5 项，其中两个全局参考已经
+完成，可以直接按哈希复用；高风险集包含必要的 `ALL-I4` 配对基线和 layer 10/22/23 共 4 项，不再为了全局
+上界额外运行 `ALL-I8`。加上两个已经完成的 determinism 计划，新合同共 11 次运行，切换合同时剩余 7 次。
+选择这三个候选的冻结依据是 80 条 pilot 中它们均取得 `net_correct_gain=2`。这只能形成候选验证排名，不能
+外推为未评估的其余 25 层之间的正式名次。
+
+第五步由 `finalize` 在不再加载模型的情况下完成所有统计。它首先审计合同要求的 11 份 result、comparison report 和
+prediction 的引用关系，逐一验证 suite、plan、数据角色、样本数、pilot 索引及文件 SHA256。审计通过后，
+以每个 `source_index` 将候选和 `ALL-I4` 配对，记录 `recovered/regressed/stable_correct/stable_wrong`、
+解析和结构化输出变化。金额、比例/利率、日期/期限和 89 条长上下文直接从 883 条 full-dev 预测切片派生，
+不重复生成；91 条高风险集来自独立推理，因此不会把普通 dev 子集冒充高风险证据。
+
+第六步是统计不确定性，而不仅给出一个点估计。对每个层建立 883 个配对差值：候选恢复记为 `+1`、退化记为
+`-1`、结果不变记为 `0`；10,000 次 bootstrap 每次都成对重采样这些差值，得到相对 `ALL-I4` 的准确率恢复
+点估计和 95% percentile 区间。成对抽样保留了“同一道题在两个模型下”的相关性，比把两个模型分别抽样更适合
+当前对照实验。第一、第二名区间重叠或最高净增并列时，程序自动降低结论强度。
+
+最后，程序先按冻结的七级 tie-break 生成 layer 10/22/23 三层候选排名，再单独应用保护层准入规则。排名靠前不等于自动
+保护：候选还必须满足 full-dev 净增为正，且高风险和长上下文均不出现净退化，最多取 3 层。这个二阶段设计
+避免“总体多答对几题，但在高风险金融问题上新增错误”的层直接进入 7.4。
+
+#### 各个最终产物分别有什么用
+
+- `experiment_manifest.json`：实验合同、输入身份、suite 和最终产物哈希的总入口；
+- `layer_metrics.jsonl`：三个候选层的完整 dev、三类业务标签、长上下文、高风险、格式和 bootstrap 指标；
+- `sample_transitions.jsonl`：逐 suite、逐层、逐题的恢复/退化证据，可回溯具体 source index；
+- `ranking.json`：机器可读的候选排名、结论强度、分析范围和推荐保护层；
+- `ranking.csv`：便于人工筛选、画图或导入表格的扁平排名；
+- `report.md`：面向评审的摘要和 Top 10；
+- `validation.json`：pending、确定性、层数、数据规模和最终验收状态。
+
+新增的一键脚本 `scripts/run_layer_sensitivity_final.sh` 只是上述命令的安全编排，不另设实验逻辑。每个计划仍由
+独立 Python 进程执行，既确保模型从相同母版开始，也能在 16GB GPU 上及时释放 CUDA allocator。脚本和单计划
+入口都支持幂等续跑：只有 result、report 和预测哈希能互相对应时才跳过完成项，否则最终审计会拒绝它。
 
 确定性 suite 优先运行；如果 `ALL-I4` 或 layer 22 不能与原始 pilot 逐行一致，应停止后续约 60 次昂贵运行并
 先排查环境。full-dev 预测完成后，金额、比例/利率、日期/期限不再单独执行推理，而是按冻结的多标签文件从
@@ -2293,7 +2349,7 @@ contract SHA256 还覆盖完整 evaluation 参数、W4A16-g32/W8A16 精度合同
 预测按冻结的 89 个 source index 派生。每个分组都同时写出基线和候选的 `正确数/总数`、accuracy、
 recovered、regressed、net gain、解析数/率及结构化输出数/率，避免小样本只报告百分比。
 
-最终排名口径在看到 full-dev 结果前固定为：
+候选排名口径在看到 full-dev 结果前固定为：
 
 1. full-dev `net_correct_gain` 降序；
 2. full-dev `recovered_count` 降序；
@@ -2311,7 +2367,7 @@ recovered、regressed、net gain、解析数/率及结构化输出数/率，避�
 保护层建议也在运行前冻结：最多选择排名最前的 3 层，并要求完整 dev 净增大于 0、高风险净增不小于 0、
 长上下文净增不小于 0。不满足条件的层即使静态量化误差或激活误差突出，也不会自动进入 7.4 的保护集合。
 
-`finalize` 运行前会检查 62 次新增运行全部存在，并逐一核对 suite、plan、comparison report SHA256、预测
+`finalize` 运行前会检查候选合同要求的 11 次运行全部存在，并逐一核对 suite、plan、comparison report SHA256、预测
 SHA256、数据角色、样本数及 determinism pilot 索引哈希。任一错配都会终止，失败结果不会进入排名。成功后
 生成以下 7 个正式产物：
 
@@ -2339,15 +2395,14 @@ python3 scripts/run_layer_sensitivity.py run-final-plan \
 python3 scripts/run_layer_sensitivity.py pending-final --suite determinism
 python3 scripts/run_layer_sensitivity.py audit-determinism
 
-for suite in full_dev high_risk; do
+for plan in all_int4 all_int8 layer_10_int8 layer_22_int8 layer_23_int8; do
   python3 scripts/run_layer_sensitivity.py run-final-plan \
-    --suite "$suite" --plan-id all_int4 || break
+    --suite full_dev --plan-id "$plan" || break
+done
+
+for plan in all_int4 layer_10_int8 layer_22_int8 layer_23_int8; do
   python3 scripts/run_layer_sensitivity.py run-final-plan \
-    --suite "$suite" --plan-id all_int8 || break
-  for i in $(seq -w 0 27); do
-    python3 scripts/run_layer_sensitivity.py run-final-plan \
-      --suite "$suite" --plan-id "layer_${i}_int8" || break 2
-  done
+    --suite high_risk --plan-id "$plan" || break
 done
 
 python3 scripts/run_layer_sensitivity.py pending-final
@@ -2368,6 +2423,7 @@ LAYER_SENSITIVITY_PYTHON=.venv/bin/python \
 ```
 
 每次计划使用独立 Python 进程，因此 7B 模型退出后会释放 CUDA allocator；脚本支持安全重跑，已完成计划按
-结果和预测哈希跳过。最终只有在 `pending-final` 的三个列表全空、`validation.json status=pass`、28 层全部
-进入 ranking、两项 determinism 均 exact match 后，才能勾选 7.1.4/7.1.5 剩余验收项，并把
-`recommended_protected_layers` 写成 7.4 的唯一层级输入。
+结果和预测哈希跳过。最终只有在 `pending-final` 的三个列表全空、`validation.json status=pass`、10/22/23
+三层全部进入 candidate ranking、两项 determinism 均 exact match 后，才能勾选候选验证相关验收项，并把
+`recommended_protected_layers` 作为 7.4 的候选层级输入。`ranking.json status=candidate_subset_final`、
+`full_layer_ranking_claim_allowed=false` 必须保留，不能把该结果改写成 28 层完整排名。
