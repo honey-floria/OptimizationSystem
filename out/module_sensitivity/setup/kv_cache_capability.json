@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.1",
+  "status": "sensitivity_only",
+  "requested_precisions": [
+    "fp16",
+    "int8",
+    "int4"
+  ],
+  "model_cache_interface": {
+    "forward_accepts_use_cache": true,
+    "forward_accepts_past_key_values": true,
+    "config_use_cache": true
+  },
+  "transformers_version": "5.18.0",
+  "transformers_quantized_cache_api": {
+    "QuantizedCache": true,
+    "QuantizedCacheConfig": false
+  },
+  "real_backend_contract": {
+    "name": "transformers_quantized_cache",
+    "implementation": "runtime_probe_required",
+    "supports_real_int8": false,
+    "supports_real_int4": false,
+    "performance_claims_allowed_before_runtime_probe": false,
+    "runtime_arguments": {
+      "int8": {
+        "cache_implementation": "quantized",
+        "cache_config": {
+          "backend": "hqq",
+          "nbits": 8,
+          "axis_key": 1,
+          "axis_value": 1
+        }
+      },
+      "int4": {
+        "cache_implementation": "quantized",
+        "cache_config": {
+          "backend": "hqq",
+          "nbits": 4,
+          "axis_key": 1,
+          "axis_value": 1
+        }
+      }
+    }
+  },
+  "weight_fake_quant_allowed": false,
+  "deployment_performance_claims_allowed": false,
+  "runtime_probe_completed": false
+}

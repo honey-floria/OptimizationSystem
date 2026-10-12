@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "7.2.1",
   "status": "awaiting_model_inspection",
-  "created_at": "2026-10-12T10:12:09.798757+00:00",
+  "created_at": "2026-10-12T11:34:59.394259+00:00",
   "experiment_name": "finqa-module-sensitivity-contract",
   "upstream": {
     "status": "pass",
@@ -52,27 +52,27 @@
     },
     "artifacts": {
       "merged_manifest": {
-        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/merged_model_manifest.json",
+        "path": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/merged_model_manifest.json",
         "sha256": "261156009d4673753e8ff8e7ec46efee3058739285dfe5ed4a5904c96867329d"
       },
       "input_freeze": {
-        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
+        "path": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
         "sha256": "f08a9e0a79ffcfa135357b98fd145ddbbda5f288146872fddb78fd43e6bc1385"
       },
       "layer_matrix_manifest": {
-        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/experiment_manifest.json",
+        "path": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/matrix/experiment_manifest.json",
         "sha256": "0fe74c8f0c3812931a4a75cb0e0ce6bbe7ab4946650eb65b66815ee938987fdc"
       },
       "all_int4_plan": {
-        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/plan.json",
+        "path": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/plan.json",
         "sha256": "caaeefee87871f1cd40be8da2930e2c2fd0a370383a087fe11fc9ff590842e18"
       },
       "all_int4_result": {
-        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/result.json",
+        "path": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/result.json",
         "sha256": "7494504620a26096c94992dd6be3a17dbb1a2adc28f1c7cb7abd8dbe305706a5"
       },
       "all_int4_report": {
-        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/comparison_report.json",
+        "path": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/comparison_report.json",
         "sha256": "f0b034e8500dca002e484b47b88a72491521258ba5f010aed2367f3a4397dad3"
       }
     },
@@ -202,7 +202,27 @@
       "implementation": "runtime_probe_required",
       "supports_real_int8": false,
       "supports_real_int4": false,
-      "performance_claims_allowed_before_runtime_probe": false
+      "performance_claims_allowed_before_runtime_probe": false,
+      "runtime_arguments": {
+        "int8": {
+          "cache_implementation": "quantized",
+          "cache_config": {
+            "backend": "hqq",
+            "nbits": 8,
+            "axis_key": 1,
+            "axis_value": 1
+          }
+        },
+        "int4": {
+          "cache_implementation": "quantized",
+          "cache_config": {
+            "backend": "hqq",
+            "nbits": 4,
+            "axis_key": 1,
+            "axis_value": 1
+          }
+        }
+      }
     }
   },
   "runtime_inspection": {
@@ -211,5 +231,5 @@
     "local_files_only": true,
     "trust_remote_code": false
   },
-  "contract_sha256": "8afd42c78b3ce44fcfc2acb3a77fa9b529f6df2749aa44db9a4885e7fa936eb5"
+  "contract_sha256": "15d4f11aefe1b0063dcfa638c5179464e1dad7d0f0e19ba5e7e0ed77d3517688"
 }

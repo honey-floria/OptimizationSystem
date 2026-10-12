@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.1",
+  "status": "pass",
+  "validated_at": "2026-10-12T11:35:13.721812+00:00",
+  "contract_sha256": "15d4f11aefe1b0063dcfa638c5179464e1dad7d0f0e19ba5e7e0ed77d3517688",
+  "module_inventory_sha256": "1459bec6aea1dd474e00ed29b1bf3f35bcd3d719783eb5eb5519c62fab045226",
+  "kv_cache_capability_sha256": "a517220fc2191f171a976501c9155575b4bfad78902a96355785cef9ef54d3fb",
+  "block_count": 28,
+  "attention_module_count": 112,
+  "mlp_module_count": 84,
+  "norm_module_count": 57,
+  "embedding_lm_head_tied": false,
+  "kv_cache_status": "sensitivity_only",
+  "deployment_performance_claims_allowed": false
+}
