@@ -1751,3 +1751,94 @@ python3 scripts/prepare_layer_sensitivity.py compare-pilot \
 SHA256 为 `c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4`，与修正后的 6.7.5 冻结记录一致，可作为
 7.1.1 合并输入。仓库本地副本不参与本次服务器实验，不再视为执行阻塞。`merge` 命令仍会在服务器上
 对权重执行 SHA256 硬校验，避免路径误传或权重被后续覆盖。
+
+### 7.1.1 服务器执行结果（2026-10-12）
+
+用户已修复先前由 Git 问题导致的 adapter 文件异常，并确认服务器上
+`adapter_model.safetensors` 的 SHA256 为 6.7.5 冻结值
+`c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4`。原记录的 `771482db...`
+是 Git LFS 指针文件哈希，不是 hydrated 权重哈希。`freeze` 命令成功生成输入冻结清单，
+状态为 `inputs_frozen`。原始数据资产为：
+
+| 资产 | 样本数 | SHA256 |
+|---|---:|---|
+| calibration | 1024 | `34af0e443492d4fdc831712c67cd6f12168e923b187b0175817ed9457bd6adfd` |
+| FinQA evaluation dev | 883 | `7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8` |
+| contextual high-risk | 91 | `064f379a0c63ea9cfe49681b1c9a477f8246f9aaf853c85799812bb2feda0693` |
+
+冻结后样本清单的哈希为：
+
+| 子集 | 清单 SHA256 |
+|---|---|
+| calibration | `dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092` |
+| fixed 80 pilot | `225c221200a11b7281fc7505ca34f77f7d77c362636bba1b4b993abb47a1d7d7` |
+| evaluation dev | `d9a4a3818e0ac2612a16c388574e5d9c888a2f1563da115457bcb48097f700eb` |
+| contextual high-risk | `441fdc055de9b7b9a1c24872153da9278c102630ce3d235f97d0c70523994c44` |
+| longest 10% context | `4b8c2d16ae3b053aed47a0fb502a0f6e44d0e233ad506040813a188377a6b936` |
+
+业务多标签统计为金额 338 条、比例/利率 567 条、日期/期限 709 条。标签可重叠，因此三类计数不应
+求和为 883。推理契约已冻结为 `structured_json`、`max_new_tokens=256`、`do_sample=false`、
+`num_beams=1`。
+
+adapter 目录树 SHA256 为 `f5ea0841df97ff9a3c1c0c457a905fd61db185de0af6fc3dbe69f40306a95f3b`。该值是包含
+adapter 配置和 tokenizer 等全部文件的目录树哈希，不替代上述 `adapter_model.safetensors` 单文件哈希。
+合并成功后，merged FP16 模型目录树 SHA256 为
+`c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946`，脚本自动发现 Transformer block 路径为
+`model.layers`，层数为 28。
+
+merged FP16 与冻结 QLoRA/NF4 使用相同的固定 80 条 pilot，索引 SHA256 均为
+`cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61`。配对结果为：
+
+| 指标 | QLoRA/NF4 | merged FP16 |
+|---|---:|---:|
+| 正确数 | 37/80 | 37/80 |
+| 数值准确率 | 46.25% | 46.25% |
+| 解析率 | 100% | 100% |
+
+两者有 43 条原始输出发生变化，其中 5 条由错变对、5 条由对变错、32 条稳定正确、38 条稳定错误。
+因此 merged FP16 通过 7.1.1 的质量与解析门禁，可作为后续量化误差的数学母版；但它与 NF4 仅是总体质量持平，
+不是逐样本等价。后续 7.1 必须以 merged FP16 生成 `ALL-I4/ALL-I8/L-i-I8`，同时保留 NF4 作为 6.7.5 业务参考，
+不得把两者预测混成同一基线。至此 7.1.1 全部完成，可进入 7.1.2。
+
+### 7.1.2 工具与实验矩阵实现（2026-10-12）
+
+新增 `configs/layer_sensitivity.json`、`src/quantization/layer_sensitivity.py`、
+`scripts/run_layer_sensitivity.py` 和 `tests/test_layer_sensitivity.py`。工具首先校验 7.1.1 的 adapter、merged
+模型、输入冻结和 Transformer block 身份，然后生成 32 个互不混淆的计划：2 个只读参考组、
+`ALL-I4`、`ALL-I8` 和 28 个 `L-i-I8`。其中可运行计划共 30 个，每个计划有独立目录、
+`plan.json`、生效配置、量化误差、逐样本预测和 `result.json`。
+
+在当前后端尚未提供可部署的逐层混合打包时，7.1.2 使用明确标记的 symmetric fake-quant：INT4 对
+Transformer block 内所有 Linear 权重做 W4A16 g32 对称分组量化—反量化，INT8 做 per-output-channel
+W8A16 量化—反量化。反量化后的权重仍以 FP16 运行，因此该路径只用于质量敏感性，不代表真实
+模型大小、显存、延迟或吞吐收益。所有量化只作用于 28 个 Transformer block 内的 Linear，Embedding、
+LayerNorm、lm_head 和 KV Cache 保持不变。
+
+模型在 CPU 上加载和反量化，再整体移入 GPU 评测，避免 16GB GPU 在保留 FP16 模型时叠加大型 FP32
+临时量化张量。每次只运行一个计划；已完成且 `result.json` 状态为 `completed` 的计划会被续跑机制跳过。
+完成后以 `ALL-I4` 为基准做 source-index 严格对齐的逐样本配对，输出恢复、退化、稳定正确、稳定错误和
+原始输出变化数，生成 `matrix_summary.json` 和仅供 pilot 筛选的 `ranking_preview.json`。
+
+服务器执行顺序：
+
+```bash
+# 校验 7.1.1 身份并生成 32 个计划
+python3 scripts/run_layer_sensitivity.py prepare
+
+# 先执行两个全局对照
+python3 scripts/run_layer_sensitivity.py run-plan --plan-id all_int4
+python3 scripts/run_layer_sensitivity.py run-plan --plan-id all_int8
+
+# 再遍历 28 个单层 INT8 计划；任一失败时停止，修复后可续跑
+for i in $(seq -w 0 27); do
+  python3 scripts/run_layer_sensitivity.py run-plan --plan-id "layer_${i}_int8" || break
+done
+
+# 检查是否还有未完成计划，然后生成配对汇总
+python3 scripts/run_layer_sensitivity.py pending
+python3 scripts/run_layer_sensitivity.py summarize
+```
+
+`prepare` 完成后应报告 `block_count=28`、`plan_count=32`、`runnable_plan_count=30`，并把已有
+merged FP16 `37/80` 注册为 `REF-FP`、把 QLoRA/NF4 `37/80` 注册为 `REF-NF4`。在 30 个可运行计划
+全部回传之前，7.1.2 的模型矩阵仍保持未验收状态，不提前勾选服务器执行项。

@@ -49,6 +49,8 @@ configs/
 │
 ├── quality_repair.json               # Colab 质量修复实验及多种 Prompt 方案
 ├── quality_repair_4080.json          # 4080/服务器质量修复与 LoRA 评测配置
+├── layer_sensitivity_setup.json      # 7.1.1 合并、输入冻结和 pilot 对比契约
+├── layer_sensitivity.json            # 7.1.2 逐层精度替换矩阵与 fake-quant 契约
 └── environment/
     ├── nvidia_colab_t4.json          # 已采集的 NVIDIA Colab/T4 环境模板
     └── ascend.pending.json           # 等待真实昇腾机器补齐的环境模板
@@ -62,7 +64,9 @@ configs/
 scripts/
 ├── download_model_4080.py            # 从 Hugging Face 下载模型到本地 models/data/
 ├── train_finqa_qlora.py              # 使用 FinQA train 训练 7B QLoRA adapter
-└── run_quality_repair_4080.py         # 在 NVIDIA 上运行 FP16、LoRA、AWQ 或 GPTQ 质量评测
+├── run_quality_repair_4080.py         # 在 NVIDIA 上运行 FP16、LoRA、AWQ 或 GPTQ 质量评测
+├── prepare_layer_sensitivity.py       # 合并 adapter、冻结 7.1.1 输入并比较 pilot
+└── run_layer_sensitivity.py           # 准备、续跑和汇总 7.1.2 逐层矩阵
 
 notebooks/
 └── optimization_system_all_colab.ipynb
@@ -169,6 +173,8 @@ tests/
 ├── test_quality_repair.py            # Prompt、JSON、计算器和候选方案测试
 ├── test_quality_repair_4080_cli.py    # 服务器评测命令行参数测试
 ├── test_finqa_qlora.py               # QLoRA 数据转换和训练参数测试
+├── test_layer_sensitivity_setup.py   # 7.1.1 输入冻结、层发现与 pilot 配对测试
+├── test_layer_sensitivity.py         # 7.1.2 矩阵、精度替换、续跑和排名测试
 │
 ├── test_quantization_framework.py    # 统一量化契约测试
 ├── test_awq.py                       # AWQ 流程测试

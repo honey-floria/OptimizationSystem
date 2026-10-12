@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.2",
+  "experiment_name": "finqa-layer-sensitivity-matrix",
+  "backend": {
+    "name": "symmetric_fake_quant",
+    "artifact_kind": "ephemeral_dequantized_weights",
+    "deployment_performance_claims_allowed": false,
+    "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+  },
+  "paths": {
+    "setup_dir": "out/layer_sensitivity/setup",
+    "merged_manifest": "out/layer_sensitivity/setup/merged_model_manifest.json",
+    "input_freeze": "out/layer_sensitivity/setup/input_freeze.json",
+    "dataset_dir": "datasets_contextual",
+    "baseline_config": "configs/baseline.json",
+    "quality_config": "configs/quality_repair_4080.json",
+    "output_root": "out/layer_sensitivity/matrix",
+    "ref_fp_report": "out/layer_sensitivity/pilot_merged_fp16/comparison_report.json",
+    "ref_nf4_report": "out/quality_repair_7b_qlora_v2_final_pilot/comparison_report.json"
+  },
+  "expected_identity": {
+    "adapter_weights_sha256": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4",
+    "adapter_tree_sha256": "f5ea0841df97ff9a3c1c0c457a905fd61db185de0af6fc3dbe69f40306a95f3b",
+    "merged_tree_sha256": "c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946",
+    "pilot_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+    "block_path": "model.layers",
+    "block_count": 28
+  },
+  "precision": {
+    "int4": {
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 32,
+      "scheme": "symmetric_groupwise",
+      "label": "W4A16-g32"
+    },
+    "int8": {
+      "weight_bits": 8,
+      "activation_bits": 16,
+      "group_size": null,
+      "scheme": "symmetric_per_output_channel",
+      "label": "W8A16"
+    },
+    "excluded_modules": ["embedding", "layernorm", "lm_head", "kv_cache"]
+  },
+  "evaluation": {
+    "mode": "pilot",
+    "dataset_role": "evaluation_dev",
+    "variant": "structured_json",
+    "pilot_size": 80,
+    "pilot_seed": 20261004,
+    "batch_size": 1,
+    "max_new_tokens": 256,
+    "device": "cuda:0",
+    "dtype": "float16"
+  },
+  "ranking": {
+    "baseline_plan": "all_int4",
+    "exclude_failed": true,
+    "tie_break": [
+      "net_correct_gain_desc",
+      "recovered_count_desc",
+      "numeric_accuracy_desc",
+      "quantization_error_recovery_desc",
+      "layer_index_asc"
+    ]
+  }
+}

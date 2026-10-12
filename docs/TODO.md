@@ -539,28 +539,28 @@ Transformer block 恢复为 INT8，测量该层带来的量化误差下降和金
 - [x] 实现 `configs/layer_sensitivity_setup.json`、`src/quantization/layer_sensitivity_setup.py` 和 `scripts/prepare_layer_sensitivity.py`，提供 `merge/freeze/compare-pilot` 三个独立且不覆盖旧证据的命令
 - [x] 实现 7.1.1 单元测试，覆盖精度契约、层自动发现、目录哈希、pilot 索引哈希、多标签分类、长上下文选择和配对对比
 - [x] 根据用户于 2026-10-12 的服务器核对结果，确认训练服务器 hydrated `models/data/finqa_qlora_7b_v2/adapter_model.safetensors` 大小为 `161533192` 字节，SHA256 为 `c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4`，与修正后的 6.7.5 冻结记录一致；`771482db...` 仅为 LFS 指针哈希
-- [ ] 记录 Qwen2.5-7B-Instruct 基座模型、step 724 adapter、tokenizer 和数据集的绝对路径、版本与 SHA256
-- [ ] 将冻结的 step 724 LoRA adapter 合并到 BF16/FP16 基座模型，导出专用的 7.1 实验母版和 manifest
-- [ ] 在固定 80 条 pilot 上核对 merged BF16/FP16 与已冻结 QLoRA/NF4 的输出和质量差异；不要覆盖 6.7.5 冻结证据
+- [x] 在服务器生成 `input_freeze.json`，记录 Qwen2.5-7B-Instruct 基座模型、step 724 adapter、tokenizer 和数据集的绝对路径、版本与逐文件 SHA256
+- [x] 将冻结的 step 724 LoRA adapter 合并到 FP16 基座模型，导出 7.1 实验母版和 `merged_model_manifest.json`；merged 目录树 SHA256 为 `c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946`
+- [x] 在固定 80 条 pilot 上核对 merged FP16 与已冻结 QLoRA/NF4；两者均为 `37/80`、解析 `80/80`，5 条恢复、5 条退化，总分相同但逐样本不等价
 - [x] 明确 7.1 中 INT4 为 `W4A16 group_size=32`，INT8 为 `W8A16`，激活统一保持 FP16/BF16，并写入可校验配置
 - [x] 明确 7.1 不把 AWQ W4A16 与 SmoothQuant W8A8 直接作为逐层对照，配置验证会拒绝丢失该限制的实验契约
-- [ ] 冻结 1024 条 calibration、80 条 pilot、883 条 FinQA dev、91 条 contextual 高风险集及最长 10% 上下文子集的样本清单与哈希
-- [ ] 冻结 `structured_json` Prompt、`max_new_tokens=256`、`do_sample=false`、`num_beams=1`、数值容差和评分器版本
-- [ ] 实验前生成并冻结金额、比例/利率、日期/期限的多标签样本分类，记录每类样本数
-- [x] 实现从模型实例自动发现 Transformer block 路径与层数，禁止在脚本中硬编码层数；待服务器合并时回传实际路径和层数
+- [x] 冻结 1024 条 calibration、80 条 pilot、883 条 FinQA dev、91 条 contextual 高风险集及 89 条最长上下文子集的样本清单与哈希
+- [x] 冻结 `structured_json` Prompt、`max_new_tokens=256`、`do_sample=false`、`num_beams=1`、数值容差和评分器版本
+- [x] 生成并冻结金额、比例/利率、日期/期限多标签，样本数分别为 `338/567/709`；计数可重叠，不应求和为 883
+- [x] 实现从模型实例自动发现 Transformer block 路径与层数，服务器实际发现路径为 `model.layers`、层数为 `28`
 
 #### 7.1.2 工具与实验矩阵
 
-- [ ] 新增 `configs/layer_sensitivity.json`，定义模型、位宽、group size、数据子集、生成参数、排名规则和输出路径
-- [ ] 新增 `src/quantization/layer_sensitivity.py`，支持模型身份校验、逐层精度替换、误差采集、评测、断点续跑和排名汇总
-- [ ] 新增 `tests/test_layer_sensitivity.py`，覆盖层发现、位宽配置、单层替换、加权误差、断点续跑、失败排除和排名 tie-break
+- [x] 新增 `configs/layer_sensitivity.json`，定义模型、位宽、group size、数据子集、生成参数、排名规则和输出路径
+- [x] 新增 `src/quantization/layer_sensitivity.py` 和 `scripts/run_layer_sensitivity.py`，支持模型身份校验、逐层精度替换、误差采集、评测、断点续跑、配对转移和预览排名汇总
+- [x] 新增 `tests/test_layer_sensitivity.py`，覆盖矩阵完整性、单层替换、加权误差、身份与参考组校验、断点续跑、配对转移、失败排除和排名 tie-break
 - [ ] 生成 `REF-FP`：merged BF16/FP16 数学参考
 - [ ] 保留 `REF-NF4`：6.7.5 冻结 QLoRA/NF4 业务参考
 - [ ] 生成 `ALL-I4`：所有 Transformer block 使用 W4A16 g32
 - [ ] 生成 `ALL-I8`：所有 Transformer block 使用 W8A16
 - [ ] 为每个第 `i` 层生成 `L-i-I8`：仅第 `i` 层使用 W8A16，其余 Transformer block 使用 W4A16 g32
 - [ ] 确认每个 `L-i-I8` 除目标层位宽外的权重、校准统计、Prompt、生成参数和评分路径完全一致
-- [ ] 完成后端不支持真实混合位宽时的 fake-quant 敏感性路径，并在 manifest 中明确标记其不代表真实存储、显存或加速收益
+- [x] 完成后端不支持真实混合位宽时的 symmetric fake-quant 敏感性路径：INT4 使用 W4A16 g32，INT8 使用 per-output-channel W8A16，manifest 明确禁止声称真实存储、显存、延迟或吞吐收益
 
 #### 7.1.3 量化误差采集
 
