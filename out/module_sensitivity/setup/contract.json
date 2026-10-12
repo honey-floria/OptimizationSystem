@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.1",
+  "status": "awaiting_model_inspection",
+  "created_at": "2026-10-12T10:12:09.798757+00:00",
+  "experiment_name": "finqa-module-sensitivity-contract",
+  "upstream": {
+    "status": "pass",
+    "model_identity": {
+      "merged_tree_sha256": "c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946",
+      "adapter_tree_sha256": "f5ea0841df97ff9a3c1c0c457a905fd61db185de0af6fc3dbe69f40306a95f3b",
+      "adapter_weights_sha256": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4",
+      "tokenizer_tree_sha256": "5e3e658cb45bd87f66bc33c118a7359d8905da7d3c20b18710ad537f85a0ad33"
+    },
+    "transformer_blocks": {
+      "path": "model.layers",
+      "count": 28
+    },
+    "subset_hashes": {
+      "calibration": "dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092",
+      "evaluation_dev": "d9a4a3818e0ac2612a16c388574e5d9c888a2f1563da115457bcb48097f700eb",
+      "contextual_high_risk": "441fdc055de9b7b9a1c24872153da9278c102630ce3d235f97d0c70523994c44",
+      "long_context": "4b8c2d16ae3b053aed47a0fb502a0f6e44d0e233ad506040813a188377a6b936"
+    },
+    "evaluation_contract": {
+      "variant": "structured_json",
+      "pilot_size": 80,
+      "pilot_seed": 20261004,
+      "dev_size": 883,
+      "calibration_size": 1024,
+      "high_risk_size": 91,
+      "long_context_fraction": 0.1,
+      "tolerance": 0.0001,
+      "generation": {
+        "max_new_tokens": 256,
+        "do_sample": false,
+        "num_beams": 1
+      },
+      "scorer": "src.evaluation.finqa_metrics:evaluate_numeric_answers"
+    },
+    "all_int4_reference": {
+      "plan_sha256": "9b9b74bea5bfdc37aae2a01b32ec45f63236bb7d29efb920f29dccecb1cf3db0",
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "predictions_sha256": "4bcd0dac2343e532c14b7838d43d6d7dbe3cd7786542a41ef3490e7d6456c11b",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 36,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.45
+      }
+    },
+    "artifacts": {
+      "merged_manifest": {
+        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/merged_model_manifest.json",
+        "sha256": "261156009d4673753e8ff8e7ec46efee3058739285dfe5ed4a5904c96867329d"
+      },
+      "input_freeze": {
+        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
+        "sha256": "f08a9e0a79ffcfa135357b98fd145ddbbda5f288146872fddb78fd43e6bc1385"
+      },
+      "layer_matrix_manifest": {
+        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/experiment_manifest.json",
+        "sha256": "0fe74c8f0c3812931a4a75cb0e0ce6bbe7ab4946650eb65b66815ee938987fdc"
+      },
+      "all_int4_plan": {
+        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/plan.json",
+        "sha256": "caaeefee87871f1cd40be8da2930e2c2fd0a370383a087fe11fc9ff590842e18"
+      },
+      "all_int4_result": {
+        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/result.json",
+        "sha256": "7494504620a26096c94992dd6be3a17dbb1a2adc28f1c7cb7abd8dbe305706a5"
+      },
+      "all_int4_report": {
+        "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/all_int4/comparison_report.json",
+        "sha256": "f0b034e8500dca002e484b47b88a72491521258ba5f010aed2367f3a4397dad3"
+      }
+    },
+    "merged_model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16"
+  },
+  "module_groups": {
+    "attention": [
+      "self_attn.q_proj",
+      "self_attn.k_proj",
+      "self_attn.v_proj",
+      "self_attn.o_proj"
+    ],
+    "mlp": [
+      "mlp.gate_proj",
+      "mlp.up_proj",
+      "mlp.down_proj"
+    ],
+    "block_norms": [
+      "input_layernorm",
+      "post_attention_layernorm"
+    ]
+  },
+  "precision": {
+    "linear_int4": {
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 32,
+      "axis": "input_dimension",
+      "scheme": "symmetric_groupwise",
+      "label": "W4A16-g32"
+    },
+    "linear_int8": {
+      "weight_bits": 8,
+      "activation_bits": 16,
+      "group_size": null,
+      "axis": "output_channel",
+      "scheme": "symmetric_per_output_channel",
+      "label": "W8A16"
+    },
+    "embedding": {
+      "allowed": [
+        "fp16",
+        "int8",
+        "int4"
+      ],
+      "int4": {
+        "group_size": 32,
+        "axis": "embedding_dimension",
+        "scheme": "symmetric_groupwise",
+        "zero_point": 0
+      },
+      "int8": {
+        "group_size": null,
+        "axis": "embedding_row",
+        "scheme": "symmetric_per_row",
+        "zero_point": 0
+      }
+    },
+    "lm_head": {
+      "allowed": [
+        "fp16",
+        "int8",
+        "int4"
+      ],
+      "int4": {
+        "group_size": 32,
+        "axis": "input_dimension",
+        "scheme": "symmetric_groupwise",
+        "zero_point": 0
+      },
+      "int8": {
+        "group_size": null,
+        "axis": "output_channel",
+        "scheme": "symmetric_per_output_channel",
+        "zero_point": 0
+      }
+    },
+    "norm": {
+      "allowed": [
+        "fp16",
+        "int8",
+        "int4"
+      ],
+      "int4": {
+        "group_size": null,
+        "axis": null,
+        "scheme": "symmetric_per_tensor",
+        "zero_point": 0
+      },
+      "int8": {
+        "group_size": null,
+        "axis": null,
+        "scheme": "symmetric_per_tensor",
+        "zero_point": 0
+      }
+    },
+    "shared_weight_policy": "joint_plan_only"
+  },
+  "weight_backend": {
+    "name": "symmetric_fake_quant",
+    "artifact_kind": "ephemeral_dequantized_weights",
+    "deployment_performance_claims_allowed": false
+  },
+  "kv_cache": {
+    "requested_precisions": [
+      "fp16",
+      "int8",
+      "int4"
+    ],
+    "cache_tensors": [
+      "key",
+      "value"
+    ],
+    "phases": [
+      "prefill",
+      "decode"
+    ],
+    "quantize_at": "cache_write",
+    "dequantize_at": "attention_read",
+    "scale_mode": "backend_native_dynamic",
+    "granularity": "record_from_runtime_backend",
+    "cache_layout": "record_from_runtime_backend",
+    "weight_fake_quant_allowed": false,
+    "sensitivity_qdq_hook_allowed": true,
+    "real_backend": {
+      "name": "transformers_quantized_cache",
+      "implementation": "runtime_probe_required",
+      "supports_real_int8": false,
+      "supports_real_int4": false,
+      "performance_claims_allowed_before_runtime_probe": false
+    }
+  },
+  "runtime_inspection": {
+    "device_map": "cpu",
+    "dtype": "float16",
+    "local_files_only": true,
+    "trust_remote_code": false
+  },
+  "contract_sha256": "8afd42c78b3ce44fcfc2acb3a77fa9b529f6df2749aa44db9a4885e7fa936eb5"
+}

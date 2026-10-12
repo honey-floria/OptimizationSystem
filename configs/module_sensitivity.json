@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.1",
+  "experiment_name": "finqa-module-sensitivity-contract",
+  "paths": {
+    "merged_manifest": "out/layer_sensitivity/setup/merged_model_manifest.json",
+    "input_freeze": "out/layer_sensitivity/setup/input_freeze.json",
+    "layer_matrix_manifest": "out/layer_sensitivity/matrix/experiment_manifest.json",
+    "all_int4_plan": "out/layer_sensitivity/matrix/all_int4/plan.json",
+    "all_int4_result": "out/layer_sensitivity/matrix/all_int4/result.json",
+    "all_int4_report": "out/layer_sensitivity/matrix/all_int4/comparison_report.json",
+    "dataset_dir": "datasets_contextual",
+    "baseline_config": "configs/baseline.json",
+    "quality_config": "configs/quality_repair_4080.json",
+    "output_root": "out/module_sensitivity/setup",
+    "experiment_output_root": "out/module_sensitivity/pilot"
+  },
+  "expected_identity": {
+    "adapter_weights_sha256": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4",
+    "adapter_tree_sha256": "f5ea0841df97ff9a3c1c0c457a905fd61db185de0af6fc3dbe69f40306a95f3b",
+    "merged_tree_sha256": "c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946",
+    "tokenizer_tree_sha256": "5e3e658cb45bd87f66bc33c118a7359d8905da7d3c20b18710ad537f85a0ad33",
+    "pilot_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+    "calibration_subset_sha256": "dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092",
+    "evaluation_dev_subset_sha256": "d9a4a3818e0ac2612a16c388574e5d9c888a2f1563da115457bcb48097f700eb",
+    "high_risk_subset_sha256": "441fdc055de9b7b9a1c24872153da9278c102630ce3d235f97d0c70523994c44",
+    "long_context_subset_sha256": "4b8c2d16ae3b053aed47a0fb502a0f6e44d0e233ad506040813a188377a6b936",
+    "block_path": "model.layers",
+    "block_count": 28
+  },
+  "evaluation_contract": {
+    "variant": "structured_json",
+    "pilot_size": 80,
+    "pilot_seed": 20261004,
+    "dev_size": 883,
+    "calibration_size": 1024,
+    "high_risk_size": 91,
+    "long_context_fraction": 0.1,
+    "tolerance": 0.0001,
+    "generation": {
+      "max_new_tokens": 256,
+      "do_sample": false,
+      "num_beams": 1
+    },
+    "scorer": "src.evaluation.finqa_metrics:evaluate_numeric_answers"
+  },
+  "module_groups": {
+    "attention": ["self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj"],
+    "mlp": ["mlp.gate_proj", "mlp.up_proj", "mlp.down_proj"],
+    "block_norms": ["input_layernorm", "post_attention_layernorm"]
+  },
+  "precision": {
+    "linear_int4": {
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 32,
+      "axis": "input_dimension",
+      "scheme": "symmetric_groupwise",
+      "label": "W4A16-g32"
+    },
+    "linear_int8": {
+      "weight_bits": 8,
+      "activation_bits": 16,
+      "group_size": null,
+      "axis": "output_channel",
+      "scheme": "symmetric_per_output_channel",
+      "label": "W8A16"
+    },
+    "embedding": {
+      "allowed": ["fp16", "int8", "int4"],
+      "int4": {
+        "group_size": 32,
+        "axis": "embedding_dimension",
+        "scheme": "symmetric_groupwise",
+        "zero_point": 0
+      },
+      "int8": {
+        "group_size": null,
+        "axis": "embedding_row",
+        "scheme": "symmetric_per_row",
+        "zero_point": 0
+      }
+    },
+    "lm_head": {
+      "allowed": ["fp16", "int8", "int4"],
+      "int4": {
+        "group_size": 32,
+        "axis": "input_dimension",
+        "scheme": "symmetric_groupwise",
+        "zero_point": 0
+      },
+      "int8": {
+        "group_size": null,
+        "axis": "output_channel",
+        "scheme": "symmetric_per_output_channel",
+        "zero_point": 0
+      }
+    },
+    "norm": {
+      "allowed": ["fp16", "int8", "int4"],
+      "int4": {
+        "group_size": null,
+        "axis": null,
+        "scheme": "symmetric_per_tensor",
+        "zero_point": 0
+      },
+      "int8": {
+        "group_size": null,
+        "axis": null,
+        "scheme": "symmetric_per_tensor",
+        "zero_point": 0
+      }
+    },
+    "shared_weight_policy": "joint_plan_only"
+  },
+  "weight_backend": {
+    "name": "symmetric_fake_quant",
+    "artifact_kind": "ephemeral_dequantized_weights",
+    "deployment_performance_claims_allowed": false
+  },
+  "kv_cache": {
+    "requested_precisions": ["fp16", "int8", "int4"],
+    "cache_tensors": ["key", "value"],
+    "phases": ["prefill", "decode"],
+    "quantize_at": "cache_write",
+    "dequantize_at": "attention_read",
+    "scale_mode": "backend_native_dynamic",
+    "granularity": "record_from_runtime_backend",
+    "cache_layout": "record_from_runtime_backend",
+    "weight_fake_quant_allowed": false,
+    "sensitivity_qdq_hook_allowed": true,
+    "real_backend": {
+      "name": "transformers_quantized_cache",
+      "implementation": "runtime_probe_required",
+      "supports_real_int8": false,
+      "supports_real_int4": false,
+      "performance_claims_allowed_before_runtime_probe": false,
+      "runtime_arguments": {
+        "int8": {
+          "cache_implementation": "quantized",
+          "cache_config": {
+            "backend": "hqq",
+            "nbits": 8,
+            "axis_key": 1,
+            "axis_value": 1
+          }
+        },
+        "int4": {
+          "cache_implementation": "quantized",
+          "cache_config": {
+            "backend": "hqq",
+            "nbits": 4,
+            "axis_key": 1,
+            "axis_value": 1
+          }
+        }
+      }
+    }
+  },
+  "pilot_evaluation": {
+    "dataset_role": "evaluation_dev",
+    "variant": "structured_json",
+    "pilot_size": 80,
+    "pilot_seed": 20261004,
+    "batch_size": 1,
+    "max_new_tokens": 256,
+    "device": "cuda:0",
+    "dtype": "float16"
+  },
+  "runtime_inspection": {
+    "device_map": "cpu",
+    "dtype": "float16",
+    "local_files_only": true,
+    "trust_remote_code": false
+  }
+}

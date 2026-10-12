@@ -589,30 +589,79 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 - [x] 在固定 80 条 pilot 上完成 `REF-FP/REF-NF4/ALL-I4/ALL-I8` 和全部 `L-i-I8`；30/30 个可运行计划完成且无 pending
 - [x] 对每个层候选记录数值准确率、正确数、解析率、structured output rate、format retry 次数和运行时间；30 个计划总耗时约 84.59 分钟
 - [x] 逐样本记录 `ALL-I4` 错→`L-i-I8` 对的 `recovered`、`ALL-I4` 对→`L-i-I8` 错的 `regressed` 及净正确数变化
-- [ ] 在金额、比例/利率、日期/期限子集上同时报告“正确数/总数”和比例；已实现从完整 dev 预测按冻结多标签派生计数、比例和配对转移，待服务器完整 dev 结果生成后验收
-- [ ] 记录最长 10% 上下文子集和 91 条 contextual 高风险集的恢复数、退化数、解析率和结构化输出变化；已实现 89 条长上下文派生统计及独立 91 条高风险 suite，待服务器运行
-- [ ] 至少重复运行 `ALL-I4` 和一个哨兵层，确认确定性生成可逐条复现；已冻结 `ALL-I4 + layer-22` 哨兵复跑及逐行/文件 SHA256 完全一致验收，待服务器运行
-- [ ] 对 pilot 第一梯队 `L-10-I8/L-22-I8/L-23-I8` 执行完整 883 条 FinQA dev；2026-10-12 经用户确认改为候选子集验证，复用已完成的 `ALL-I4/ALL-I8` full-dev 参考，不再等待其余 25 层，结果不得表述为 28 层完整排名
+- [x] 在金额、比例/利率、日期/期限子集上同时报告“正确数/总数”和比例；layer 23 三类分别为 `133/338`、`204/567`、`277/709`，相对 ALL-I4 净增 `6/13/15` 题
+- [x] 记录最长 10% 上下文子集和 91 条 contextual 高风险集的恢复数、退化数、解析率和结构化输出变化；layer 23 长上下文净增 1 题且高风险 0 恢复/0 退化，layer 10 两者均净增 1，layer 22 长上下文净退化 1
+- [x] 至少重复运行 `ALL-I4` 和一个哨兵层，确认确定性生成可逐条复现；`ALL-I4 + layer-22` 的 80 行复跑均 exact match，预测文件 SHA256 分别为 `4bcd0dac...` 和 `d1451160...`
+- [x] 对 pilot 第一梯队 `L-10-I8/L-22-I8/L-23-I8` 执行完整 883 条 FinQA dev；三层分别为 `330/883`、`328/883`、`344/883`，结果是候选子集验证，不表述为 28 层完整排名
 
 #### 7.1.5 排名、产物与验收
 
 - [x] 定义 `quality_recovery_i = accuracy(L-i-I8) - accuracy(ALL-I4)`，并同时保留 `recovered_count/regressed_count/net_correct_gain`；pilot 第一梯队为 layer 10/22/23，均净增 2 题
-- [ ] 候选排名优先级固定为：`net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、normalized quantization error、层号；规则已写入 final contract，仅在 10/22/23 三层内排序
-- [ ] 为质量恢复量生成 bootstrap 置信区间，并在大量并列或区间高度重叠时降低排名结论强度；已实现 10,000 次确定性配对 percentile bootstrap 和结论强度降级，待完整 dev 预测输入
-- [ ] 输出 `experiment_manifest.json`、`layer_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`；候选合同共审计 11 次运行（determinism 2、full-dev 5、high-risk 4），其中已有结果可幂等复用，待服务器完成剩余 7 次后验收
+- [x] 候选排名优先级固定为：`net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、normalized quantization error、层号；最终候选顺序为 `23 > 10 > 22`
+- [x] 为质量恢复量生成 bootstrap 置信区间，并在大量并列或区间高度重叠时降低排名结论强度；layer 23/10/22 的 95% 区间分别为 `[+0.68,+3.06]`、`[-0.79,+1.25]`、`[-1.25,+1.25]` 个百分点，Top-2 区间重叠，因此总体排名强度为 `low`
+- [x] 输出 `experiment_manifest.json`、`layer_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`；11/11 合同运行完成、pending 全空、`invalid_runs=[]`，七项最终产物 SHA256 全部复核一致
 - [x] 验收时确认所有 Transformer block 均有 INT4/INT8 误差和业务评测记录；30/30 schema v2 计划通过范围、文件哈希与结果引用审计，无失败或缺失运行进入排名
 - [x] 验收时确认每个 pilot 排名结论都能回溯到模型 manifest、量化配置、固定样本哈希、逐样本预测和逐层/模块误差记录；原始 schema v1 证据亦保留用于 lineage 核对
-- [ ] 将三层候选验证排名及推荐保护层集合写入项目总文档，作为 7.4 混合精度候选生成输入；明确它不是 28 层完整 layer sensitivity ranking
+- [x] 将三层候选验证排名及推荐保护层集合写入项目总文档；合同推荐为 `[23,10]`，保守解释为 layer 23 确定保护、layer 10 组合候选、layer 22 排除，并明确它不是 28 层完整 layer sensitivity ranking
 
 ### 7.2 模块敏感性分析
 
-- [ ] 对 Attention 模块执行单独量化实验
-- [ ] 对 MLP 模块执行单独量化实验
-- [ ] 对 Embedding 执行精度对比
-- [ ] 对 lm_head 执行精度对比
-- [ ] 对 LayerNorm 执行精度对比
-- [ ] 对 KV Cache 执行精度对比
-- [ ] 生成模块级敏感性报告
+目标：在 7.1 已冻结的 merged FP16 母版、`ALL-I4`、样本清单、Prompt、生成参数和评分器上，进一步回答
+“同一层内 Attention 与 MLP 哪一类更值得保护，以及 Embedding、Norm、`lm_head` 和 KV Cache 是否可以安全
+降精度”。Attention/MLP 使用“从 `ALL-I4` 恢复为 INT8 后挽回多少质量”的恢复实验；7.1 中原本保持
+FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的退化实验。两类分数方向不同，必须分榜报告，
+不得直接混成一个排名。
+
+#### 7.2.1 前置条件与实验契约
+
+- [x] 复用并校验 7.1.1 的模型身份、目录哈希、tokenizer、calibration/pilot/dev/high-risk/长上下文样本哈希、Prompt、生成参数、随机种子和评分器；本地 `prepare` 合同审计已通过，禁止重新抽样形成不可比结果
+- [x] 校验 `ALL-I4` 计划、plan SHA256、80 条 pilot 样本哈希、结果与预测哈希完整可追溯；以其逐样本预测作为 Attention/MLP 恢复实验的唯一主对照，不重复生成另一份同名基线
+- [ ] 自动发现并登记实际模块路径：代码已覆盖每层 Attention 的 `q/k/v/o_proj`、MLP 的 `gate/up/down_proj`、Embedding、全部 RMSNorm/LayerNorm、最终 Norm 和 `lm_head`，不硬编码层数；待训练服务器执行真实模型 `inspect-model` 后验收
+- [x] 冻结模块分组与精度规则：Linear 沿用 7.1 的 W4A16 g32 和 per-output-channel W8A16；Embedding、Norm、`lm_head` 已独立记录量化轴、group size 与共享权重策略，配置不适用时失败而非静默回退
+- [ ] 检查 Embedding 与 `lm_head` 是否共享权重：已实现参数对象及底层 storage 双重检测与 `joint_plan_only` 约束，待训练服务器真实模型检查后确定计划类型
+- [x] 为 KV Cache 单独冻结能力审计契约：记录请求位宽、真实后端声明、模型 `use_cache/past_key_values` 接口和 Transformers QuantizedCache API；禁止把权重 fake-quant 当作 KV Cache 量化，真实 K/V 粒度、scale、layout 在 7.2.3 runtime probe 前保持未验证
+- [x] 明确 fake-quant 结果只用于质量敏感性；配置与 validation 在真实低比特存储和 kernel runtime probe 前固定 `deployment_performance_claims_allowed=false`
+- [x] 新增 `configs/module_sensitivity.json`、`src/quantization/module_sensitivity.py`、`scripts/run_module_sensitivity.py` 和 `tests/test_module_sensitivity.py`；当前覆盖上游身份、精度契约、模块发现、缺失模块失败、tied weights、Norm、KV Cache 能力检测与 CLI，两项运行矩阵相关覆盖随 7.2.2 实现
+
+#### 7.2.2 Attention 与 MLP 受控恢复矩阵
+
+- [ ] 生成 `ATTN-ALL-I8`：所有层仅 Attention 的 `q/k/v/o_proj` 恢复为 INT8，全部 MLP Linear 保持 INT4，用于测量 Attention 模块族的总体恢复量
+- [ ] 生成 `MLP-ALL-I8`：所有层仅 MLP 的 `gate/up/down_proj` 恢复为 INT8，全部 Attention Linear 保持 INT4，用于测量 MLP 模块族的总体恢复量
+- [ ] 为全部 28 个 block 分别生成 `L-i-ATTN-I8`：仅第 `i` 层 Attention 恢复为 INT8，其余受量化 Linear 保持与 `ALL-I4` 完全一致
+- [ ] 为全部 28 个 block 分别生成 `L-i-MLP-I8`：仅第 `i` 层 MLP 恢复为 INT8，其余受量化 Linear 保持与 `ALL-I4` 完全一致
+- [ ] 对每个计划校验只有声明的模块发生变化，并保存生效模块清单、权重前后哈希、量化配置和父基线引用；缺层、重复层、越界模块或意外修改均判失败
+- [ ] 逐模块记录参数量、权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例；模块族汇总按权重元素数加权，同时保留每个 Linear 明细
+- [ ] 使用 7.1 相同的 calibration 子集采集目标模块输出或 block 输出误差，至少记录 activation MSE、normalized MSE、cosine similarity 和异常值比例
+- [ ] 计算相对 `ALL-I4` 的 `recovered_count`、`regressed_count`、`net_correct_gain` 和准确率变化；另生成只用于组合审计的 `ATTN+MLP-ALL-I8`，确认其生效权重与 `ALL-I8` 完全一致，不一致即视为实现错误
+
+#### 7.2.3 Embedding、Norm、lm_head 与 KV Cache 降精度实验
+
+- [ ] 对 Embedding 分别执行 INT8 和 INT4 单模块降精度实验，其余模块固定为 `ALL-I4` 配置；记录质量损失、量化误差和实际参数/存储占比
+- [ ] 对 `lm_head` 分别执行 INT8 和 INT4 单模块降精度实验，其余模块固定；除业务指标外记录 logits MSE、top-1/top-k token 一致率和目标数值 token 的排名变化
+- [ ] 对 Norm 执行 FP16、INT8 和 INT4 对比；至少区分 block 内 input/post-attention Norm 与最终 Norm，并记录 scale/range、异常值和 NaN/Inf，避免将 Qwen 的 RMSNorm 错标为 LayerNorm
+- [ ] 若 Embedding 与 `lm_head` 权重共享，改为执行共享权重计划，并在报告中单列其参数收益和不可独立归因限制
+- [ ] 在同一权重基线上对 KV Cache 执行 FP16、INT8 和 INT4 对比；分别覆盖 prefill 与逐 token decode，并检查生成长度、batch size 和上下文长度完全一致
+- [ ] KV Cache 后端不支持真实 INT8/INT4 时，输出明确的 `unsupported` 能力审计；可增加标记为 sensitivity-only 的量化—反量化 hook，但不得据此声称真实 cache 显存或性能收益
+- [ ] 对真实 KV Cache 量化记录 cache bytes/token、峰值显存、TTFT、TPOT、端到端延迟、吞吐及输出质量，并验证请求期间低比特 cache 确实驻留而非立即反量化后长期保存为 FP16
+
+#### 7.2.4 两阶段业务评测与统计
+
+- [ ] 第一阶段在冻结的 80 条 pilot 上运行全部 Attention/MLP、特殊模块和可用 KV Cache 计划；失败、OOM、非有限值或输出数量不符的计划不得进入排名
+- [ ] pilot 后预注册完整 dev 晋级规则：优先选择正向恢复的 Attention/MLP 候选，以及质量损失最小且存在实际存储或计算收益的特殊模块候选；不得看完 full-dev 结果后改规则
+- [ ] 第二阶段在完整 883 条 FinQA dev 上评测晋级候选，并运行 91 条 contextual 高风险集和 89 条最长上下文子集；KV Cache 候选必须包含长上下文评测
+- [ ] 每个计划同时报告数值准确率、正确数、解析率、structured output rate、format retry、运行时间，以及金额、比例/利率、日期/期限三个冻结多标签子集的“正确数/总数”和比例
+- [ ] 保存逐样本 `recovered/regressed/unchanged` 转移；对特殊模块和 KV Cache 使用相对 FP16 特殊模块对照的 `degraded/recovered/net_correct_change`，不得误写成相对 `ALL-I4` 的模块恢复量
+- [ ] 至少复跑一个 Attention 哨兵、一个 MLP 哨兵和一个特殊模块或 KV Cache 哨兵，校验逐行预测与文件 SHA256；不能逐条复现时记录波动并增加重复次数
+- [ ] 使用固定种子的配对 bootstrap 生成 95% 置信区间；大量并列、区间跨 0 或高度重叠时，将结论降级为同一梯队而非给出虚假精确次序
+
+#### 7.2.5 排名、产物与验收
+
+- [ ] 分别生成 Attention/MLP“质量恢复榜”和特殊模块/KV Cache“质量损失—收益榜”；前者优先 `net_correct_gain` 和高风险非退化，后者先满足质量门禁，再比较真实显存、延迟和吞吐收益
+- [ ] 输出 `experiment_manifest.json`、`module_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`，所有汇总项均能回溯到计划、模型身份、样本哈希和逐样本预测
+- [ ] 报告 Attention 与 MLP 的全局模块族对比、逐层子模块排名、特殊模块保护建议、KV Cache 支持结论、置信区间和已知限制；明确哪些结论来自 fake-quant、哪些来自真实部署后端
+- [ ] 验收时确认 28 个 Attention 与 28 个 MLP 单层恢复计划无缺失、无重复、无越界，特殊模块计划覆盖适用精度，失败计划未进入排名
+- [ ] 形成供 7.4 使用的机器可读保护策略：推荐的层内模块集合、Embedding/Norm/`lm_head` 保留精度、KV Cache 位宽、质量门禁、后端约束和禁止组合
+- [ ] 将最终模块级结论、推荐配置及“不支持/无收益”的负结果写入项目总文档；未完成 full-dev 与真实后端验证前，不得将 pilot 排名表述为最终可部署方案
 
 ### 7.3 金融错误定位
 

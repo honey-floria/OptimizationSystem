@@ -51,6 +51,7 @@ configs/
 ├── quality_repair_4080.json          # 4080/服务器质量修复与 LoRA 评测配置
 ├── layer_sensitivity_setup.json      # 7.1.1 合并、输入冻结和 pilot 对比契约
 ├── layer_sensitivity.json            # 7.1.2 逐层精度替换矩阵与 fake-quant 契约
+├── module_sensitivity.json           # 7.2.1 模块发现、精度规则和 KV Cache 能力契约
 └── environment/
     ├── nvidia_colab_t4.json          # 已采集的 NVIDIA Colab/T4 环境模板
     └── ascend.pending.json           # 等待真实昇腾机器补齐的环境模板
@@ -66,7 +67,8 @@ scripts/
 ├── train_finqa_qlora.py              # 使用 FinQA train 训练 7B QLoRA adapter
 ├── run_quality_repair_4080.py         # 在 NVIDIA 上运行 FP16、LoRA、AWQ 或 GPTQ 质量评测
 ├── prepare_layer_sensitivity.py       # 合并 adapter、冻结 7.1.1 输入并比较 pilot
-└── run_layer_sensitivity.py           # 准备、续跑和汇总 7.1.2 逐层矩阵
+├── run_layer_sensitivity.py           # 准备、续跑和汇总 7.1.2 逐层矩阵
+└── run_module_sensitivity.py          # 冻结 7.2.1 合同并在服务器审计真实模型模块
 
 notebooks/
 └── optimization_system_all_colab.ipynb
@@ -138,6 +140,7 @@ src/
     ├── gptq.py                       # GPTQ INT4 导出、加载、评测和证据校验
     ├── int8_fp8.py                   # SmoothQuant INT8、FP8 能力探测和质量对比
     ├── comparison.py                 # 汇总 FP16/INT8/AWQ/GPTQ 的质量与性能报告
+    ├── module_sensitivity.py         # 7.2.1 上游合同、模块发现、tied weights 与 KV Cache 审计
     └── stage6_acceptance.py          # 第 6 章定制量化阶段验收
 ```
 
@@ -175,6 +178,7 @@ tests/
 ├── test_finqa_qlora.py               # QLoRA 数据转换和训练参数测试
 ├── test_layer_sensitivity_setup.py   # 7.1.1 输入冻结、层发现与 pilot 配对测试
 ├── test_layer_sensitivity.py         # 7.1.2 矩阵、精度替换、续跑和排名测试
+├── test_module_sensitivity.py        # 7.2.1 合同、模块发现、共享权重与 KV Cache 测试
 │
 ├── test_quantization_framework.py    # 统一量化契约测试
 ├── test_awq.py                       # AWQ 流程测试
