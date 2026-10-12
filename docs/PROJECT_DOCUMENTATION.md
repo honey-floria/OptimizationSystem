@@ -1593,3 +1593,117 @@ BitsAndBytes NF4 4-bit 基座加载加 QLoRA adapter，因此该结果不再标�
 `771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`。该哈希已写入
 `out/finqa_qlora_7b_v2/frozen_adapter.json`，6.7.5 质量与制品身份验收全部完成，第 7 章可以启动。完整验收清单
 见 `out/finqa_qlora_7b_v2/acceptance_6_7_5.json`。
+
+## 7.1 逐层敏感性分析执行设计（2026-10-12）
+
+### 目标与核心问题
+
+7.1 的目标不是再做一次全模型量化对比，而是通过受控的单层精度替换，回答“当所有 Transformer block
+均采用 INT4 时，把第 `i` 层恢复为 INT8 能挽回多少金融业务质量”。实验必须同时观察数值准确率、
+金融错误类型、长上下文、结构化输出和量化误差，最终为 7.4 生成可解释的混合精度配置。
+
+### 现有资产审计与前置结论
+
+当前 6.7.5 冻结对象为 Qwen2.5-7B-Instruct 基座上的 step 724 LoRA adapter，验收推理路径是 BitsAndBytes NF4
+4-bit 加载基座并挂载 adapter。它在完整 883 条 FinQA dev 上正确 `328/883`（`37.15%`），解析率和结构化
+输出成功率均为 `99.89%`；在 91 条 contextual 高风险集上正确 `21/91`。该结果作为已冻结的业务参考，
+不应被 7.1 的 merged 模型或量化产物覆盖。
+
+第 6 章保存在 `out/awq` 和 `out/gptq` 的正式量化证据来自旧 Qwen2.5-0.5B 模型，不能与新的 7B QLoRA
+基线作为同一实验矩阵。现有 7B AWQ/GPTQ pilot 则加载公开预量化基础模型，没有合并 step 724 adapter，
+同样不能代表当前冻结模型。因此 7.1 必须先从冻结 adapter 建立新的 7B merged BF16/FP16 实验母版，
+再从该母版产生统一口径的 INT4、INT8 和逐层混合精度候选。
+
+### 精度口径
+
+7.1 中将 INT4 固定为 `W4A16 group_size=32`，将 INT8 固定为 `W8A16`，激活统一保持 FP16/BF16。
+Embedding、LayerNorm、lm_head 和 KV Cache 在本节保持不变，它们的独立敏感性属于 7.2。这个定义
+使单层实验只改变权重位宽，避免把激活量化、量化算法和特殊模块精度的影响混在一起。
+
+因此不将 AWQ W4A16 与 SmoothQuant W8A8 直接作为逐层 INT4/INT8 对照。如部署后端不支持真实混合位宽，
+可先用统一 fake-quant 路径完成敏感性排名，但 manifest 必须清楚标记该结果仅表示质量敏感性，不能用于声称
+真实模型大小、显存、延迟或吞吐收益。
+
+### 实验矩阵
+
+| 标识 | 配置 | 用途 |
+|---|---|---|
+| `REF-FP` | step 724 adapter 合并后的 BF16/FP16 模型 | 权重与激活误差的数学参考 |
+| `REF-NF4` | 6.7.5 冻结 QLoRA/NF4 路径 | 已验收的业务质量参考 |
+| `ALL-I4` | 全部 Transformer block 为 W4A16 g32 | 逐层恢复实验的起点 |
+| `ALL-I8` | 全部 Transformer block 为 W8A16 | INT8 质量上限参考 |
+| `L-i-I8` | 第 `i` 层 W8A16，其余 block W4A16 g32 | 测量第 `i` 层的质量恢复量 |
+
+层路径和层数必须从模型配置及实例中自动发现，不在脚本中硬编码。每个 `L-i-I8` 除目标层位宽外，
+必须共享相同的模型母版、校准集、量化规则、Prompt、tokenizer、生成参数、数据顺序和评分器。
+
+### 量化误差和业务指标
+
+每层权重记录 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例。层内的多个 Linear
+矩阵按权重元素数加权汇总，不对尺寸差异很大的矩阵做简单平均。同时保留 `q_proj/k_proj/v_proj/o_proj`
+和 `gate_proj/up_proj/down_proj` 的明细，便于 7.2 直接复用。固定 calibration 样本还需采集层输出激活的
+MSE、normalized MSE 和 cosine similarity。
+
+业务评测以 `ALL-I4` 为配对基准，对每个 `L-i-I8` 记录：
+
+- 数值准确率、正确数、解析率和 structured output rate；
+- `ALL-I4` 错而单层 INT8 正确的 `recovered_count`；
+- `ALL-I4` 正确而单层 INT8 错误的 `regressed_count`；
+- `net_correct_gain = recovered_count - regressed_count`；
+- 金额、比例/利率、日期/期限子集的正确数和比例；
+- 最长 10% 上下文子集和 91 条 contextual 高风险集的恢复、退化、解析及结构化输出变化。
+
+金额、利率和日期标签在运行前生成并冻结，允许一条样本具有多个标签。样本数较少的类别必须报告“正确数/总数”，
+不得只报百分比。量化误差和业务质量的相关性单独分析；权重 MSE 不得直接代替业务敏感度排名。
+
+### 执行阶段和机时预估
+
+第一阶段在已有的固定 80 条 pilot 上遍历所有层，用于校验实验口径、发现失败层并获得初步排名。当前 7B
+QLoRA 的 80 条 `structured_json` 运行约需 3.2 分钟，所有层 pilot 扫描预计需要数小时。
+
+第二阶段对所有层执行完整 883 条 FinQA dev，才能产生严格意义上的完整 layer sensitivity ranking。当前单次
+完整 dev 约需 39 分钟；若模型共 28 层，逐层候选约需 18.2 小时，加入四个参考组和高风险回归后，
+整体应预留 20～22 小时的 GPU 机时。层数仍以脚本实际发现结果为准。如只对 pilot 排名的前若干层执行完整 dev，
+最终结论必须明确标记为“候选排名”，不能声称已完成所有层的正式排名。
+
+### 排名规则与统计稳定性
+
+定义：
+
+```text
+quality_recovery_i = accuracy(L-i-I8) - accuracy(ALL-I4)
+```
+
+主排名依次使用 `net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、
+normalized quantization error 和层号打破并列。对质量恢复量生成 bootstrap 置信区间；如多层区间高度重叠，
+报告应将它们标记为同一敏感度梯队，而不是过度解读单个名次。至少重复运行 `ALL-I4` 和一个哨兵层，
+检查确定性生成是否能逐条复现。
+
+### 工程产物和验收条件
+
+计划新增：
+
+```text
+configs/layer_sensitivity.json
+src/quantization/layer_sensitivity.py
+tests/test_layer_sensitivity.py
+
+out/layer_sensitivity/
+├── experiment_manifest.json
+├── baseline_fp/
+├── all_int4/
+├── all_int8/
+├── layer_00_int8/
+├── ...
+├── layer_metrics.jsonl
+├── sample_transitions.jsonl
+├── ranking.json
+├── ranking.csv
+├── report.md
+└── validation.json
+```
+
+实验脚本需支持模型与数据哈希校验、单层替换、误差采集、断点续跑、已完成项跳过、失败项隔离、
+逐样本状态迁移和自动排名。只有当所有 Transformer block 都具有可回溯的 INT4/INT8 误差及完整业务评测记录，
+且模型 manifest、配置、数据哈希、预测文件和排名能互相对应时，7.1 才可标记完成。任何失败、缺失或哈希不匹配的
+运行不得进入正式排名。

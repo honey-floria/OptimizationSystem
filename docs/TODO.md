@@ -530,13 +530,62 @@ Prompt，确认有效后再恢复 883 条完整评测。
 
 ### 7.1 逐层敏感性分析
 
-- [ ] 建立逐层替换精度的实验脚本
-- [ ] 对每层执行 INT4 与 INT8 对比
-- [ ] 记录每层量化误差
-- [ ] 记录每层业务质量变化
-- [ ] 记录金额、利率、日期类错误变化
-- [ ] 记录长上下文和结构化输出变化
-- [ ] 生成 layer sensitivity ranking
+目标：在保持模型、数据、Prompt、校准集和生成参数不变的前提下，以“全层 INT4”为起点，每次仅将一个
+Transformer block 恢复为 INT8，测量该层带来的量化误差下降和金融业务质量恢复量，为 7.4 的混合精度搜索
+提供可复现的层级排名。
+
+#### 7.1.1 实验口径与输入冻结
+
+- [ ] 记录 Qwen2.5-7B-Instruct 基座模型、step 724 adapter、tokenizer 和数据集的绝对路径、版本与 SHA256
+- [ ] 将冻结的 step 724 LoRA adapter 合并到 BF16/FP16 基座模型，导出专用的 7.1 实验母版和 manifest
+- [ ] 在固定 80 条 pilot 上核对 merged BF16/FP16 与已冻结 QLoRA/NF4 的输出和质量差异；不要覆盖 6.7.5 冻结证据
+- [ ] 明确 7.1 中 INT4 为 `W4A16 group_size=32`，INT8 为 `W8A16`，激活统一保持 FP16/BF16
+- [ ] 确认 7.1 不把 AWQ W4A16 与 SmoothQuant W8A8 直接作为逐层对照，避免同时改变量化算法和激活位宽
+- [ ] 冻结 1024 条 calibration、80 条 pilot、883 条 FinQA dev、91 条 contextual 高风险集及最长 10% 上下文子集的样本清单与哈希
+- [ ] 冻结 `structured_json` Prompt、`max_new_tokens=256`、`do_sample=false`、`num_beams=1`、数值容差和评分器版本
+- [ ] 实验前生成并冻结金额、比例/利率、日期/期限的多标签样本分类，记录每类样本数
+- [ ] 从模型配置和实例自动发现 Transformer block 路径与层数，禁止在脚本中硬编码层数
+
+#### 7.1.2 工具与实验矩阵
+
+- [ ] 新增 `configs/layer_sensitivity.json`，定义模型、位宽、group size、数据子集、生成参数、排名规则和输出路径
+- [ ] 新增 `src/quantization/layer_sensitivity.py`，支持模型身份校验、逐层精度替换、误差采集、评测、断点续跑和排名汇总
+- [ ] 新增 `tests/test_layer_sensitivity.py`，覆盖层发现、位宽配置、单层替换、加权误差、断点续跑、失败排除和排名 tie-break
+- [ ] 生成 `REF-FP`：merged BF16/FP16 数学参考
+- [ ] 保留 `REF-NF4`：6.7.5 冻结 QLoRA/NF4 业务参考
+- [ ] 生成 `ALL-I4`：所有 Transformer block 使用 W4A16 g32
+- [ ] 生成 `ALL-I8`：所有 Transformer block 使用 W8A16
+- [ ] 为每个第 `i` 层生成 `L-i-I8`：仅第 `i` 层使用 W8A16，其余 Transformer block 使用 W4A16 g32
+- [ ] 确认每个 `L-i-I8` 除目标层位宽外的权重、校准统计、Prompt、生成参数和评分路径完全一致
+- [ ] 完成后端不支持真实混合位宽时的 fake-quant 敏感性路径，并在 manifest 中明确标记其不代表真实存储、显存或加速收益
+
+#### 7.1.3 量化误差采集
+
+- [ ] 逐层记录权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例
+- [ ] 按权重元素数对层内 Linear 误差加权汇总，不对大小不同的矩阵做简单平均
+- [ ] 保留 `q_proj/k_proj/v_proj/o_proj` 和 `gate_proj/up_proj/down_proj` 明细，但 7.1 排名仅以完整 block 为单位
+- [ ] 使用固定 calibration 样本采集层输出激活 MSE、normalized MSE 和 cosine similarity
+- [ ] 单独报告量化误差与业务质量的相关性，不用权重 MSE 直接代替业务敏感度
+
+#### 7.1.4 两阶段业务评测
+
+- [ ] 先在固定 80 条 pilot 上执行 `REF-FP/REF-NF4/ALL-I4/ALL-I8` 和全部 `L-i-I8`，排查实验口径、失败层和明显异常
+- [ ] 对每个层候选记录数值准确率、正确数、解析率、structured output rate、format retry 次数和运行时间
+- [ ] 逐样本记录 `ALL-I4` 错→`L-i-I8` 对的 `recovered`、`ALL-I4` 对→`L-i-I8` 错的 `regressed` 及净正确数变化
+- [ ] 在金额、比例/利率、日期/期限子集上同时报告“正确数/总数”和比例；小样本类别不仅报百分比
+- [ ] 记录最长 10% 上下文子集和 91 条 contextual 高风险集的恢复数、退化数、解析率和结构化输出变化
+- [ ] 至少重复运行 `ALL-I4` 和一个哨兵层，确认确定性生成可逐条复现
+- [ ] pilot 通过后对全部 `L-i-I8` 执行完整 883 条 FinQA dev；若受机时限制只运行部分层，结论必须标记为“候选排名”而非完整层级排名
+
+#### 7.1.5 排名、产物与验收
+
+- [ ] 定义 `quality_recovery_i = accuracy(L-i-I8) - accuracy(ALL-I4)`，并同时保留 `recovered_count/regressed_count/net_correct_gain`
+- [ ] 排名优先级固定为：`net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、normalized quantization error、层号
+- [ ] 为质量恢复量生成 bootstrap 置信区间，并在大量并列或区间高度重叠时降低排名结论强度
+- [ ] 输出 `experiment_manifest.json`、`layer_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`
+- [ ] 验收时确认所有 Transformer block 均有 INT4/INT8 误差和业务评测记录，失败、缺失或哈希不匹配的运行不得进入排名
+- [ ] 验收时确认每个排名结论都能回溯到模型 manifest、量化配置、数据哈希、逐样本预测和逐层误差记录
+- [ ] 将最终 layer sensitivity ranking 及推荐保护层集合写入项目总文档，作为 7.4 混合精度候选生成的唯一输入
 
 ### 7.2 模块敏感性分析
 
