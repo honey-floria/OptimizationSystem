@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare, inspect, and run the TODO 7.1.2 sensitivity matrix."""
+"""Prepare, inspect, and run the TODO 7.1.2/7.1.3 sensitivity matrix."""
 
 from __future__ import annotations
 
@@ -13,11 +13,16 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.quantization.layer_sensitivity import (
+    audit_activation_reports,
     audit_error_reports,
+    pending_activation_plan_ids,
     pending_plan_ids,
+    prepare_activation_reference,
     prepare_matrix,
     recompute_plan_error,
+    run_activation_plan,
     run_plan,
+    summarize_activation_reports,
     summarize_matrix,
 )
 from src.quantization.layer_sensitivity_setup import (
@@ -40,6 +45,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "audit-errors",
         help="Validate all error reports, schema versions, hashes, and cosine ranges.",
     )
+    subparsers.add_parser(
+        "prepare-activation-reference",
+        help="Cache sampled FP16 block outputs on fixed calibration prompts.",
+    )
+    subparsers.add_parser(
+        "pending-activations",
+        help="List plans without a completed activation comparison.",
+    )
+    subparsers.add_parser(
+        "audit-activations",
+        help="Validate activation report schemas, hashes, and metric ranges.",
+    )
+    subparsers.add_parser(
+        "summarize-activations",
+        help="Summarize activation-error recovery relative to ALL-I4.",
+    )
     run = subparsers.add_parser("run-plan", help="Run one isolated fake-quant plan.")
     run.add_argument("--plan-id", required=True)
     repair = subparsers.add_parser(
@@ -47,6 +68,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Recompute one plan's error metrics without repeating quality inference.",
     )
     repair.add_argument("--plan-id", required=True)
+    activation = subparsers.add_parser(
+        "run-activation", help="Compare one plan with the cached FP16 activations."
+    )
+    activation.add_argument("--plan-id", required=True)
     return parser.parse_args(argv)
 
 
@@ -62,6 +87,18 @@ def main(argv: list[str] | None = None) -> int:
         payload = summarize_matrix(root, config)
     elif args.command == "audit-errors":
         payload = audit_error_reports(root, config)
+    elif args.command == "prepare-activation-reference":
+        payload = prepare_activation_reference(project_root=root, config=config)
+    elif args.command == "pending-activations":
+        payload = {"pending": pending_activation_plan_ids(root, config)}
+    elif args.command == "audit-activations":
+        payload = audit_activation_reports(root, config)
+    elif args.command == "summarize-activations":
+        payload = summarize_activation_reports(root, config)
+    elif args.command == "run-activation":
+        payload = run_activation_plan(
+            project_root=root, config=config, plan_id=args.plan_id
+        )
     elif args.command == "recompute-error":
         payload = recompute_plan_error(
             project_root=root, config=config, plan_id=args.plan_id

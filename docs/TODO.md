@@ -578,11 +578,11 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 
 #### 7.1.3 量化误差采集
 
-- [ ] 逐层记录权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例；已实现 schema v2 FP64 分块累计、范围校验、`recompute-error` 无推理修复和 `audit-errors` 审计，待服务器重算 30 个计划并确认 `status=pass`、`valid_plans=30` 后验收
+- [x] 逐层记录权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例；30 个计划已升级 schema v2，审计 `status=pass`、`valid_plans=30`、`invalid_plans=[]`，模块 cosine 范围为 `[0.9931837, 0.9999594]`
 - [x] 按权重元素数对层内 Linear 误差加权汇总，不对大小不同的矩阵做简单平均；28 层均有 7 个 Linear、全模型共 196 个模块
 - [x] 保留 `q_proj/k_proj/v_proj/o_proj` 和 `gate_proj/up_proj/down_proj` 明细，但 7.1 排名仅以完整 block 为单位
-- [ ] 使用固定 calibration 样本采集层输出激活 MSE、normalized MSE 和 cosine similarity
-- [x] 单独报告量化误差与业务质量的相关性：pilot 中误差恢复量对净正确数的 Pearson=-0.393、Spearman=-0.442，仅作描述，不用权重误差代替业务敏感度
+- [ ] 使用固定 calibration 样本采集层输出激活 MSE、normalized MSE 和 cosine similarity；已实现固定前 32 条 calibration、每条最多 512 token 中均匀抽取 32 个位置的 FP16 配对探针，以及参考缓存、30 计划断点续跑、SHA256 审计和汇总命令，待服务器完成 `30/30` 并回传结果后验收
+- [x] 单独报告量化误差与业务质量的相关性：schema v2 pilot 中误差恢复量对净正确数的 Pearson=-0.3932625、Spearman=-0.4421115，仅作描述，不用权重误差代替业务敏感度
 
 #### 7.1.4 两阶段业务评测
 
@@ -600,8 +600,8 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 - [ ] 排名优先级固定为：`net_correct_gain`、`recovered_count`、高风险恢复量、长上下文恢复量、结构化输出恢复量、normalized quantization error、层号
 - [ ] 为质量恢复量生成 bootstrap 置信区间，并在大量并列或区间高度重叠时降低排名结论强度
 - [ ] 输出 `experiment_manifest.json`、`layer_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`
-- [ ] 验收时确认所有 Transformer block 均有 INT4/INT8 误差和业务评测记录，失败、缺失或哈希不匹配的运行不得进入排名
-- [ ] 验收时确认每个排名结论都能回溯到模型 manifest、量化配置、数据哈希、逐样本预测和逐层误差记录
+- [x] 验收时确认所有 Transformer block 均有 INT4/INT8 误差和业务评测记录；30/30 schema v2 计划通过范围、文件哈希与结果引用审计，无失败或缺失运行进入排名
+- [x] 验收时确认每个 pilot 排名结论都能回溯到模型 manifest、量化配置、固定样本哈希、逐样本预测和逐层/模块误差记录；原始 schema v1 证据亦保留用于 lineage 核对
 - [ ] 将最终 layer sensitivity ranking 及推荐保护层集合写入项目总文档，作为 7.4 混合精度候选生成的唯一输入
 
 ### 7.2 模块敏感性分析

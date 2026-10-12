@@ -16,6 +16,7 @@ from src.quantization.layer_sensitivity_setup import (
     discover_transformer_blocks,
     load_json,
     resolve_project_path,
+    row_fingerprint,
     sha256_file,
     write_json,
 )
@@ -25,6 +26,7 @@ REFERENCE_KINDS = {"ref_fp", "ref_nf4"}
 RUNNABLE_KINDS = {"all_int4", "all_int8", "layer_int8"}
 ERROR_METRICS_SCHEMA_VERSION = 2
 ERROR_METRICS_CHUNK_SIZE = 1_048_576
+ACTIVATION_METRICS_SCHEMA_VERSION = 1
 
 
 def build_plan_matrix(block_count: int) -> list[dict[str, Any]]:
@@ -184,6 +186,80 @@ def _stable_error_statistics(
         "mse": mse,
         "cosine_similarity": cosine,
         "max_abs_error": max_abs_error,
+    }
+
+
+def select_evenly_spaced_positions(token_count: int, limit: int) -> list[int]:
+    """Select deterministic token positions, always including both endpoints."""
+
+    if token_count <= 0 or limit <= 0:
+        raise ValueError("token_count and limit must be positive.")
+    if token_count <= limit:
+        return list(range(token_count))
+    return [index * (token_count - 1) // (limit - 1) for index in range(limit)]
+
+
+def _empty_error_sums() -> dict[str, float | int]:
+    return {
+        "numel": 0,
+        "dot": 0.0,
+        "source_square_sum": 0.0,
+        "measured_square_sum": 0.0,
+        "error_square_sum": 0.0,
+        "max_abs_error": 0.0,
+    }
+
+
+def _accumulate_error_sums(
+    accumulator: dict[str, float | int],
+    source: Any,
+    measured: Any,
+    *,
+    torch_module: Any,
+    chunk_size: int = ERROR_METRICS_CHUNK_SIZE,
+) -> None:
+    if source.shape != measured.shape:
+        raise ValueError("Activation tensors have different shapes.")
+    left_flat = source.reshape(-1)
+    right_flat = measured.reshape(-1)
+    for start in range(0, left_flat.numel(), chunk_size):
+        stop = min(start + chunk_size, left_flat.numel())
+        left = left_flat[start:stop].to(dtype=torch_module.float64)
+        right = right_flat[start:stop].to(dtype=torch_module.float64)
+        difference = right - left
+        accumulator["dot"] += float(torch_module.sum(left * right).item())
+        accumulator["source_square_sum"] += float(torch_module.sum(left * left).item())
+        accumulator["measured_square_sum"] += float(torch_module.sum(right * right).item())
+        accumulator["error_square_sum"] += float(
+            torch_module.sum(difference * difference).item()
+        )
+        if difference.numel():
+            accumulator["max_abs_error"] = max(
+                float(accumulator["max_abs_error"]),
+                float(difference.abs().max().item()),
+            )
+    accumulator["numel"] += int(left_flat.numel())
+
+
+def _metrics_from_error_sums(sums: dict[str, float | int]) -> dict[str, Any]:
+    numel = int(sums["numel"])
+    if numel <= 0:
+        raise ValueError("Activation error statistics require at least one value.")
+    source_square_sum = float(sums["source_square_sum"])
+    measured_square_sum = float(sums["measured_square_sum"])
+    denominator = math.sqrt(source_square_sum * measured_square_sum)
+    if denominator > 0:
+        cosine = min(1.0, max(-1.0, float(sums["dot"]) / denominator))
+    else:
+        cosine = 1.0 if source_square_sum == measured_square_sum else 0.0
+    mse = float(sums["error_square_sum"]) / numel
+    source_power = source_square_sum / numel
+    return {
+        "numel": numel,
+        "mse": mse,
+        "nmse": mse / source_power if source_power > 0 else 0.0,
+        "cosine_similarity": cosine,
+        "max_abs_error": float(sums["max_abs_error"]),
     }
 
 
@@ -642,7 +718,7 @@ def audit_error_reports(
             checked += 1
         except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
             invalid.append({"plan_id": plan_id, "reason": str(exc)})
-    return {
+    audit = {
         "schema_version": 1,
         "stage": "7.1.2",
         "status": "pass" if not invalid else "fail",
@@ -653,6 +729,8 @@ def audit_error_reports(
         "module_cosine_min": min(cosines) if cosines else None,
         "module_cosine_max": max(cosines) if cosines else None,
     }
+    write_json(output_root / "error_audit.json", audit)
+    return audit
 
 
 def run_plan(
@@ -769,6 +847,568 @@ def run_plan(
     }
     write_json(result_path, result)
     return result
+
+
+def _activation_settings(config: dict[str, Any]) -> dict[str, Any]:
+    settings = config.get("activation_analysis")
+    if not isinstance(settings, dict):
+        raise ValueError("activation_analysis is missing from the sensitivity config.")
+    indices = settings.get("sample_indices")
+    if (
+        not isinstance(indices, list)
+        or not indices
+        or any(not isinstance(index, int) or index < 0 for index in indices)
+        or len(indices) != len(set(indices))
+    ):
+        raise ValueError("activation sample_indices must be unique non-negative integers.")
+    if int(settings.get("max_input_tokens", 0)) <= 0:
+        raise ValueError("activation max_input_tokens must be positive.")
+    if int(settings.get("token_positions_per_sample", 0)) < 2:
+        raise ValueError("activation token_positions_per_sample must be at least 2.")
+    if settings.get("truncation_side") not in {"left", "right"}:
+        raise ValueError("activation truncation_side must be left or right.")
+    return settings
+
+
+def _activation_reference_dir(root: Path, config: dict[str, Any]) -> Path:
+    return resolve_project_path(root, _activation_settings(config)["reference_dir"])
+
+
+def _block_hidden_state(output: Any) -> Any:
+    if hasattr(output, "shape"):
+        return output
+    if isinstance(output, (tuple, list)) and output and hasattr(output[0], "shape"):
+        return output[0]
+    raise ValueError("Transformer block hook did not receive a hidden-state tensor.")
+
+
+def _capture_block_outputs(
+    model: Any,
+    encoded: dict[str, Any],
+    positions: list[int],
+    *,
+    torch_module: Any,
+    cache_dtype: Any,
+) -> tuple[str, list[Any]]:
+    block_path, blocks = discover_transformer_blocks(model)
+    captured: list[Any | None] = [None] * len(blocks)
+    device = encoded["input_ids"].device
+    position_tensor = torch_module.tensor(positions, dtype=torch_module.long, device=device)
+    handles = []
+    for layer_index, block in enumerate(blocks):
+        def capture(_module: Any, _inputs: Any, output: Any, index: int = layer_index) -> None:
+            hidden = _block_hidden_state(output)
+            captured[index] = (
+                hidden.detach()
+                .index_select(1, position_tensor)
+                .contiguous()
+            )
+
+        handles.append(block.register_forward_hook(capture))
+    try:
+        backbone = getattr(model, "model", model)
+        with torch_module.inference_mode():
+            backbone(**encoded, use_cache=False, output_hidden_states=False)
+    finally:
+        for handle in handles:
+            handle.remove()
+    if any(value is None for value in captured):
+        raise ValueError("One or more transformer block hooks did not run.")
+    captured_values = [value for value in captured if value is not None]
+    return block_path, [
+        value.to(device="cpu", dtype=cache_dtype).contiguous()
+        for value in captured_values
+    ]
+
+
+def _tokenize_activation_prompt(
+    tokenizer: Any,
+    prompt: str,
+    *,
+    max_input_tokens: int,
+    device: str,
+) -> tuple[dict[str, Any], list[int]]:
+    encoded = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=max_input_tokens,
+        add_special_tokens=True,
+    )
+    input_ids = encoded["input_ids"][0].tolist()
+    if not input_ids:
+        raise ValueError("Tokenizer produced an empty activation input.")
+    return {name: tensor.to(device) for name, tensor in encoded.items()}, input_ids
+
+
+def _validate_activation_reference(
+    root: Path, config: dict[str, Any], manifest: dict[str, Any]
+) -> None:
+    settings = _activation_settings(config)
+    expected = config["expected_identity"]
+    if manifest.get("status") != "completed":
+        raise ValueError("Activation reference is not complete.")
+    if manifest.get("merged_tree_sha256") != expected["merged_tree_sha256"]:
+        raise ValueError("Activation reference uses the wrong merged model.")
+    if manifest.get("calibration_subset_sha256") != expected["calibration_subset_sha256"]:
+        raise ValueError("Activation reference uses the wrong calibration set.")
+    if manifest.get("sample_indices") != settings["sample_indices"]:
+        raise ValueError("Activation reference uses different calibration indices.")
+    if manifest.get("sample_indices_sha256") != canonical_json_sha256(
+        settings["sample_indices"]
+    ):
+        raise ValueError("Activation reference sample-index SHA256 differs.")
+    contract = manifest.get("probe_contract", {})
+    for field in (
+        "max_input_tokens",
+        "truncation_side",
+        "token_positions_per_sample",
+        "cache_dtype",
+    ):
+        if contract.get(field) != settings[field]:
+            raise ValueError(f"Activation reference contract changed: {field}.")
+    if contract.get("model_dtype") != settings["dtype"]:
+        raise ValueError("Activation reference contract changed: model_dtype.")
+    if (
+        contract.get("scope") != "sampled_block_output_token_states"
+        or contract.get("position_selection") != "evenly_spaced_include_endpoints"
+        or contract.get("use_cache") is not False
+    ):
+        raise ValueError("Activation reference probe semantics changed.")
+    if manifest.get("block_count") != expected["block_count"]:
+        raise ValueError("Activation reference block count changed.")
+    if manifest.get("block_path") != expected["block_path"]:
+        raise ValueError("Activation reference block path changed.")
+    samples = manifest.get("samples", [])
+    if [sample.get("source_index") for sample in samples] != settings["sample_indices"]:
+        raise ValueError("Activation reference sample records are incomplete or reordered.")
+    reference_dir = _activation_reference_dir(root, config)
+    for sample in samples:
+        shard = reference_dir / sample["cache_file"]
+        if not shard.is_file() or sha256_file(shard) != sample["cache_sha256"]:
+            raise ValueError(f"Activation reference shard is missing or changed: {shard.name}")
+
+
+def prepare_activation_reference(
+    *, project_root: str | Path, config: dict[str, Any]
+) -> dict[str, Any]:
+    """Cache sampled FP16 block outputs for fixed calibration prompts."""
+
+    root = Path(project_root).resolve()
+    settings = _activation_settings(config)
+    reference_dir = _activation_reference_dir(root, config)
+    manifest_path = reference_dir / "manifest.json"
+    if manifest_path.is_file():
+        existing = load_json(manifest_path)
+        try:
+            _validate_activation_reference(root, config, existing)
+            return {**existing, "resume_action": "skipped_completed"}
+        except (KeyError, TypeError, ValueError):
+            pass
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+    except ImportError as exc:
+        raise RuntimeError("Activation collection requires torch and transformers.") from exc
+    from src.data.finqa_assets import load_assets
+
+    paths = config["paths"]
+    expected = config["expected_identity"]
+    frozen_subsets = load_json(
+        resolve_project_path(root, paths["setup_dir"]) / "frozen_subsets.json"
+    )
+    calibration_entries = frozen_subsets["calibration"]
+    if canonical_json_sha256(calibration_entries) != expected["calibration_subset_sha256"]:
+        raise ValueError("Frozen calibration entries do not match the accepted SHA256.")
+    assets = load_assets(resolve_project_path(root, paths["dataset_dir"]))
+    indices = settings["sample_indices"]
+    if max(indices) >= len(assets.calibration):
+        raise ValueError("Activation sample index exceeds the calibration dataset.")
+    for index in indices:
+        if row_fingerprint(dict(assets.calibration[index])) != calibration_entries[index]["row_sha256"]:
+            raise ValueError(f"Calibration row identity changed at index {index}.")
+
+    merged_manifest = load_json(resolve_project_path(root, paths["merged_manifest"]))
+    model_path = Path(merged_manifest["merged_model"]["path"]).resolve()
+    dtype = _evaluation_dtype(torch, settings["dtype"])
+    cache_dtype = _evaluation_dtype(torch, settings["cache_dtype"])
+    tokenizer = AutoTokenizer.from_pretrained(
+        str(model_path), local_files_only=True, trust_remote_code=False
+    )
+    tokenizer.truncation_side = settings["truncation_side"]
+    model = AutoModelForCausalLM.from_pretrained(
+        str(model_path), local_files_only=True, trust_remote_code=False,
+        dtype=dtype, low_cpu_mem_usage=True,
+    )
+    model.to(settings["device"])
+    model.eval()
+    reference_dir.mkdir(parents=True, exist_ok=True)
+    samples = []
+    observed_block_path = None
+    started = time.perf_counter()
+    for ordinal, source_index in enumerate(indices):
+        encoded, input_ids = _tokenize_activation_prompt(
+            tokenizer,
+            assets.calibration_prompts[source_index],
+            max_input_tokens=int(settings["max_input_tokens"]),
+            device=settings["device"],
+        )
+        positions = select_evenly_spaced_positions(
+            len(input_ids), int(settings["token_positions_per_sample"])
+        )
+        block_path, layers = _capture_block_outputs(
+            model, encoded, positions, torch_module=torch, cache_dtype=cache_dtype
+        )
+        observed_block_path = observed_block_path or block_path
+        if block_path != observed_block_path or len(layers) != expected["block_count"]:
+            raise ValueError("Runtime transformer block discovery changed.")
+        shard_path = reference_dir / f"sample_{ordinal:03d}.pt"
+        temporary_path = shard_path.with_suffix(".pt.tmp")
+        torch.save({"layers": layers}, temporary_path)
+        temporary_path.replace(shard_path)
+        samples.append(
+            {
+                "ordinal": ordinal,
+                "source_index": source_index,
+                "row_sha256": calibration_entries[source_index]["row_sha256"],
+                "input_token_count": len(input_ids),
+                "input_ids_sha256": canonical_json_sha256(input_ids),
+                "selected_positions": positions,
+                "selected_positions_sha256": canonical_json_sha256(positions),
+                "cache_file": shard_path.name,
+                "cache_sha256": sha256_file(shard_path),
+                "cache_bytes": shard_path.stat().st_size,
+            }
+        )
+    manifest = {
+        "schema_version": 1,
+        "stage": "7.1.3",
+        "status": "completed",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "reference": "merged_fp16",
+        "merged_tree_sha256": expected["merged_tree_sha256"],
+        "calibration_subset_sha256": expected["calibration_subset_sha256"],
+        "sample_indices": indices,
+        "sample_indices_sha256": canonical_json_sha256(indices),
+        "selected_rows_sha256": canonical_json_sha256(
+            [calibration_entries[index] for index in indices]
+        ),
+        "probe_contract": {
+            "scope": "sampled_block_output_token_states",
+            "max_input_tokens": settings["max_input_tokens"],
+            "truncation_side": settings["truncation_side"],
+            "token_positions_per_sample": settings["token_positions_per_sample"],
+            "position_selection": "evenly_spaced_include_endpoints",
+            "model_dtype": settings["dtype"],
+            "cache_dtype": settings["cache_dtype"],
+            "use_cache": False,
+        },
+        "block_path": observed_block_path,
+        "block_count": expected["block_count"],
+        "samples": samples,
+        "total_cache_bytes": sum(sample["cache_bytes"] for sample in samples),
+        "duration_seconds": time.perf_counter() - started,
+    }
+    write_json(manifest_path, manifest)
+    return manifest
+
+
+def _merge_error_sums(
+    destination: dict[str, float | int], source: dict[str, float | int]
+) -> None:
+    for field in ("numel", "dot", "source_square_sum", "measured_square_sum", "error_square_sum"):
+        destination[field] += source[field]
+    destination["max_abs_error"] = max(
+        float(destination["max_abs_error"]), float(source["max_abs_error"])
+    )
+
+
+def validate_activation_error_report(report: dict[str, Any]) -> None:
+    if report.get("activation_metrics_schema_version") != ACTIVATION_METRICS_SCHEMA_VERSION:
+        raise ValueError("Activation report uses an obsolete metrics schema.")
+    if report.get("status") != "completed" or not report.get("layers"):
+        raise ValueError("Activation report is incomplete.")
+    for record in [*report["layers"], report.get("aggregate", {})]:
+        for field in ("mse", "nmse", "cosine_similarity", "max_abs_error"):
+            if not math.isfinite(float(record[field])):
+                raise ValueError(f"Non-finite activation metric: {field}")
+        if float(record["mse"]) < 0 or float(record["nmse"]) < 0:
+            raise ValueError("Activation MSE and NMSE must be non-negative.")
+        if not -1.0 <= float(record["cosine_similarity"]) <= 1.0:
+            raise ValueError("Activation cosine similarity must be in [-1, 1].")
+
+
+def run_activation_plan(
+    *, project_root: str | Path, config: dict[str, Any], plan_id: str
+) -> dict[str, Any]:
+    """Compare one fake-quant plan with the cached FP16 block outputs."""
+
+    root = Path(project_root).resolve()
+    settings = _activation_settings(config)
+    plan, plan_dir, experiment = load_prepared_plan(root, config, plan_id)
+    result_path = plan_dir / "activation_result.json"
+    report_path = plan_dir / settings["report_filename"]
+    reference_dir = _activation_reference_dir(root, config)
+    reference_manifest_path = reference_dir / "manifest.json"
+    reference = load_json(reference_manifest_path)
+    _validate_activation_reference(root, config, reference)
+    if result_path.is_file() and report_path.is_file():
+        existing = load_json(result_path)
+        existing_report = load_json(report_path)
+        if (
+            existing.get("status") == "completed"
+            and existing.get("activation_error_sha256") == sha256_file(report_path)
+            and existing_report.get("plan") == plan
+            and existing_report.get("reference_manifest_sha256")
+            == sha256_file(reference_manifest_path)
+        ):
+            validate_activation_error_report(existing_report)
+            return {**existing, "resume_action": "skipped_completed"}
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+    except ImportError as exc:
+        raise RuntimeError("Activation collection requires torch and transformers.") from exc
+    from src.data.finqa_assets import load_assets
+
+    merged_manifest = load_json(
+        resolve_project_path(root, config["paths"]["merged_manifest"])
+    )
+    model_path = Path(merged_manifest["merged_model"]["path"]).resolve()
+    dtype = _evaluation_dtype(torch, settings["dtype"])
+    cache_dtype = _evaluation_dtype(torch, settings["cache_dtype"])
+    tokenizer = AutoTokenizer.from_pretrained(
+        str(model_path), local_files_only=True, trust_remote_code=False
+    )
+    tokenizer.truncation_side = settings["truncation_side"]
+    model = AutoModelForCausalLM.from_pretrained(
+        str(model_path), local_files_only=True, trust_remote_code=False,
+        dtype=dtype, low_cpu_mem_usage=True,
+    )
+    quantization_error = quantize_model_for_plan(model, plan, config["precision"], torch)
+    _validate_runtime_blocks(quantization_error, experiment)
+    model.to(settings["device"])
+    model.eval()
+    assets = load_assets(resolve_project_path(root, config["paths"]["dataset_dir"]))
+    layer_sums = [_empty_error_sums() for _ in range(experiment["block_count"])]
+    layer_token_states = [0] * experiment["block_count"]
+    started = time.perf_counter()
+    for sample in reference["samples"]:
+        source_index = int(sample["source_index"])
+        encoded, input_ids = _tokenize_activation_prompt(
+            tokenizer,
+            assets.calibration_prompts[source_index],
+            max_input_tokens=int(settings["max_input_tokens"]),
+            device=settings["device"],
+        )
+        if canonical_json_sha256(input_ids) != sample["input_ids_sha256"]:
+            raise ValueError(f"Tokenized activation input changed at index {source_index}.")
+        positions = select_evenly_spaced_positions(
+            len(input_ids), int(settings["token_positions_per_sample"])
+        )
+        if positions != sample["selected_positions"]:
+            raise ValueError(f"Activation token positions changed at index {source_index}.")
+        block_path, measured_layers = _capture_block_outputs(
+            model, encoded, positions, torch_module=torch, cache_dtype=cache_dtype
+        )
+        if block_path != reference["block_path"]:
+            raise ValueError("Candidate block path differs from the FP16 reference.")
+        cached = torch.load(
+            reference_dir / sample["cache_file"], map_location="cpu", weights_only=True
+        )
+        source_layers = cached["layers"]
+        if len(source_layers) != len(measured_layers):
+            raise ValueError("Candidate and reference block counts differ.")
+        for layer_index, (source, measured) in enumerate(zip(source_layers, measured_layers)):
+            _accumulate_error_sums(
+                layer_sums[layer_index], source, measured,
+                torch_module=torch,
+            )
+            layer_token_states[layer_index] += len(positions)
+    aggregate_sums = _empty_error_sums()
+    layers = []
+    for layer_index, sums in enumerate(layer_sums):
+        metrics = _metrics_from_error_sums(sums)
+        layers.append(
+            {
+                "layer_index": layer_index,
+                "precision": precision_for_layer(plan, layer_index),
+                "sample_count": len(reference["samples"]),
+                "token_state_count": layer_token_states[layer_index],
+                **metrics,
+            }
+        )
+        _merge_error_sums(aggregate_sums, sums)
+    report = {
+        "schema_version": 1,
+        "activation_metrics_schema_version": ACTIVATION_METRICS_SCHEMA_VERSION,
+        "stage": "7.1.3",
+        "status": "completed",
+        "completed_at": datetime.now(timezone.utc).isoformat(),
+        "plan": plan,
+        "reference_manifest": str(reference_manifest_path),
+        "reference_manifest_sha256": sha256_file(reference_manifest_path),
+        "probe_contract": reference["probe_contract"],
+        "sample_indices_sha256": reference["sample_indices_sha256"],
+        "block_path": reference["block_path"],
+        "block_count": reference["block_count"],
+        "metric_accumulation": {
+            "strategy": "paired_chunked_sum",
+            "accumulator_dtype": "float64",
+            "cached_activation_dtype": settings["cache_dtype"],
+            "chunk_size": ERROR_METRICS_CHUNK_SIZE,
+            "cosine_clamped_to_valid_range": True,
+        },
+        "layers": layers,
+        "aggregate": {
+            "layer_count": len(layers),
+            "sample_count": len(reference["samples"]),
+            "token_state_count": sum(layer_token_states),
+            **_metrics_from_error_sums(aggregate_sums),
+        },
+        "duration_seconds": time.perf_counter() - started,
+    }
+    validate_activation_error_report(report)
+    write_json(report_path, report)
+    result = {
+        "schema_version": 1,
+        "stage": "7.1.3",
+        "status": "completed",
+        "plan_id": plan_id,
+        "activation_error_sha256": sha256_file(report_path),
+        "reference_manifest_sha256": report["reference_manifest_sha256"],
+        "sample_indices_sha256": report["sample_indices_sha256"],
+        "aggregate": report["aggregate"],
+        "duration_seconds": report["duration_seconds"],
+    }
+    write_json(result_path, result)
+    return result
+
+
+def pending_activation_plan_ids(
+    project_root: str | Path, config: dict[str, Any]
+) -> list[str]:
+    root = Path(project_root).resolve()
+    output_root = resolve_project_path(root, config["paths"]["output_root"])
+    experiment = load_json(output_root / "experiment_manifest.json")
+    pending = []
+    for plan in experiment["plans"]:
+        if not plan.get("runnable"):
+            continue
+        result_path = output_root / plan["plan_id"] / "activation_result.json"
+        if not result_path.is_file() or load_json(result_path).get("status") != "completed":
+            pending.append(plan["plan_id"])
+    return pending
+
+
+def audit_activation_reports(
+    project_root: str | Path, config: dict[str, Any]
+) -> dict[str, Any]:
+    root = Path(project_root).resolve()
+    settings = _activation_settings(config)
+    output_root = resolve_project_path(root, config["paths"]["output_root"])
+    experiment = load_json(output_root / "experiment_manifest.json")
+    reference_path = _activation_reference_dir(root, config) / "manifest.json"
+    reference = load_json(reference_path)
+    _validate_activation_reference(root, config, reference)
+    invalid = []
+    cosines = []
+    for plan in experiment["plans"]:
+        if not plan.get("runnable"):
+            continue
+        plan_dir = output_root / plan["plan_id"]
+        report_path = plan_dir / settings["report_filename"]
+        result_path = plan_dir / "activation_result.json"
+        try:
+            report = load_json(report_path)
+            result = load_json(result_path)
+            validate_activation_error_report(report)
+            if report.get("plan") != plan:
+                raise ValueError("activation report plan contract differs")
+            if report.get("reference_manifest_sha256") != sha256_file(reference_path):
+                raise ValueError("activation reference manifest SHA256 differs")
+            if result.get("activation_error_sha256") != sha256_file(report_path):
+                raise ValueError("activation result SHA256 differs")
+            cosines.extend(float(layer["cosine_similarity"]) for layer in report["layers"])
+        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            invalid.append({"plan_id": plan["plan_id"], "reason": str(exc)})
+    audit = {
+        "schema_version": 1,
+        "stage": "7.1.3",
+        "status": "pass" if not invalid else "fail",
+        "expected_runnable_plans": experiment["runnable_plan_count"],
+        "valid_plans": experiment["runnable_plan_count"] - len(invalid),
+        "invalid_plans": invalid,
+        "layer_cosine_min": min(cosines) if cosines else None,
+        "layer_cosine_max": max(cosines) if cosines else None,
+    }
+    write_json(output_root / "activation_audit.json", audit)
+    return audit
+
+
+def summarize_activation_reports(
+    project_root: str | Path, config: dict[str, Any]
+) -> dict[str, Any]:
+    root = Path(project_root).resolve()
+    settings = _activation_settings(config)
+    output_root = resolve_project_path(root, config["paths"]["output_root"])
+    experiment = load_json(output_root / "experiment_manifest.json")
+    reports = {}
+    for plan in experiment["plans"]:
+        if not plan.get("runnable"):
+            continue
+        path = output_root / plan["plan_id"] / settings["report_filename"]
+        if path.is_file():
+            report = load_json(path)
+            validate_activation_error_report(report)
+            reports[plan["plan_id"]] = report
+    baseline = reports.get("all_int4")
+    if baseline is None:
+        raise ValueError("ALL-I4 activation report is required for summarization.")
+    candidates = []
+    for plan in experiment["plans"]:
+        if plan.get("kind") != "layer_int8" or plan["plan_id"] not in reports:
+            continue
+        report = reports[plan["plan_id"]]
+        layer_index = int(plan["layer_index"])
+        candidates.append(
+            {
+                "layer_index": layer_index,
+                "plan_id": plan["plan_id"],
+                "aggregate_nmse": report["aggregate"]["nmse"],
+                "aggregate_cosine_similarity": report["aggregate"]["cosine_similarity"],
+                "aggregate_nmse_recovery_vs_all_int4": (
+                    baseline["aggregate"]["nmse"] - report["aggregate"]["nmse"]
+                ),
+                "target_layer_nmse": report["layers"][layer_index]["nmse"],
+                "target_layer_cosine_similarity": report["layers"][layer_index]["cosine_similarity"],
+                "target_layer_nmse_recovery_vs_all_int4": (
+                    baseline["layers"][layer_index]["nmse"]
+                    - report["layers"][layer_index]["nmse"]
+                ),
+            }
+        )
+    candidates.sort(
+        key=lambda row: (-row["aggregate_nmse_recovery_vs_all_int4"], row["layer_index"])
+    )
+    for rank, row in enumerate(candidates, start=1):
+        row["activation_error_rank"] = rank
+    summary = {
+        "schema_version": 1,
+        "stage": "7.1.3",
+        "status": "complete" if len(reports) == experiment["runnable_plan_count"] else "partial",
+        "completed_plan_count": len(reports),
+        "expected_plan_count": experiment["runnable_plan_count"],
+        "baseline": {
+            "plan_id": "all_int4",
+            "aggregate": baseline["aggregate"],
+        },
+        "all_int8": reports.get("all_int8", {}).get("aggregate"),
+        "candidates": candidates,
+        "interpretation": "Activation error is diagnostic evidence, not a replacement for paired business quality.",
+    }
+    write_json(output_root / "activation_summary.json", summary)
+    return summary
 
 
 def paired_prediction_transitions(

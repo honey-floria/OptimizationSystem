@@ -4,7 +4,11 @@ from pathlib import Path
 
 from scripts.run_layer_sensitivity import _parse_args
 from src.quantization.layer_sensitivity import (
+    ACTIVATION_METRICS_SCHEMA_VERSION,
     ERROR_METRICS_SCHEMA_VERSION,
+    _accumulate_error_sums,
+    _empty_error_sums,
+    _metrics_from_error_sums,
     _stable_error_statistics,
     aggregate_error_metrics,
     apply_plan_with_callback,
@@ -14,6 +18,8 @@ from src.quantization.layer_sensitivity import (
     plan_precision_vector,
     prepare_matrix,
     rank_completed_results,
+    select_evenly_spaced_positions,
+    validate_activation_error_report,
     validate_plan_isolation,
     validate_plan_matrix,
     validate_quantization_error_report,
@@ -161,6 +167,53 @@ class LayerSensitivityMatrixTest(unittest.TestCase):
         self.assertAlmostEqual(metrics["max_abs_error"], 1.0)
         self.assertGreaterEqual(metrics["cosine_similarity"], -1.0)
         self.assertLessEqual(metrics["cosine_similarity"], 1.0)
+
+    def test_activation_positions_are_deterministic_and_include_endpoints(self):
+        positions = select_evenly_spaced_positions(100, 4)
+        self.assertEqual(positions, [0, 33, 66, 99])
+        self.assertEqual(select_evenly_spaced_positions(3, 4), [0, 1, 2])
+
+    def test_activation_sums_aggregate_before_metric_calculation(self):
+        sums = _empty_error_sums()
+        _accumulate_error_sums(
+            sums,
+            self._FakeTensor([1.0, 2.0]),
+            self._FakeTensor([1.0, 1.0]),
+            torch_module=self._FakeTorch,
+            chunk_size=1,
+        )
+        _accumulate_error_sums(
+            sums,
+            self._FakeTensor([3.0, 4.0]),
+            self._FakeTensor([3.0, 3.0]),
+            torch_module=self._FakeTorch,
+            chunk_size=1,
+        )
+        metrics = _metrics_from_error_sums(sums)
+        self.assertEqual(metrics["numel"], 4)
+        self.assertAlmostEqual(metrics["mse"], 0.5)
+        self.assertAlmostEqual(metrics["nmse"], 0.5 / 7.5)
+        self.assertGreaterEqual(metrics["cosine_similarity"], -1.0)
+        self.assertLessEqual(metrics["cosine_similarity"], 1.0)
+
+    def test_activation_report_validation_rejects_invalid_cosine(self):
+        metric = {
+            "numel": 4,
+            "mse": 0.1,
+            "nmse": 0.2,
+            "cosine_similarity": 0.9,
+            "max_abs_error": 0.3,
+        }
+        report = {
+            "activation_metrics_schema_version": ACTIVATION_METRICS_SCHEMA_VERSION,
+            "status": "completed",
+            "layers": [{**metric, "layer_index": 0}],
+            "aggregate": metric,
+        }
+        validate_activation_error_report(report)
+        report["layers"][0]["cosine_similarity"] = 1.1
+        with self.assertRaisesRegex(ValueError, "cosine similarity"):
+            validate_activation_error_report(report)
 
     def test_quantization_error_validation_rejects_obsolete_schema(self):
         with self.assertRaisesRegex(ValueError, "obsolete"):
@@ -323,6 +376,24 @@ class LayerSensitivityMatrixTest(unittest.TestCase):
         repair = _parse_args(["recompute-error", "--plan-id", "all_int4"])
         self.assertEqual(repair.command, "recompute-error")
         self.assertEqual(repair.plan_id, "all_int4")
+        self.assertEqual(
+            _parse_args(["prepare-activation-reference"]).command,
+            "prepare-activation-reference",
+        )
+        self.assertEqual(
+            _parse_args(["pending-activations"]).command,
+            "pending-activations",
+        )
+        activation = _parse_args(["run-activation", "--plan-id", "all_int4"])
+        self.assertEqual(activation.command, "run-activation")
+        self.assertEqual(activation.plan_id, "all_int4")
+        self.assertEqual(
+            _parse_args(["audit-activations"]).command, "audit-activations"
+        )
+        self.assertEqual(
+            _parse_args(["summarize-activations"]).command,
+            "summarize-activations",
+        )
 
 
 if __name__ == "__main__":

@@ -2069,7 +2069,77 @@ python3 scripts/run_layer_sensitivity.py summarize
 `summarize` 后需要以 schema v2 NMSE 更新相关系数和同分层的辅助排序；业务预测及 recovered/regressed
 不会改变。
 
+服务器完成 schema v2 重算并回传后，最终 `error_audit.json` 为 `status=pass`、`valid_plans=30`、
+`invalid_plans=[]`；196 个模块乘 30 个计划的全部新记录中，cosine 范围为
+`[0.9931836730501131, 0.9999593877335811]`，没有越界值。30 份原始 schema v1 文件均已保留，旧矩阵
+累计 2,648 个模块 cosine 越界，新矩阵为 0。逐计划核对确认旧文件 SHA256 等于 `result.json` 保存的
+`original_quantization_error_sha256`，新文件 SHA256 等于当前 `quantization_error_sha256`；预测文件哈希
+同时与 `result.json` 和 `comparison_report.json` 一致，说明修复没有改变任何业务预测。
+
+FP64 重算造成的 weighted NMSE 最大绝对变化仅约 `4.03e-10`。`ALL-I4` 从
+`0.010137710939269946` 修正为 `0.010137710540054103`，`ALL-I8` 从
+`0.0001309179087966406` 修正为 `0.00013091790388376212`。28 层的完整排名顺序保持不变，第一梯队仍为
+10、22、23；误差恢复量对净正确数的 Pearson 更新为 `-0.3932625`，Spearman 保持
+`-0.4421115`。因此 schema v2 修复恢复了 cosine 证据的数学有效性，没有改变此前的 pilot 业务结论。
+
 综上，7.1.2 的 32 项矩阵定义、30 项服务器执行、身份一致性和 pilot 配对结果可以验收；当前输出仍应称为
 `ranking_preview`。建议保护层候选为第一梯队 `{10, 22, 23}`，其中 `{22, 23}` 是零退化的保守子集，
-但在完成 cosine 报告重算、确定性复跑、候选组合实测、业务子集/高风险评测和完整 883 条 dev 前，不把该集合
-升级为 7.4 的最终保护层输入。
+但在完成确定性复跑、候选组合实测、业务子集/高风险评测和完整 883 条 dev 前，不把该集合升级为 7.4 的
+最终保护层输入。
+
+### 7.1.3 层输出激活误差采集
+
+权重误差只能说明参数矩阵在量化前后的距离，不能说明误差经过 attention、MLP、残差连接和 LayerNorm 后，
+最终在各层 hidden state 中被放大还是被抵消。因此 7.1.3 还需要把 merged FP16 作为数学参考，在完全相同的
+calibration 输入和 token 位置上，对每个 fake-quant 计划逐层计算输出激活 MSE、normalized MSE、cosine
+similarity 和最大绝对误差。这些指标仍然只是诊断证据，不能替代逐样本业务正确率。
+
+激活探针固定使用冻结 calibration 的前 32 条数据。每条 Prompt 按 merged 模型 tokenizer 从左侧截断到最多
+512 个输入 token，以保留末尾的财务问题和 `Answer:` 提示，并从实际 token 序列中均匀选择最多 32 个位置；
+序列长于 32 时首尾位置一定包含在内，短序列
+则保留全部位置。这里比较的是 `32 条样本 × 每条最多 32 个 token 位置 × 28 层` 的抽样 block 输出，
+不是 1,024 条 calibration 的全 token 激活。采用抽样是为了同时覆盖序列前部、中部和答案前的末端上下文，
+并把 Qwen2.5-7B（hidden size 3,584）的 FP16 参考缓存控制在约 196 MiB，而非数 GB。最终报告和 manifest
+均明确记录 `scope=sampled_block_output_token_states`，不得把它表述成全量激活评测。
+
+实现位于 `src/quantization/layer_sensitivity.py`，配置位于 `configs/layer_sensitivity.json`：
+
+- `prepare-activation-reference` 只加载一次 merged FP16，关闭 KV cache，并直接执行 backbone，避免计算和保存
+  词表 logits；28 个 block hook 仅把选中的 token hidden state 复制到 CPU FP16，每条样本独立保存一个 shard。
+- reference manifest 绑定 merged tree SHA256、完整 calibration subset SHA256、32 个 source index、逐行 SHA256、
+  token IDs SHA256、token 位置 SHA256 和每个缓存 shard SHA256。tokenizer、样本或缓存任一变化都会拒绝比较。
+- `run-activation` 每个进程只加载一个候选模型，先应用与 7.1.2 完全相同的 W4A16-g32/W8A16 fake quant，
+  再读取 FP16 shard 做逐层配对。参考模型和候选模型不会同时占用 GPU，因此适配 16GB 显存。
+- MSE、NMSE 和 cosine 不按样本或层做简单平均。代码对配对元素的 dot product、参考平方和、候选平方和、
+  误差平方和使用分块 FP64 累计，再从全局充分统计量计算指标；cosine 强制校验在 `[-1,1]`。
+- 每个计划写入 `activation_error.json` 和 `activation_result.json`；`audit-activations` 校验 30 个计划的 schema、
+  计划合同、参考 manifest 哈希、结果哈希和数值范围；`summarize-activations` 报告相对 `ALL-I4` 的全层及目标层
+  NMSE 恢复量，但不会修改已有的业务排名。
+
+服务器按以下顺序执行。每个 `run-activation` 都是独立进程，前一个模型退出后才加载下一个，既方便断点续跑，
+也能释放 CUDA allocator；该流程不会重复 80 条答案生成：
+
+```bash
+python3 scripts/run_layer_sensitivity.py prepare-activation-reference
+
+python3 scripts/run_layer_sensitivity.py run-activation --plan-id all_int4
+python3 scripts/run_layer_sensitivity.py run-activation --plan-id all_int8
+
+for i in $(seq -w 0 27); do
+  python3 scripts/run_layer_sensitivity.py run-activation \
+    --plan-id "layer_${i}_int8" || break
+done
+
+python3 scripts/run_layer_sensitivity.py pending-activations
+python3 scripts/run_layer_sensitivity.py audit-activations
+python3 scripts/run_layer_sensitivity.py summarize-activations
+```
+
+`prepare-activation-reference` 与已完成计划都具有幂等跳过逻辑。中断后先执行 `pending-activations`，只需补跑
+其列出的 plan。验收条件是 `pending=[]`，`activation_audit.json` 为 `status=pass`、`valid_plans=30`、
+`invalid_plans=[]`，且 `layer_cosine_min/layer_cosine_max` 均位于 `[-1,1]`。在这些服务器结果回传前，TODO
+中的激活误差采集保持未勾选。
+
+回传分析时只需带回 reference 的 `manifest.json`、30 个计划的 `activation_error.json`/
+`activation_result.json`，以及矩阵根目录的 `activation_audit.json` 和 `activation_summary.json`。约 196 MiB 的
+`sample_*.pt` 参考 shard 可留在服务器；它们只用于服务器端重新审计或补跑，不进入最终 JSON 分析产物。

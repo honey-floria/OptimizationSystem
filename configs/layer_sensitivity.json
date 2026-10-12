@@ -24,6 +24,7 @@
     "adapter_tree_sha256": "f5ea0841df97ff9a3c1c0c457a905fd61db185de0af6fc3dbe69f40306a95f3b",
     "merged_tree_sha256": "c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946",
     "pilot_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+    "calibration_subset_sha256": "dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092",
     "block_path": "model.layers",
     "block_count": 28
   },
@@ -54,6 +55,22 @@
     "max_new_tokens": 256,
     "device": "cuda:0",
     "dtype": "float16"
+  },
+  "activation_analysis": {
+    "sample_indices": [
+      0, 1, 2, 3, 4, 5, 6, 7,
+      8, 9, 10, 11, 12, 13, 14, 15,
+      16, 17, 18, 19, 20, 21, 22, 23,
+      24, 25, 26, 27, 28, 29, 30, 31
+    ],
+    "max_input_tokens": 512,
+    "truncation_side": "left",
+    "token_positions_per_sample": 32,
+    "device": "cuda:0",
+    "dtype": "float16",
+    "cache_dtype": "float16",
+    "reference_dir": "out/layer_sensitivity/activation_reference",
+    "report_filename": "activation_error.json"
   },
   "ranking": {
     "baseline_plan": "all_int4",
