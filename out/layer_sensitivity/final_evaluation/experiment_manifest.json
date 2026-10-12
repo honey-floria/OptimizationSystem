@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "stage": "7.1.4-7.1.5",
-  "status": "prepared",
-  "created_at": "2026-10-12T05:58:11.627423+00:00",
+  "status": "completed",
+  "created_at": "2026-10-12T08:36:07.169146+00:00",
   "matrix_manifest": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/matrix/experiment_manifest.json",
   "matrix_manifest_sha256": "0fe74c8f0c3812931a4a75cb0e0ce6bbe7ab4946650eb65b66815ee938987fdc",
   "input_freeze": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
@@ -20,81 +20,59 @@
     "rate_or_ratio": 567,
     "date_or_term": 709
   },
+  "analysis_scope": {
+    "mode": "candidate_subset",
+    "candidate_layer_indices": [
+      10,
+      22,
+      23
+    ],
+    "candidate_plan_ids": [
+      "layer_10_int8",
+      "layer_22_int8",
+      "layer_23_int8"
+    ],
+    "candidate_layer_count": 3,
+    "total_model_layers": 28,
+    "complete_layer_coverage": false,
+    "full_layer_ranking_claim_allowed": false,
+    "selection_basis": "fixed 80-sample pilot business ranking; all three candidates had net_correct_gain=2"
+  },
   "suites": {
     "full_dev": {
       "dataset_role": "evaluation_dev",
       "expected_size": 883,
       "frozen_subset": "evaluation_dev",
-      "plans": "all_runnable",
+      "plans": [
+        "all_int4",
+        "all_int8",
+        "layer_10_int8",
+        "layer_22_int8",
+        "layer_23_int8"
+      ],
       "plan_ids": [
         "all_int4",
         "all_int8",
-        "layer_00_int8",
-        "layer_01_int8",
-        "layer_02_int8",
-        "layer_03_int8",
-        "layer_04_int8",
-        "layer_05_int8",
-        "layer_06_int8",
-        "layer_07_int8",
-        "layer_08_int8",
-        "layer_09_int8",
         "layer_10_int8",
-        "layer_11_int8",
-        "layer_12_int8",
-        "layer_13_int8",
-        "layer_14_int8",
-        "layer_15_int8",
-        "layer_16_int8",
-        "layer_17_int8",
-        "layer_18_int8",
-        "layer_19_int8",
-        "layer_20_int8",
-        "layer_21_int8",
         "layer_22_int8",
-        "layer_23_int8",
-        "layer_24_int8",
-        "layer_25_int8",
-        "layer_26_int8",
-        "layer_27_int8"
+        "layer_23_int8"
       ]
     },
     "high_risk": {
       "dataset_role": "high_risk_regression",
       "expected_size": 91,
       "frozen_subset": "contextual_high_risk",
-      "plans": "all_runnable",
+      "plans": [
+        "all_int4",
+        "layer_10_int8",
+        "layer_22_int8",
+        "layer_23_int8"
+      ],
       "plan_ids": [
         "all_int4",
-        "all_int8",
-        "layer_00_int8",
-        "layer_01_int8",
-        "layer_02_int8",
-        "layer_03_int8",
-        "layer_04_int8",
-        "layer_05_int8",
-        "layer_06_int8",
-        "layer_07_int8",
-        "layer_08_int8",
-        "layer_09_int8",
         "layer_10_int8",
-        "layer_11_int8",
-        "layer_12_int8",
-        "layer_13_int8",
-        "layer_14_int8",
-        "layer_15_int8",
-        "layer_16_int8",
-        "layer_17_int8",
-        "layer_18_int8",
-        "layer_19_int8",
-        "layer_20_int8",
-        "layer_21_int8",
         "layer_22_int8",
-        "layer_23_int8",
-        "layer_24_int8",
-        "layer_25_int8",
-        "layer_26_int8",
-        "layer_27_int8"
+        "layer_23_int8"
       ]
     },
     "determinism": {
@@ -173,5 +151,14 @@
     "require_nonnegative_high_risk_gain": true,
     "require_nonnegative_long_context_gain": true
   },
-  "contract_sha256": "a2eb08a2341f1c96afce07de8df48aba912532362d24eac6af5ce7547c6fc515"
+  "contract_sha256": "3dbbde957bff4670ffb25ca2b50c8c2f084fcc5d3cae8d18866dffae2c199c9d",
+  "completed_at": "2026-10-12T09:53:08.380356+00:00",
+  "final_artifact_sha256": {
+    "layer_metrics.jsonl": "29f7af4611911640e61365bc32d1f21a7420de5e9c0270b47fb8a6c43f41580b",
+    "sample_transitions.jsonl": "d2aea3cfcb262e1a087980210a2694322c87ccbd171383fb908a24472a8a6314",
+    "ranking.json": "cb97df526ed53b7c5b687571163fdcd7ac621a6fcbefa87163ed73b50acc4208",
+    "ranking.csv": "8a742a2e8b6de70e7bec26ad436384e7cbcc129c88ed1739aa2a01146b389b9a",
+    "report.md": "093f465f0e73aee9ee79b939f570f0cd0519da9fe9520602443f4e121363c5a4",
+    "validation.json": "1b02b55bdde67caba5c0809190a941fd89b588a77c900af6c58317bd4ee56cf1"
+  }
 }

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.4",
+  "status": "completed",
+  "completed_at": "2026-10-12T09:49:34.882809+00:00",
+  "suite": "high_risk",
+  "plan": {
+    "plan_id": "layer_22_int8",
+    "kind": "layer_int8",
+    "runnable": true,
+    "layer_index": 22,
+    "default_precision": "int4",
+    "overrides": {
+      "22": "int8"
+    }
+  },
+  "dataset": {
+    "role": "high_risk_regression",
+    "size": 91,
+    "source_size": 91,
+    "version": "~parquet",
+    "sha256": "064f379a0c63ea9cfe49681b1c9a477f8246f9aaf853c85799812bb2feda0693"
+  },
+  "metrics": {
+    "total": 91,
+    "parsed": 90,
+    "correct": 19,
+    "parse_rate": 0.989010989010989,
+    "numeric_accuracy": 0.2087912087912088
+  },
+  "structured_output_rate": 0.989010989010989,
+  "format_retry_count": 1,
+  "predictions_sha256": "cff45cc37c195069b7a3c1d7f8306513497a19b7b175d50a1ed8f2ee8a9edf9e",
+  "comparison_report_sha256": "41e96bbace0b8115808d80ccfa9d5c5127963100130bf7cad3f20c4c85c4e259",
+  "duration_seconds": 185.36934679397382
+}

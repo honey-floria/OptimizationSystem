@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.4",
+  "status": "completed",
+  "completed_at": "2026-10-12T09:42:49.968775+00:00",
+  "suite": "high_risk",
+  "plan": {
+    "plan_id": "all_int4",
+    "kind": "all_int4",
+    "runnable": true,
+    "default_precision": "int4",
+    "overrides": {}
+  },
+  "dataset": {
+    "role": "high_risk_regression",
+    "size": 91,
+    "source_size": 91,
+    "version": "~parquet",
+    "sha256": "064f379a0c63ea9cfe49681b1c9a477f8246f9aaf853c85799812bb2feda0693"
+  },
+  "metrics": {
+    "total": 91,
+    "parsed": 90,
+    "correct": 18,
+    "parse_rate": 0.989010989010989,
+    "numeric_accuracy": 0.1978021978021978
+  },
+  "structured_output_rate": 0.989010989010989,
+  "format_retry_count": 1,
+  "predictions_sha256": "ee3db07bb1798964042726c8d8072c6fbedc9deaac4eaa57abb4f7d8b95dd4c4",
+  "comparison_report_sha256": "b8b64c0e0c50eac761b18e7b9c14615ac2e28e5c8f3fbd1ab9179e4ea96f4a6b",
+  "duration_seconds": 187.8300606769044
+}

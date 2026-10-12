@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.4",
+  "status": "completed",
+  "completed_at": "2026-10-12T08:56:56.314673+00:00",
+  "suite": "full_dev",
+  "plan": {
+    "plan_id": "layer_10_int8",
+    "kind": "layer_int8",
+    "runnable": true,
+    "layer_index": 10,
+    "default_precision": "int4",
+    "overrides": {
+      "10": "int8"
+    }
+  },
+  "dataset": {
+    "role": "evaluation_dev",
+    "size": 883,
+    "source_size": 883,
+    "version": "main",
+    "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8"
+  },
+  "metrics": {
+    "total": 883,
+    "parsed": 876,
+    "correct": 330,
+    "parse_rate": 0.9920724801812004,
+    "numeric_accuracy": 0.3737259343148358
+  },
+  "structured_output_rate": 0.9920724801812004,
+  "format_retry_count": 11,
+  "predictions_sha256": "703909bd912c6168b72815ac44b43413e1988b928e3af7d52961448a31592327",
+  "comparison_report_sha256": "54d301f7cc369b01ccf3663bb6a57ac45e27fdbdd53e99110e2447d4dfb1901f",
+  "duration_seconds": 1226.5643842651043
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.5",
+  "status": "pass",
+  "pending": {
+    "full_dev": [],
+    "high_risk": [],
+    "determinism": []
+  },
+  "invalid_runs": [],
+  "determinism": {
+    "all_int4": {
+      "status": "pass",
+      "row_count": 80,
+      "exact_row_match": true,
+      "original_sha256": "4bcd0dac2343e532c14b7838d43d6d7dbe3cd7786542a41ef3490e7d6456c11b",
+      "repeat_sha256": "4bcd0dac2343e532c14b7838d43d6d7dbe3cd7786542a41ef3490e7d6456c11b"
+    },
+    "layer_22_int8": {
+      "status": "pass",
+      "row_count": 80,
+      "exact_row_match": true,
+      "original_sha256": "d1451160bf50691777e7b76625545394459e717355017bc5710a7a74981d7b56",
+      "repeat_sha256": "d1451160bf50691777e7b76625545394459e717355017bc5710a7a74981d7b56"
+    }
+  },
+  "analysis_scope": {
+    "mode": "candidate_subset",
+    "candidate_layer_indices": [
+      10,
+      22,
+      23
+    ],
+    "candidate_plan_ids": [
+      "layer_10_int8",
+      "layer_22_int8",
+      "layer_23_int8"
+    ],
+    "candidate_layer_count": 3,
+    "total_model_layers": 28,
+    "complete_layer_coverage": false,
+    "full_layer_ranking_claim_allowed": false,
+    "selection_basis": "fixed 80-sample pilot business ranking; all three candidates had net_correct_gain=2"
+  },
+  "expected_candidate_layers": 3,
+  "total_model_layers": 28,
+  "ranked_layers": 3,
+  "full_dev_size": 883,
+  "high_risk_size": 91,
+  "long_context_size": 89,
+  "business_label_counts": {
+    "amount": 338,
+    "rate_or_ratio": 567,
+    "date_or_term": 709
+  },
+  "required_artifacts": [
+    "experiment_manifest.json",
+    "layer_metrics.jsonl",
+    "sample_transitions.jsonl",
+    "ranking.json",
+    "ranking.csv",
+    "report.md",
+    "validation.json"
+  ],
+  "ranking_conclusion_strength": "low"
+}

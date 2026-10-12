@@ -1,0 +1,4 @@
+rank,layer_index,full_dev_correct,full_dev_total,net_correct_gain,recovered,regressed,high_risk_recovered,high_risk_regressed,long_context_recovered,long_context_regressed,structured_output_net,bootstrap_lower,bootstrap_upper,quantization_error_recovery
+1,23,344,883,16,22,6,0,0,1,0,1,0.006795016987542469,0.030577576443941108,0.0003482215612683366
+2,10,330,883,2,12,10,1,0,1,0,-1,-0.007927519818799546,0.01245753114382786,0.0003530262035809622
+3,22,328,883,0,15,15,1,0,1,2,0,-0.01245753114382786,0.01245753114382786,0.0003579677757054034
