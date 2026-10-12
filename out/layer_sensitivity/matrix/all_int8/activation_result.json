@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.3",
+  "status": "completed",
+  "plan_id": "all_int8",
+  "activation_error_sha256": "ff1d724ddae308e4d991c9168d82e66beca64d26e5c9415becd5bce3c14965c1",
+  "reference_manifest_sha256": "d981706d7d9d9bf878cba45bd48b3eea782f46eafa7cfd6fedc32ea30eec17e2",
+  "sample_indices_sha256": "23b22df6bf551a4e788327db3b3d3d96e1eca49078d2c6bd0049da2d390eca8b",
+  "aggregate": {
+    "layer_count": 28,
+    "sample_count": 32,
+    "token_state_count": 28672,
+    "numel": 102760448,
+    "mse": 0.06739936220579223,
+    "nmse": 5.02776190235119e-05,
+    "cosine_similarity": 0.9999856296172478,
+    "max_abs_error": 278.0
+  },
+  "duration_seconds": 3.7056333359796554
+}
