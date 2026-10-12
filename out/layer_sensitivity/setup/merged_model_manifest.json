@@ -1,0 +1,663 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.1",
+  "status": "merged",
+  "created_at": "2026-10-12T01:19:42.208624+00:00",
+  "base_model": {
+    "path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct",
+    "file_count": 45,
+    "total_bytes": 15242811312,
+    "tree_sha256": "75090bc8762b020ef12f22604eff77d39f4f793abbc39590c00c52d13d374691",
+    "files": [
+      {
+        "path": ".cache/huggingface/.gitignore",
+        "size": 1,
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      },
+      {
+        "path": ".cache/huggingface/CACHEDIR.TAG",
+        "size": 191,
+        "sha256": "f6572428f6d5e1575e73a1502895a8731f10757dfbb634909c6e154b849af91d"
+      },
+      {
+        "path": ".cache/huggingface/download/.gitattributes.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/.gitattributes.metadata",
+        "size": 101,
+        "sha256": "648bf4cea9328039d80090a0846dc4591ced69fae36d47242765d3d6bab3c311"
+      },
+      {
+        "path": ".cache/huggingface/download/LICENSE.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/LICENSE.metadata",
+        "size": 101,
+        "sha256": "9c021ff27898ba7b29535911bc936a4fb7a92584edfed7baa8e512d2f3767624"
+      },
+      {
+        "path": ".cache/huggingface/download/README.md.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/README.md.metadata",
+        "size": 100,
+        "sha256": "884489da2f468edf58f9623ed067fb466e7c4ea7fe2d8683e1e8ef4ab79205dc"
+      },
+      {
+        "path": ".cache/huggingface/download/config.json.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/config.json.metadata",
+        "size": 99,
+        "sha256": "937c4bdefd85dd174235b2349866a30b8f3b183cb0f42f1fcdbe83134262a234"
+      },
+      {
+        "path": ".cache/huggingface/download/generation_config.json.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/generation_config.json.metadata",
+        "size": 101,
+        "sha256": "40512f09c23225924d7e217f14df3f147f2698fee40b75cbbdf0503e8da473ef"
+      },
+      {
+        "path": ".cache/huggingface/download/merges.txt.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/merges.txt.metadata",
+        "size": 101,
+        "sha256": "8997a0ac6585ae1eb85506f595f8004063ec4dabcc1d399d66d5324a05be5f92"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00001-of-00004.safetensors.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00001-of-00004.safetensors.metadata",
+        "size": 124,
+        "sha256": "26ab1427bd791fe9d3c61000eda360c35ad74e62ae8b9957d25ca7f4db2b0ff2"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00002-of-00004.safetensors.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00002-of-00004.safetensors.metadata",
+        "size": 125,
+        "sha256": "d2ce394403767ef28b2c8352928ca74115f3d2d8087b1055e2168987daad83f4"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00003-of-00004.safetensors.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00003-of-00004.safetensors.metadata",
+        "size": 125,
+        "sha256": "66760e7dd275faa7fcb0912bbe1e109ac15e4224c0abadbd1ab0b33564958e30"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00004-of-00004.safetensors.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/model-00004-of-00004.safetensors.metadata",
+        "size": 125,
+        "sha256": "0b2ff29f2250562eb888f083d702c48031c8d8e178114629f919ef1a0242ce3a"
+      },
+      {
+        "path": ".cache/huggingface/download/model.safetensors.index.json.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/model.safetensors.index.json.metadata",
+        "size": 101,
+        "sha256": "3caa0c881de11ab89d43b518ef5156181f8968dde1082ff6653b49dba7634984"
+      },
+      {
+        "path": ".cache/huggingface/download/tokenizer.json.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/tokenizer.json.metadata",
+        "size": 101,
+        "sha256": "24fb0a7e979ab4daf4b661f99fa4026ab143119511094af14f96044ad7ea4d54"
+      },
+      {
+        "path": ".cache/huggingface/download/tokenizer_config.json.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/tokenizer_config.json.metadata",
+        "size": 101,
+        "sha256": "fcbf8ad0fbf3bcdb3c2371660a9156b1fc7a80c33992480ed37b38c9b6d2107c"
+      },
+      {
+        "path": ".cache/huggingface/download/vocab.json.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": ".cache/huggingface/download/vocab.json.metadata",
+        "size": 101,
+        "sha256": "0d1b5bf0068361cca66e0a26a7cf9168c5ae0da803bd0fdb8757f8bd44951b96"
+      },
+      {
+        "path": ".cache/huggingface/trees/a09a35458c702b33eeacc393d103063234e8bc28.json",
+        "size": 2344,
+        "sha256": "3ef1b137ecabe56a171959fcbf1a27be49ba2d2f9c7769706e86651d94d4de94"
+      },
+      {
+        "path": ".gitattributes",
+        "size": 1519,
+        "sha256": "11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361"
+      },
+      {
+        "path": "LICENSE",
+        "size": 11343,
+        "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e"
+      },
+      {
+        "path": "README.md",
+        "size": 6240,
+        "sha256": "f366f33bbf6bcadbb7d87f0a21a7b65584a56b8d58b0743c77c88bee625b93a6"
+      },
+      {
+        "path": "config.json",
+        "size": 663,
+        "sha256": "7463bb0ea78315365e6c6b74de4e73bbcc8359dfb0c5a737584e077d42c0b03c"
+      },
+      {
+        "path": "generation_config.json",
+        "size": 243,
+        "sha256": "3a8f9087e486054c8a4a08dae2e5a3ba62e23da212b5b8c08bc42cb983c3459f"
+      },
+      {
+        "path": "merges.txt",
+        "size": 1671839,
+        "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+      },
+      {
+        "path": "model-00001-of-00004.safetensors",
+        "size": 3945441440,
+        "sha256": "a1333e6293854747c481288ea83b348226af178dd565c49b6f9495ba1966aba7"
+      },
+      {
+        "path": "model-00002-of-00004.safetensors",
+        "size": 3864726352,
+        "sha256": "f5d25a2772cb825164a2a2c0fb6d51a87e282abf21e4dd75bc5cfb3cd0ea6185"
+      },
+      {
+        "path": "model-00003-of-00004.safetensors",
+        "size": 3864726424,
+        "sha256": "8efdec4c1bc12317ae1a38dc42b595ce777738a64deea3fcb8a0a91381bcdfd5"
+      },
+      {
+        "path": "model-00004-of-00004.safetensors",
+        "size": 3556377672,
+        "sha256": "1a72d403cdf0c1ec3cb7f289f17b394a01e64394c2e9b3c0f94dbce3faf879bd"
+      },
+      {
+        "path": "model.safetensors.index.json",
+        "size": 27752,
+        "sha256": "624bf7c47cd12468fdc16e38a47cf4f19e0415b859a223ba3c027eed2f0e1028"
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 7031645,
+        "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 7305,
+        "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583"
+      },
+      {
+        "path": "vocab.json",
+        "size": 2776833,
+        "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+      }
+    ]
+  },
+  "adapter": {
+    "path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/finqa_qlora_7b_v2",
+    "file_count": 65,
+    "total_bytes": 2132342279,
+    "tree_sha256": "f5ea0841df97ff9a3c1c0c457a905fd61db185de0af6fc3dbe69f40306a95f3b",
+    "files": [
+      {
+        "path": "README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "adapter_config.json",
+        "size": 1229,
+        "sha256": "cfd908ddadd2951248227a95da94d31b934395c28e1b5e728a30a7a1cac6d742"
+      },
+      {
+        "path": "adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4"
+      },
+      {
+        "path": "chat_template.jinja",
+        "size": 2507,
+        "sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
+      },
+      {
+        "path": "checkpoint-100/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-100/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "bef927989fd140ee61b59f1d6fed70bbb830e1f5467fb3495e02e1867529a4b4"
+      },
+      {
+        "path": "checkpoint-100/optimizer.pt",
+        "size": 82469637,
+        "sha256": "657a708e985d71e8689da3358d6e9bffc5792f087b7bf74e5768923f871c61ee"
+      },
+      {
+        "path": "checkpoint-100/rng_state.pth",
+        "size": 14645,
+        "sha256": "c7f93e28b091a5cdf872a3b87facb2332e24c5cdcd5afc28ba424b3d5b100487"
+      },
+      {
+        "path": "checkpoint-100/scaler.pt",
+        "size": 1383,
+        "sha256": "c4393a84a3109995aa1202073b039b12062e3189ed89aa0b94ef0510ba843009"
+      },
+      {
+        "path": "checkpoint-100/scheduler.pt",
+        "size": 1465,
+        "sha256": "76a2417c552f2bdc77f02e5895b11a8ab016d87e3e5eb1ba1c862a4cfd0fd110"
+      },
+      {
+        "path": "checkpoint-100/training_args.bin",
+        "size": 5265,
+        "sha256": "7c4de282a5bdfb98f85ab24742c77bea9530cf26c8aec74ebf5b6af44da9540e"
+      },
+      {
+        "path": "checkpoint-200/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-200/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "1419f1abcbf7300e6a7cf544c0c53bcdb7032eb15715f5ee4465b0195d51d3e8"
+      },
+      {
+        "path": "checkpoint-200/optimizer.pt",
+        "size": 83484755,
+        "sha256": "898a0a58d2d54eb0191694f35d6cff6e6b88b7bac8ebcf0f62d6b36b2e6b8a4a"
+      },
+      {
+        "path": "checkpoint-200/rng_state.pth",
+        "size": 14645,
+        "sha256": "95afe67a4cd72b19662da5e325405ecd9fd16edf4b8f76b1e97e62987cb8bdcf"
+      },
+      {
+        "path": "checkpoint-200/scaler.pt",
+        "size": 1383,
+        "sha256": "124625e167eb28acbfc793cfcb3e8a08b32e7fea06501462bc9e420a5e1beb2a"
+      },
+      {
+        "path": "checkpoint-200/scheduler.pt",
+        "size": 1465,
+        "sha256": "832dccde5f644cae00c4d4fbfd7b102e96f5be3c22af076b5b367ce5ae59f0b9"
+      },
+      {
+        "path": "checkpoint-200/training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      },
+      {
+        "path": "checkpoint-300/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-300/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "748040f435d995fafac149966939d96f771699ce2e514297383ff63ada4b82e8"
+      },
+      {
+        "path": "checkpoint-300/optimizer.pt",
+        "size": 83485139,
+        "sha256": "035394ea5d64998f2b8aed6238aec743e4bbe69632abb36af45d64f399456187"
+      },
+      {
+        "path": "checkpoint-300/rng_state.pth",
+        "size": 14645,
+        "sha256": "7f754df5f1d8c2596b37c39fda4866aee4b971ff8cd2e90571e210788b649b28"
+      },
+      {
+        "path": "checkpoint-300/scaler.pt",
+        "size": 1383,
+        "sha256": "30af866df24edce708e1eb20700878b402fa05707fa9bc5f332496baf440dbbb"
+      },
+      {
+        "path": "checkpoint-300/scheduler.pt",
+        "size": 1465,
+        "sha256": "4a270056706f17cf4d0e8f3cf6e9e322934fd57f96226c2dfd2eb407ab505ca4"
+      },
+      {
+        "path": "checkpoint-300/training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      },
+      {
+        "path": "checkpoint-400/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-400/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "c639fc6d831cae026ee01d5954f1fe0ca4c608f3a057b198f744b47eecd488db"
+      },
+      {
+        "path": "checkpoint-400/optimizer.pt",
+        "size": 83485139,
+        "sha256": "c4cb84167bb4bc6ab52ad5dcf49abfe1a1d2150916ac65316f98466898a8b9d4"
+      },
+      {
+        "path": "checkpoint-400/rng_state.pth",
+        "size": 14645,
+        "sha256": "781862213253c43647df98a8627af9c3110a43fb8fcc33a4edac76ee3e0bca1d"
+      },
+      {
+        "path": "checkpoint-400/scaler.pt",
+        "size": 1383,
+        "sha256": "30858f23bcb22d0baef45bd4add9d6fa474141308c12653c706077b87d932e49"
+      },
+      {
+        "path": "checkpoint-400/scheduler.pt",
+        "size": 1465,
+        "sha256": "97c4aea2b8fce8992ceac3b7860ff6f4939e10aaea8ad58f275a97d0731551d0"
+      },
+      {
+        "path": "checkpoint-400/training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      },
+      {
+        "path": "checkpoint-500/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-500/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "0292f4cb73c7844482726225f0bdf4b003e7d15aad6c9872b008e9eaee46abf7"
+      },
+      {
+        "path": "checkpoint-500/optimizer.pt",
+        "size": 83485139,
+        "sha256": "b69491202ec3a606e67970a0c7628f628cc449eec10bd0e0071c56e3f9507c32"
+      },
+      {
+        "path": "checkpoint-500/rng_state.pth",
+        "size": 14645,
+        "sha256": "dae5a30a1cf1afa85c939ff820a2162f1d1fa8b4094e1311c191d0b38be2b876"
+      },
+      {
+        "path": "checkpoint-500/scaler.pt",
+        "size": 1383,
+        "sha256": "f77569c2e850b04af982cc8c1389f1430851448915c593b69e5da36ce05b71d7"
+      },
+      {
+        "path": "checkpoint-500/scheduler.pt",
+        "size": 1465,
+        "sha256": "67e66b36e956d515e23ce120baeac5d4b24b094d49826b61f4ea1ffea2ed4815"
+      },
+      {
+        "path": "checkpoint-500/training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      },
+      {
+        "path": "checkpoint-600/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-600/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "b33a261eeb52f5421d6532879c3e6f47256e167764471365e7de7a12835fce0e"
+      },
+      {
+        "path": "checkpoint-600/optimizer.pt",
+        "size": 83485139,
+        "sha256": "69583d7174364dc9402503dbea7a6a7288c76b766c8517cca688028c3b57791b"
+      },
+      {
+        "path": "checkpoint-600/rng_state.pth",
+        "size": 14645,
+        "sha256": "3cd8e1bda4df00e5133ee6f0c3558b06be6f954c1427a8102eb026768e1d78f3"
+      },
+      {
+        "path": "checkpoint-600/scaler.pt",
+        "size": 1383,
+        "sha256": "cb7fde5111803012042c93a73aa191336bb6e10b3ad44f6bd1d94fc7008a22b6"
+      },
+      {
+        "path": "checkpoint-600/scheduler.pt",
+        "size": 1465,
+        "sha256": "dcc473cf215402c5c0269ff4960078b55347cfef7b90d763930b8791b2fa630c"
+      },
+      {
+        "path": "checkpoint-600/training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      },
+      {
+        "path": "checkpoint-700/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-700/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "8266e25d2fa3fdde6225932b45e697c7a9fff34e3eae4a0a50c4d1cb2013f8bc"
+      },
+      {
+        "path": "checkpoint-700/optimizer.pt",
+        "size": 83485139,
+        "sha256": "8060e43fe16501ae61a22d38e1ee796d4101e4910c98abc39995bc123e530969"
+      },
+      {
+        "path": "checkpoint-700/rng_state.pth",
+        "size": 14645,
+        "sha256": "8d738acba0d0cd4b5bae7726d3fc4a5c5c60e60fd2431e83bea597a2ce6a81da"
+      },
+      {
+        "path": "checkpoint-700/scaler.pt",
+        "size": 1383,
+        "sha256": "850c3d909f8a0af6f9b431fac5a25833ab1658c39f899825e3b347b6af8a490b"
+      },
+      {
+        "path": "checkpoint-700/scheduler.pt",
+        "size": 1465,
+        "sha256": "127c70bcc4fc19f6a6e0b8b38ddaa4c8d07d0809438fb69ee1c2bb2012057bd6"
+      },
+      {
+        "path": "checkpoint-700/training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      },
+      {
+        "path": "checkpoint-724/README.md",
+        "size": 5300,
+        "sha256": "1a978b3ab350bdf7ba6cdb37fe2d12ac6fe3bc73f52837cd12756958df087112"
+      },
+      {
+        "path": "checkpoint-724/adapter_config.json",
+        "size": 1229,
+        "sha256": "cfd908ddadd2951248227a95da94d31b934395c28e1b5e728a30a7a1cac6d742"
+      },
+      {
+        "path": "checkpoint-724/adapter_model.safetensors",
+        "size": 161533192,
+        "sha256": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4"
+      },
+      {
+        "path": "checkpoint-724/optimizer.pt",
+        "size": 83485139,
+        "sha256": "aa0dd9b20ed0275fd71ca3e3487e92ec87a499a4a238828674495970b7aef26e"
+      },
+      {
+        "path": "checkpoint-724/rng_state.pth",
+        "size": 14645,
+        "sha256": "728af7ed2e8587ba9674a432edb3c77bcf0ab27b017f18db14a613c3f35b53e9"
+      },
+      {
+        "path": "checkpoint-724/scaler.pt",
+        "size": 1383,
+        "sha256": "ce647a94b8cac583dad3937b094f7608c6baa71abf050c847461777d8de07158"
+      },
+      {
+        "path": "checkpoint-724/scheduler.pt",
+        "size": 1465,
+        "sha256": "59aef43d8d340ae50e46f1df6d23931e471a44aa1131f339ffde659b5cd6f21f"
+      },
+      {
+        "path": "checkpoint-724/trainer_state.json",
+        "size": 15647,
+        "sha256": "5f9aad18c97ec20011cc6a4b03a74d76314b4f740355ea5062097fb6773270df"
+      },
+      {
+        "path": "checkpoint-724/training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 11421991,
+        "sha256": "2f55e63353d3d978b390d346bae531be8b83bc9532c0be500d62b7253aa4c595"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 693,
+        "sha256": "2e3bd3cb5055f7a903a54e7062b2fd14d21b70f4174c3ffcd9fc81ec50a25631"
+      },
+      {
+        "path": "training_args.bin",
+        "size": 5265,
+        "sha256": "9566bf282ff2a78fcf9d81b5b9811f7ae0b837e428993830c74d9f5c1b415fba"
+      }
+    ]
+  },
+  "merged_model": {
+    "path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16",
+    "file_count": 10,
+    "total_bytes": 15242725984,
+    "tree_sha256": "c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946",
+    "files": [
+      {
+        "path": "chat_template.jinja",
+        "size": 2507,
+        "sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
+      },
+      {
+        "path": "config.json",
+        "size": 1374,
+        "sha256": "a189e4cd70fab43e1ff1f2fc0dded4a039c61df3e31b9027594fda39b25295b6"
+      },
+      {
+        "path": "generation_config.json",
+        "size": 243,
+        "sha256": "608f27f696b72bbf9247f4b8a862bf99a1d3e1d7ae1361ef7a8bb9bee2068332"
+      },
+      {
+        "path": "model-00001-of-00004.safetensors",
+        "size": 3989398504,
+        "sha256": "e10d1348b6450cbccde9dc09002ea0b16ef04cc23767d0a8632dc8fbee141027"
+      },
+      {
+        "path": "model-00002-of-00004.safetensors",
+        "size": 3919792504,
+        "sha256": "eaf8ed11361169bfd696937c8670dbc0401d1f8e62c7a53d1e0417159bcb8f8f"
+      },
+      {
+        "path": "model-00003-of-00004.safetensors",
+        "size": 3864726312,
+        "sha256": "fb2ad035feaf04746c397b194cc9d8e637fdb1bd971bac2d5cad51bf55d2e358"
+      },
+      {
+        "path": "model-00004-of-00004.safetensors",
+        "size": 3457354168,
+        "sha256": "d43150a1e7d1a476c3ac0e7e7deb0209a5674c5753c6660d5d33f8eb66c22f7f"
+      },
+      {
+        "path": "model.safetensors.index.json",
+        "size": 27788,
+        "sha256": "e80bc94fb54b44bb8274d8d97168f2b00c9c830813c2f6bd48c887268810e2a8"
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 11421892,
+        "sha256": "3fd169731d2cbde95e10bf356d66d5997fd885dd8dbb6fb4684da3f23b2585d8"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 692,
+        "sha256": "1cc816812993bff176eb4f7495433b736f06fba9b6e7b05cac7b4a1780650c95"
+      }
+    ]
+  },
+  "merge": {
+    "dtype": "float16",
+    "device_map": "cpu",
+    "safe_serialization": true,
+    "max_shard_size": "4GB"
+  },
+  "transformer_blocks": {
+    "path": "model.layers",
+    "count": 28
+  },
+  "precision_contract": {
+    "int4": {
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 32,
+      "label": "W4A16-g32"
+    },
+    "int8": {
+      "weight_bits": 8,
+      "activation_bits": 16,
+      "group_size": null,
+      "label": "W8A16"
+    },
+    "activation_dtype": "float16_or_bfloat16",
+    "controlled_variable": "transformer_block_weight_bit_width",
+    "excluded_modules": [
+      "embedding",
+      "layernorm",
+      "lm_head",
+      "kv_cache"
+    ],
+    "forbidden_direct_comparison": "awq_w4a16_vs_smoothquant_w8a8"
+  }
+}

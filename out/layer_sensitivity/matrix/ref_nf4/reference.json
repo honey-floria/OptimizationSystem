@@ -1,0 +1,21 @@
+{
+  "plan": {
+    "plan_id": "ref_nf4",
+    "kind": "ref_nf4",
+    "runnable": false,
+    "description": "Accepted QLoRA/NF4 business reference."
+  },
+  "status": "reference_registered",
+  "report": "/userhome/cs5/u3680889/OptimizationSystem/out/quality_repair_7b_qlora_v2_final_pilot/comparison_report.json",
+  "report_sha256": "01657c9f5e788875c9bcd1d2f24d3ccae49bddbd26472226e485c2789b517d42",
+  "predictions_sha256": "60ae1afe3c2fc7a8efea852bee6c55ec2a482dff89ad43a3e22dd35d7e099847",
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 37,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.4625
+  },
+  "structured_output_rate": 1.0,
+  "normalized_runtime_quantization": "bitsandbytes-nf4"
+}

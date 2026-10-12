@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.2",
+  "status": "completed",
+  "completed_at": "2026-10-12T02:26:49.275672+00:00",
+  "plan": {
+    "plan_id": "layer_09_int8",
+    "kind": "layer_int8",
+    "runnable": true,
+    "layer_index": 9,
+    "default_precision": "int4",
+    "overrides": {
+      "9": "int8"
+    }
+  },
+  "backend": {
+    "name": "symmetric_fake_quant",
+    "artifact_kind": "ephemeral_dequantized_weights",
+    "deployment_performance_claims_allowed": false,
+    "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+  },
+  "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 34,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.425
+  },
+  "structured_output_rate": 1.0,
+  "predictions_sha256": "32334e3ebd0af8d6bd20bb31a83425e95e80b743a811d00efdb7a45b21a5b4c9",
+  "quantization_error_sha256": "3ee7fbd501b7803cf43e6baf6232d6ed9058a33265fe770853222fc9bed62674",
+  "weighted_nmse": 0.009785844966889685,
+  "duration_seconds": 173.10265055391937
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "baseline": "all_int4",
+  "candidate": "layer_14_int8",
+  "transitions": {
+    "recovered": 2,
+    "regressed": 1,
+    "stable_correct": 35,
+    "stable_wrong": 42,
+    "changed_raw_predictions": 17
+  },
+  "baseline_metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 36,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.45
+  },
+  "candidate_metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 37,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.4625
+  }
+}

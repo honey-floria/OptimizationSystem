@@ -1,0 +1,1348 @@
+{
+  "ranking": [
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:29:54.824869+00:00",
+      "plan": {
+        "plan_id": "layer_10_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 10,
+        "default_precision": "int4",
+        "overrides": {
+          "10": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 38,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.475
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "3394f8d12d9ff4a48a23fd18b0f69479186c47702ff4d6d75b7648e3e3e1696e",
+      "quantization_error_sha256": "985334be176c7114f53b93ae7fd007aefcb645d064e7ab8bc72ecd30e1e3b330",
+      "weighted_nmse": 0.009784684734730969,
+      "duration_seconds": 164.0119082510937,
+      "transitions": {
+        "recovered": 3,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 41,
+        "changed_raw_predictions": 17
+      },
+      "recovered_count": 3,
+      "regressed_count": 1,
+      "net_correct_gain": 2,
+      "correct_gain": 2,
+      "quantization_error_recovery": 0.0003530262045389771,
+      "rank": 1
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:07:04.315037+00:00",
+      "plan": {
+        "plan_id": "layer_22_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 22,
+        "default_precision": "int4",
+        "overrides": {
+          "22": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 38,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.475
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "d1451160bf50691777e7b76625545394459e717355017bc5710a7a74981d7b56",
+      "quantization_error_sha256": "7f5439d7fa8f46e17af7cfeec26b5a9f679eda8062bca521a2dd37f787d39cbd",
+      "weighted_nmse": 0.009779743162911973,
+      "duration_seconds": 172.1567373140715,
+      "transitions": {
+        "recovered": 2,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 42,
+        "changed_raw_predictions": 20
+      },
+      "recovered_count": 2,
+      "regressed_count": 0,
+      "net_correct_gain": 2,
+      "correct_gain": 2,
+      "quantization_error_recovery": 0.0003579677763579734,
+      "rank": 2
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:10:11.201821+00:00",
+      "plan": {
+        "plan_id": "layer_23_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 23,
+        "default_precision": "int4",
+        "overrides": {
+          "23": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 38,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.475
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "5ca67af4ff411ef5a6f05c14215866501a0d4364e17140d343d9a000df561981",
+      "quantization_error_sha256": "6fa525f7cc5553d5d85785e566b0146114c7fd16acafabdda2290d2d48ddecef",
+      "weighted_nmse": 0.009789489349058038,
+      "duration_seconds": 172.24438981106505,
+      "transitions": {
+        "recovered": 2,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 42,
+        "changed_raw_predictions": 16
+      },
+      "recovered_count": 2,
+      "regressed_count": 0,
+      "net_correct_gain": 2,
+      "correct_gain": 2,
+      "quantization_error_recovery": 0.0003482215902119081,
+      "rank": 3
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:42:24.058110+00:00",
+      "plan": {
+        "plan_id": "layer_14_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 14,
+        "default_precision": "int4",
+        "overrides": {
+          "14": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "69b976d8985a0e1652408ab67a2c42a011019d2b95f97583b384c47590bc59ef",
+      "quantization_error_sha256": "945eb0fee04bc2c602e7f37148502ff19fc7db33ac5edbc2278427e197557d2f",
+      "weighted_nmse": 0.00977058515113403,
+      "duration_seconds": 166.04276803904213,
+      "transitions": {
+        "recovered": 2,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 42,
+        "changed_raw_predictions": 17
+      },
+      "recovered_count": 2,
+      "regressed_count": 1,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.0003671257881359153,
+      "rank": 4
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:13:55.849724+00:00",
+      "plan": {
+        "plan_id": "layer_05_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 5,
+        "default_precision": "int4",
+        "overrides": {
+          "5": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "f4a08f47a97048cfbb17c919e9bfe2671fa487040ea15db328871a8c83456d65",
+      "quantization_error_sha256": "9e956b22dee615189652dc4578b615d9c9029d35e0c94be4870c967036f7b66e",
+      "weighted_nmse": 0.009785848338080714,
+      "duration_seconds": 174.4076413048897,
+      "transitions": {
+        "recovered": 2,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 42,
+        "changed_raw_predictions": 16
+      },
+      "recovered_count": 2,
+      "regressed_count": 1,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.00035186260118923174,
+      "rank": 5
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:16:20.237244+00:00",
+      "plan": {
+        "plan_id": "layer_25_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 25,
+        "default_precision": "int4",
+        "overrides": {
+          "25": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "74cab95dbbefc4da35aed14269e25c8bead0f0d0a6050743d120f3ee82e614bd",
+      "quantization_error_sha256": "4faa7681e4e4a56fa8ed674e8276ceb5d4ba3970240e6f767b74cc5c4da5d31a",
+      "weighted_nmse": 0.009791872362554715,
+      "duration_seconds": 171.42336185090244,
+      "transitions": {
+        "recovered": 2,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 42,
+        "changed_raw_predictions": 15
+      },
+      "recovered_count": 2,
+      "regressed_count": 1,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.0003458385767152305,
+      "rank": 6
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:51:43.760041+00:00",
+      "plan": {
+        "plan_id": "layer_17_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 17,
+        "default_precision": "int4",
+        "overrides": {
+          "17": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "4450c43dec39d1282a04a89d3dd088c80d2dc7b99f9771e4b28252acb9c9cd37",
+      "quantization_error_sha256": "7582560260d7b113d698cfc0523893f4bee297b14ed32a7535e0fe2ed5c89ccf",
+      "weighted_nmse": 0.00977376204053017,
+      "duration_seconds": 165.45475638401695,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 16
+      },
+      "recovered_count": 1,
+      "regressed_count": 0,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.0003639488987397764,
+      "rank": 7
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:03:56.327377+00:00",
+      "plan": {
+        "plan_id": "layer_21_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 21,
+        "default_precision": "int4",
+        "overrides": {
+          "21": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "4b243cdd6e75ad72ca13cfdfcdd549f9bfe9611daa2c9f4e7ab0f5565fcae199",
+      "quantization_error_sha256": "b7e4f52ad4408301ce125227231f9ad976e586a3ab3cf02ebb6f402fb0b6a139",
+      "weighted_nmse": 0.00977828920201713,
+      "duration_seconds": 165.0671380709391,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 17
+      },
+      "recovered_count": 1,
+      "regressed_count": 0,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.0003594217372528165,
+      "rank": 8
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:22:28.427454+00:00",
+      "plan": {
+        "plan_id": "layer_27_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 27,
+        "default_precision": "int4",
+        "overrides": {
+          "27": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "46cb1e4cb348ca9174d848b97b6d1e37091ec07625ec0d20e867a35baca2429c",
+      "quantization_error_sha256": "d0db30d7585d01c4bdb6e491f22d0e1fa5200e28b3d7c59ae5f537fb8ad5bc7b",
+      "weighted_nmse": 0.009782043056623179,
+      "duration_seconds": 165.75787561386824,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 17
+      },
+      "recovered_count": 1,
+      "regressed_count": 0,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.0003556678826467669,
+      "rank": 9
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:23:39.143736+00:00",
+      "plan": {
+        "plan_id": "layer_08_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 8,
+        "default_precision": "int4",
+        "overrides": {
+          "8": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "439d39254168bbc4b1a18d2b9cd5948453edd911a27a959865bd16231af673be",
+      "quantization_error_sha256": "56ba601b5638fa25586e3b81818f9131ad43c8b9f2a2b58909447b279e36577c",
+      "weighted_nmse": 0.009783497137829797,
+      "duration_seconds": 163.9423031208571,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 18
+      },
+      "recovered_count": 1,
+      "regressed_count": 0,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.0003542138014401494,
+      "rank": 10
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:19:26.458826+00:00",
+      "plan": {
+        "plan_id": "layer_26_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 26,
+        "default_precision": "int4",
+        "overrides": {
+          "26": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "8a2c404f683d967a6d8e85864879e05f94f0a4bd5fec50e15f31fc4822ee83f0",
+      "quantization_error_sha256": "9ac49bf468f31dc011509a53cd11caeef837efabaddf0b13c5fa41488872dc10",
+      "weighted_nmse": 0.009790693860954686,
+      "duration_seconds": 171.71836897497997,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 7
+      },
+      "recovered_count": 1,
+      "regressed_count": 0,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.00034701707831526034,
+      "rank": 11
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:13:12.005714+00:00",
+      "plan": {
+        "plan_id": "layer_24_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 24,
+        "default_precision": "int4",
+        "overrides": {
+          "24": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 37,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4625
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "8511151f608cbed7debe689d17885a7da560eb2f2ff2d3e03b6ad22d6d443638",
+      "quantization_error_sha256": "de144d5db8dcfe3b6d60cd6096330498a23b002353cb80b67564dd373a90acc0",
+      "weighted_nmse": 0.009792897036223809,
+      "duration_seconds": 165.24681357783265,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 14
+      },
+      "recovered_count": 1,
+      "regressed_count": 0,
+      "net_correct_gain": 1,
+      "correct_gain": 1,
+      "quantization_error_recovery": 0.00034481390304613724,
+      "rank": 12
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T03:00:53.913246+00:00",
+      "plan": {
+        "plan_id": "layer_20_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 20,
+        "default_precision": "int4",
+        "overrides": {
+          "20": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 36,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.45
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "e28845fd7bf8eed8d8fdb6bbbae110fe59e9c9e311882fc511614f4ac05254f9",
+      "quantization_error_sha256": "e4ff7ee4fa87f69a7beaf102472c305b2e0e860974f097f51f2061e009f6a1e1",
+      "weighted_nmse": 0.009773912375479447,
+      "duration_seconds": 165.04123516310938,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 14
+      },
+      "recovered_count": 1,
+      "regressed_count": 1,
+      "net_correct_gain": 0,
+      "correct_gain": 0,
+      "quantization_error_recovery": 0.0003637985637904989,
+      "rank": 13
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:57:52.169281+00:00",
+      "plan": {
+        "plan_id": "layer_19_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 19,
+        "default_precision": "int4",
+        "overrides": {
+          "19": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 36,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.45
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "6db6325c8d43c3ab1414792e07c9c1bae0000b9969087976ee004739250f5a9f",
+      "quantization_error_sha256": "ff3474feec5c2eb9246eec03d2c810501a32c99664cbc9287647ec24a9ce5e7e",
+      "weighted_nmse": 0.009777112733770136,
+      "duration_seconds": 167.15572684910148,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 22
+      },
+      "recovered_count": 1,
+      "regressed_count": 1,
+      "net_correct_gain": 0,
+      "correct_gain": 0,
+      "quantization_error_recovery": 0.00036059820549981005,
+      "rank": 14
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:17:15.451143+00:00",
+      "plan": {
+        "plan_id": "layer_06_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 6,
+        "default_precision": "int4",
+        "overrides": {
+          "6": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 36,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.45
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "9b1110d4a8e2a7d29b7daad85fe407f6492166d7bbb4aa844bd74a1b336173eb",
+      "quantization_error_sha256": "a7c5f32faec34a8939cb6f738f2f6de1f18532d1fd24c10526c0dcb93bdfc9e1",
+      "weighted_nmse": 0.00978161786111372,
+      "duration_seconds": 176.63612446794286,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 17
+      },
+      "recovered_count": 1,
+      "regressed_count": 1,
+      "net_correct_gain": 0,
+      "correct_gain": 0,
+      "quantization_error_recovery": 0.0003560930781562263,
+      "rank": 15
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:32:55.507627+00:00",
+      "plan": {
+        "plan_id": "layer_11_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 11,
+        "default_precision": "int4",
+        "overrides": {
+          "11": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 36,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.45
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "6b972628c2a3e1ec8184019a97a5ee767dab32775387c27072bb96c0a4bcb388",
+      "quantization_error_sha256": "af70c8a8bbf0a8c54fbb898705aaa2d7f8cc31450458805bad42bda00aa03bb7",
+      "weighted_nmse": 0.009784526710605793,
+      "duration_seconds": 164.43960798718035,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 15
+      },
+      "recovered_count": 1,
+      "regressed_count": 1,
+      "net_correct_gain": 0,
+      "correct_gain": 0,
+      "quantization_error_recovery": 0.000353184228664153,
+      "rank": 16
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T01:58:27.860127+00:00",
+      "plan": {
+        "plan_id": "layer_00_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 0,
+        "default_precision": "int4",
+        "overrides": {
+          "0": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 36,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.45
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "8dafb8773b997eeadc173f5242b1e589e4f36949b7e89134675f8633d27530b1",
+      "quantization_error_sha256": "4e09e47425b72c96304f99ef07b1a1585c98489fa37b3c7a2ddb70e9503233a1",
+      "weighted_nmse": 0.009789249411388359,
+      "duration_seconds": 178.8588149540592,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 16
+      },
+      "recovered_count": 1,
+      "regressed_count": 1,
+      "net_correct_gain": 0,
+      "correct_gain": 0,
+      "quantization_error_recovery": 0.00034846152788158696,
+      "rank": 17
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:10:44.417408+00:00",
+      "plan": {
+        "plan_id": "layer_04_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 4,
+        "default_precision": "int4",
+        "overrides": {
+          "4": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 36,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.45
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "ce29cc036a49ba456ef49696fbbd3cd95272ec74b2d7a5b76a1d4d9450f34dc0",
+      "quantization_error_sha256": "7909aca24d89061bad8d822dafa22a588537d8502ea26de41dc7cdfebb0b0891",
+      "weighted_nmse": 0.009783334625095313,
+      "duration_seconds": 164.73319043708034,
+      "transitions": {
+        "recovered": 0,
+        "regressed": 0,
+        "stable_correct": 36,
+        "stable_wrong": 44,
+        "changed_raw_predictions": 11
+      },
+      "recovered_count": 0,
+      "regressed_count": 0,
+      "net_correct_gain": 0,
+      "correct_gain": 0,
+      "quantization_error_recovery": 0.0003543763141746325,
+      "rank": 18
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:36:03.943469+00:00",
+      "plan": {
+        "plan_id": "layer_12_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 12,
+        "default_precision": "int4",
+        "overrides": {
+          "12": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 35,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4375
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "dcc1ff5adb4ca739021dad6c634d033e2942e8334e39407de66a2dae1360bdb4",
+      "quantization_error_sha256": "03cdfad4ce46ad4a688769ea9df774c56ae4291ca4ac3c95dddcffb88c9e39d5",
+      "weighted_nmse": 0.0097756954906313,
+      "duration_seconds": 170.84379176283255,
+      "transitions": {
+        "recovered": 2,
+        "regressed": 3,
+        "stable_correct": 33,
+        "stable_wrong": 42,
+        "changed_raw_predictions": 19
+      },
+      "recovered_count": 2,
+      "regressed_count": 3,
+      "net_correct_gain": -1,
+      "correct_gain": -1,
+      "quantization_error_recovery": 0.0003620154486386456,
+      "rank": 19
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:20:28.640932+00:00",
+      "plan": {
+        "plan_id": "layer_07_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 7,
+        "default_precision": "int4",
+        "overrides": {
+          "7": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 35,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4375
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "b4db237c32c5da0cab3466ce0cd217e06b34071b797d72e4419375fd84864fe2",
+      "quantization_error_sha256": "065539387bece909ce18978d32c55cfb9e3e0b8d7879280ee720e0c2c7b0bb48",
+      "weighted_nmse": 0.009777590237394789,
+      "duration_seconds": 167.86754167708568,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 2,
+        "stable_correct": 34,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 15
+      },
+      "recovered_count": 1,
+      "regressed_count": 2,
+      "net_correct_gain": -1,
+      "correct_gain": -1,
+      "quantization_error_recovery": 0.0003601207018751572,
+      "rank": 20
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:39:21.174013+00:00",
+      "plan": {
+        "plan_id": "layer_13_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 13,
+        "default_precision": "int4",
+        "overrides": {
+          "13": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 35,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4375
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "e8e78bcdac4210686416ad75141a9b7c217552a93498d6de4c522695b00528cc",
+      "quantization_error_sha256": "510550cb71bb03823c0cdf38445c2707f822357b5256a78ce1535e85018cc433",
+      "weighted_nmse": 0.009778788081364256,
+      "duration_seconds": 177.38018173910677,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 2,
+        "stable_correct": 34,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 16
+      },
+      "recovered_count": 1,
+      "regressed_count": 2,
+      "net_correct_gain": -1,
+      "correct_gain": -1,
+      "quantization_error_recovery": 0.0003589228579056903,
+      "rank": 21
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:07:35.401360+00:00",
+      "plan": {
+        "plan_id": "layer_03_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 3,
+        "default_precision": "int4",
+        "overrides": {
+          "3": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 35,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4375
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "cc09873c2e69bb36fd5f8fc5af801723220e89aa755b677b066d4d575b775616",
+      "quantization_error_sha256": "fd59134ef8c60a4ba52a3baa29c8d6fc89d187428e76ecee8d2c9d8d126de457",
+      "weighted_nmse": 0.009783473377223396,
+      "duration_seconds": 169.5616540031042,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 2,
+        "stable_correct": 34,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 17
+      },
+      "recovered_count": 1,
+      "regressed_count": 2,
+      "net_correct_gain": -1,
+      "correct_gain": -1,
+      "quantization_error_recovery": 0.00035423756204655023,
+      "rank": 22
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:01:31.078528+00:00",
+      "plan": {
+        "plan_id": "layer_01_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 1,
+        "default_precision": "int4",
+        "overrides": {
+          "1": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 35,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4375
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "83d3c2f9738430a656601f9eb6155d7ab6e691cd14feb3c2b1291f6c3f10a97d",
+      "quantization_error_sha256": "84268e2cbfdb6fd94490587294b5800d7b4fdfb8ba38981c045bff91ef9fb898",
+      "weighted_nmse": 0.009757887359639552,
+      "duration_seconds": 167.7463479670696,
+      "transitions": {
+        "recovered": 0,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 44,
+        "changed_raw_predictions": 15
+      },
+      "recovered_count": 0,
+      "regressed_count": 1,
+      "net_correct_gain": -1,
+      "correct_gain": -1,
+      "quantization_error_recovery": 0.00037982357963039365,
+      "rank": 23
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:54:47.316058+00:00",
+      "plan": {
+        "plan_id": "layer_18_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 18,
+        "default_precision": "int4",
+        "overrides": {
+          "18": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 35,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4375
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "85225e42ce847a08ab414a63abf1ac137c5bc3c9bf80a1dfd3e6b5d98592af4e",
+      "quantization_error_sha256": "f8b07564b923aa826f45ea19ec65d458906585f6c42c4ee07223dca433ecae33",
+      "weighted_nmse": 0.009771149809812377,
+      "duration_seconds": 166.382715706015,
+      "transitions": {
+        "recovered": 0,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 44,
+        "changed_raw_predictions": 20
+      },
+      "recovered_count": 0,
+      "regressed_count": 1,
+      "net_correct_gain": -1,
+      "correct_gain": -1,
+      "quantization_error_recovery": 0.0003665611294575693,
+      "rank": 24
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:04:29.575087+00:00",
+      "plan": {
+        "plan_id": "layer_02_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 2,
+        "default_precision": "int4",
+        "overrides": {
+          "2": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 35,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4375
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "6a5b5d7053e97cd45bbcd78ed4e7a5260aae6cf2e072e898c485e9a7f37d1b2b",
+      "quantization_error_sha256": "da7d879b315ee32bbf69392e315c7d9857c4d28648c1942865a20003358cad4f",
+      "weighted_nmse": 0.009773523691745861,
+      "duration_seconds": 163.27754513919353,
+      "transitions": {
+        "recovered": 0,
+        "regressed": 1,
+        "stable_correct": 35,
+        "stable_wrong": 44,
+        "changed_raw_predictions": 15
+      },
+      "recovered_count": 0,
+      "regressed_count": 1,
+      "net_correct_gain": -1,
+      "correct_gain": -1,
+      "quantization_error_recovery": 0.00036418724752408475,
+      "rank": 25
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:26:49.275672+00:00",
+      "plan": {
+        "plan_id": "layer_09_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 9,
+        "default_precision": "int4",
+        "overrides": {
+          "9": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 34,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.425
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "32334e3ebd0af8d6bd20bb31a83425e95e80b743a811d00efdb7a45b21a5b4c9",
+      "quantization_error_sha256": "3ee7fbd501b7803cf43e6baf6232d6ed9058a33265fe770853222fc9bed62674",
+      "weighted_nmse": 0.009785844966889685,
+      "duration_seconds": 173.10265055391937,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 3,
+        "stable_correct": 33,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 16
+      },
+      "recovered_count": 1,
+      "regressed_count": 3,
+      "net_correct_gain": -2,
+      "correct_gain": -2,
+      "quantization_error_recovery": 0.0003518659723802612,
+      "rank": 26
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:45:31.118232+00:00",
+      "plan": {
+        "plan_id": "layer_15_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 15,
+        "default_precision": "int4",
+        "overrides": {
+          "15": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 33,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4125
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "6445c4cbd5928b10d03ef8db3c02047be204d51e518c6ba7cbe98bf546af810d",
+      "quantization_error_sha256": "a539697824c1de181b1be6e24560abd2e08c1b662ec37fa25642e99d3cd6595f",
+      "weighted_nmse": 0.00977299275952923,
+      "duration_seconds": 171.08490778901614,
+      "transitions": {
+        "recovered": 1,
+        "regressed": 4,
+        "stable_correct": 32,
+        "stable_wrong": 43,
+        "changed_raw_predictions": 26
+      },
+      "recovered_count": 1,
+      "regressed_count": 4,
+      "net_correct_gain": -3,
+      "correct_gain": -3,
+      "quantization_error_recovery": 0.00036471817974071535,
+      "rank": 27
+    },
+    {
+      "schema_version": 1,
+      "stage": "7.1.2",
+      "status": "completed",
+      "completed_at": "2026-10-12T02:48:40.882484+00:00",
+      "plan": {
+        "plan_id": "layer_16_int8",
+        "kind": "layer_int8",
+        "runnable": true,
+        "layer_index": 16,
+        "default_precision": "int4",
+        "overrides": {
+          "16": "int8"
+        }
+      },
+      "backend": {
+        "name": "symmetric_fake_quant",
+        "artifact_kind": "ephemeral_dequantized_weights",
+        "deployment_performance_claims_allowed": false,
+        "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+      },
+      "sample_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "metrics": {
+        "total": 80,
+        "parsed": 80,
+        "correct": 33,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.4125
+      },
+      "structured_output_rate": 1.0,
+      "predictions_sha256": "90e4ee9f691116c0a8a3d3835970a2400fc815c9f47beac3030fdcbd1d50b1b3",
+      "quantization_error_sha256": "c0f6a6f4e5a36d2d051bca249e363aed09a2b25c260a29de2f1f33c814112ee6",
+      "weighted_nmse": 0.009779008344752737,
+      "duration_seconds": 173.29883594485,
+      "transitions": {
+        "recovered": 0,
+        "regressed": 3,
+        "stable_correct": 33,
+        "stable_wrong": 44,
+        "changed_raw_predictions": 24
+      },
+      "recovered_count": 0,
+      "regressed_count": 3,
+      "net_correct_gain": -3,
+      "correct_gain": -3,
+      "quantization_error_recovery": 0.0003587025945172087,
+      "rank": 28
+    }
+  ]
+}

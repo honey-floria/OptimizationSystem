@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.2",
+  "plan": {
+    "plan_id": "ref_nf4",
+    "kind": "ref_nf4",
+    "runnable": false,
+    "description": "Accepted QLoRA/NF4 business reference."
+  },
+  "precision_vector": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "precision_contract": {
+    "int4": {
+      "weight_bits": 4,
+      "activation_bits": 16,
+      "group_size": 32,
+      "scheme": "symmetric_groupwise",
+      "label": "W4A16-g32"
+    },
+    "int8": {
+      "weight_bits": 8,
+      "activation_bits": 16,
+      "group_size": null,
+      "scheme": "symmetric_per_output_channel",
+      "label": "W8A16"
+    },
+    "excluded_modules": [
+      "embedding",
+      "layernorm",
+      "lm_head",
+      "kv_cache"
+    ]
+  },
+  "backend": {
+    "name": "symmetric_fake_quant",
+    "artifact_kind": "ephemeral_dequantized_weights",
+    "deployment_performance_claims_allowed": false,
+    "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+  },
+  "plan_sha256": "246b0f3a80e3574710284f083e7f15cd69d8e0cf8b8d06442c37fa53b3f177e7"
+}
