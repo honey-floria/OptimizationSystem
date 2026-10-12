@@ -2089,10 +2089,49 @@ FP64 重算造成的 weighted NMSE 最大绝对变化仅约 `4.03e-10`。`ALL-I4
 
 ### 7.1.3 层输出激活误差采集
 
-权重误差只能说明参数矩阵在量化前后的距离，不能说明误差经过 attention、MLP、残差连接和 LayerNorm 后，
-最终在各层 hidden state 中被放大还是被抵消。因此 7.1.3 还需要把 merged FP16 作为数学参考，在完全相同的
-calibration 输入和 token 位置上，对每个 fake-quant 计划逐层计算输出激活 MSE、normalized MSE、cosine
-similarity 和最大绝对误差。这些指标仍然只是诊断证据，不能替代逐样本业务正确率。
+#### 目的与原理：这一步在做什么，为什么需要做
+
+7.1.2 已经比较过原始 FP16 权重和量化后再反量化权重之间的误差，但权重只是模型的静态参数，不是模型真正
+输出的表示。一次推理中，输入 token 会依次通过 embedding 和 28 个 Transformer block；每个 block 内又有
+attention、MLP、残差连接和 LayerNorm。某个权重矩阵的误差可能被后续计算抵消，也可能沿网络逐层累积和
+放大，因此“某层权重误差大”不等价于“该层对最终输出或业务答案影响大”。
+
+本实验直接观察量化扰动在网络中的传播。对同一条 calibration Prompt、完全相同的 token IDs 和抽样位置，
+分别执行 merged FP16 参考模型和一个量化候选模型，然后配对比较每个 block 输出的 hidden state：
+
+```text
+同一条固定 Prompt
+        │
+        ├── merged FP16 ──→ layer 0 ... layer 27 参考 hidden state
+        │
+        └── 量化候选模型 ─→ layer 0 ... layer 27 候选 hidden state
+                                      │
+                                      └── 逐层计算 MSE、NMSE、cosine 和 max abs
+```
+
+这里的 30 个候选计划与 7.1.2 完全相同：`ALL-I4`、`ALL-I8`，以及 28 个仅把 layer i 从 INT4 提升为
+INT8、其余层保持 INT4 的 `L-i-I8`。逐层记录全部 28 个 block，而不只记录被替换的目标层，是为了同时回答：
+
+- 目标层自身的激活误差降低了多少；
+- 该改善到下一层后是保留、放大还是抵消；
+- 到 layer 27 时是否仍能观察到影响；
+- 某层局部更接近 FP16，是否反而使后续全局误差变差。
+
+因此这一步可以理解为模型的“逐层误差传播探针”：权重误差回答“参数改了多少”，激活误差回答“模型计算过程
+实际偏了多少”，业务评测则回答“最终答案是否变对”。三者观察的是不同层面，必须共同使用。
+
+每层记录四类指标。设 `x` 为 FP16 参考激活、`y` 为量化候选激活：
+
+- `MSE = mean((y-x)^2)`：衡量绝对平方误差，但会受到不同层激活尺度影响；
+- `NMSE = sum((y-x)^2) / sum(x^2)`：用参考激活能量归一化，更适合跨层比较；
+- `cosine = dot(x,y) / (||x||·||y||)`：衡量表示方向是否保持，越接近 1 越好；
+- `max abs = max(|y-x|)`：发现少数极端偏差，但不能单独代表普遍质量。
+
+即使激活指标显著改善，也不能直接判定业务更好。数值距离是连续信号，而 FinQA 正确与否是经过生成、解析和
+数值评分后的离散结果；微小扰动可能改变一个边界答案，较大扰动也可能不改变最终数字。因此激活指标用于解释
+误差传播、定位异常，并在业务结果相同时提供辅助信息，不能替代 `recovered/regressed/net_correct_gain` 排名。
+
+#### 为什么采用固定 32×32 抽样
 
 激活探针固定使用冻结 calibration 的前 32 条数据。每条 Prompt 按 merged 模型 tokenizer 从左侧截断到最多
 512 个输入 token，以保留末尾的财务问题和 `Answer:` 提示，并从实际 token 序列中均匀选择最多 32 个位置；
@@ -2101,6 +2140,31 @@ similarity 和最大绝对误差。这些指标仍然只是诊断证据，不能
 不是 1,024 条 calibration 的全 token 激活。采用抽样是为了同时覆盖序列前部、中部和答案前的末端上下文，
 并把 Qwen2.5-7B（hidden size 3,584）的 FP16 参考缓存控制在约 196 MiB，而非数 GB。最终报告和 manifest
 均明确记录 `scope=sampled_block_output_token_states`，不得把它表述成全量激活评测。
+
+固定样本、token IDs 和位置是为了保证 FP16 与每个候选进行真正的逐元素配对，避免把数据抽样变化误认为量化
+误差。使用左截断是因为 FinQA Prompt 的问题与 `Answer:` 位于末尾；均匀位置同时覆盖保留下来的上下文前部、
+中部和答案提示附近，而不是只观察最后一个 token。32 条样本乘每条 32 个位置可形成每层 1,024 个 token
+state，在代表性、运行时间和存储量之间取得可复现的折中。
+
+#### 为什么分成参考缓存和候选比较两个阶段
+
+7B FP16 模型本身已接近 16GB GPU 的容量边界，不能可靠地把参考模型和候选模型同时放在显存中。实验先单独
+运行一次 merged FP16，把选中位置的 28 层输出保存为 CPU/磁盘参考 shard；之后每个候选在独立进程中依次
+加载，与同一缓存比较。这样 GPU 中主要始终只有一个模型，进程结束后 CUDA allocator 也会释放。参考执行还
+关闭 KV cache 并直接调用 backbone，不执行文本生成和最终词表 `lm_head`，因为本步骤只需要 hidden state。
+
+参考缓存不能只保存每层均值或范数，因为计算 `MSE` 和 cosine 所需的交叉项 `dot(x,y)` 必须由配对的参考与
+候选元素得到。保存全部 1,024 条 calibration 的所有 token 又会产生数十 GB 数据，因此才采用可审计的
+32×32 hidden-state 探针。约 196 MiB 的 shard 只需留在服务器，最终分析使用 JSON 汇总结果。
+
+#### 为什么使用 FP64 分块累计
+
+每个计划最终比较 102,760,448 个标量。若直接用 FP16/FP32 对如此多的元素累加点积与平方和，舍入误差可能
+再次产生理论上不合法的 `cosine > 1`。实现按固定块读取配对元素，并以 FP64 累计 dot product、参考平方和、
+候选平方和及误差平方和，最后从全局充分统计量计算 MSE、NMSE 和 cosine。不能先计算每条样本或每层的
+cosine 再简单平均，因为不同记录的元素数和能量可能不同；全局累计才能得到严格的元素级结果。
+
+#### 实现与执行方式
 
 实现位于 `src/quantization/layer_sensitivity.py`，配置位于 `configs/layer_sensitivity.json`：
 
@@ -2143,3 +2207,167 @@ python3 scripts/run_layer_sensitivity.py summarize-activations
 回传分析时只需带回 reference 的 `manifest.json`、30 个计划的 `activation_error.json`/
 `activation_result.json`，以及矩阵根目录的 `activation_audit.json` 和 `activation_summary.json`。约 196 MiB 的
 `sample_*.pt` 参考 shard 可留在服务器；它们只用于服务器端重新审计或补跑，不进入最终 JSON 分析产物。
+
+服务器已完成全部激活探针并回传 JSON 结果。reference manifest 绑定 merged tree
+`c59ea48fd633162f9bf6fd0b5fb26b8d3d9c6e6686e2b905e49e44905f5fd946`、完整 calibration subset
+`dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092` 和 32 条探针索引
+`23b22df6bf551a4e788327db3b3d3d96e1eca49078d2c6bd0049da2d390eca8b`。实际参考缓存为
+205,798,240 bytes。`activation_audit.json` 为 `status=pass`、`valid_plans=30`、`invalid_plans=[]`，全部
+840 条逐计划逐层记录的 cosine 位于 `[0.891597151330265, 0.9999954366968903]`。再次独立核对 30 份
+`activation_error.json` 后，其 plan 合同、reference manifest SHA256、结果文件 SHA256、28 层数量及每层
+3,670,016 个元素均一致；每个计划共比较 28,672 个 token-layer state、102,760,448 个标量。
+
+全局基线对比如下：
+
+| 计划 | aggregate MSE | aggregate NMSE | aggregate cosine | max abs error |
+| --- | ---: | ---: | ---: | ---: |
+| `ALL-I4` | 3.3234466 | 0.0024791775 | 0.9987940 | 2677 |
+| `ALL-I8` | 0.0673994 | 0.0000502776 | 0.9999856 | 278 |
+
+`ALL-I8` 的 aggregate MSE/NMSE 比 `ALL-I4` 低约 49.31 倍，最大绝对误差低约 9.63 倍，说明 W8A16
+在隐藏状态层面明显更接近 FP16。但两者在 80 条业务 pilot 上都只有 `36/80`，因此“数值更接近 FP16”并不
+自动转化为小样本业务正确数提升。激活误差仍只能作诊断信息。
+
+`ALL-I4` 的误差传播在最后两层明显放大：layer 26 为 NMSE `0.0429121`、cosine `0.9791382`，layer 27
+为 NMSE `0.2050575`、cosine `0.8943939`。仅 layer 27 就贡献约 39.80% 的全层误差平方和，layer 26 和
+27 合计约 48.28%。中间 layer 3–25 的 NMSE 大多约为 `0.0011–0.0019`。因此只看 aggregate cosine
+`0.9987940` 会掩盖最终 block 的明显偏差，后续必须继续保留逐层指标。部分记录存在 2,600 以上的最大绝对
+误差，说明少数激活位置可能有很大的极值偏差；当前汇总不能定位具体样本，不能仅凭 max abs 判定普遍退化。
+
+按“相对 `ALL-I4` 的 aggregate activation NMSE 恢复量”排序，前五名为：
+
+| 激活排名 | 层 | aggregate NMSE | 相对恢复 | 相对降幅 | pilot 净正确数 |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 26 | 0.00154550 | 0.00093368 | 37.66% | +1 |
+| 2 | 1 | 0.00168437 | 0.00079481 | 32.06% | -1 |
+| 3 | 0 | 0.00209173 | 0.00038745 | 15.63% | 0 |
+| 4 | 4 | 0.00239036 | 0.00008881 | 3.58% | 0 |
+| 5 | 25 | 0.00240368 | 0.00007550 | 3.05% | +1 |
+
+layer 26 从 INT4 升为 INT8 后，其目标层 NMSE 从 `0.0429121` 降至 `0.0131122`，并把后续 layer 27
+NMSE 从 `0.2050575` 降至 `0.0413768`，是最明显的下游传播改善。layer 1 和 layer 0 也说明早期层的较小
+改动能够影响后续全部层。相反，layer 2 的目标层 NMSE 虽改善 `0.0041129`，全层 aggregate NMSE 却从
+`0.00247918` 小幅升至 `0.00248782`，说明单层局部改善经过非线性网络后不保证全局误差单调下降。
+
+已有业务第一梯队与激活排名并不一致：layer 10/22/23 的激活排名分别为 27/9/14，aggregate NMSE 相对
+降幅仅约 0.16%/0.75%/0.47%，但三者在 pilot 上都净增 2 题。反过来，激活排名第二的 layer 1 在业务上
+净退化 1 题。28 个单层计划中，aggregate activation NMSE 恢复量与业务净正确数的 Pearson 相关系数仅
+`0.03725`、Spearman 仅 `0.22148`；目标层 NMSE 恢复量与业务净正确数的 Pearson/Spearman 也只有
+`0.12798/0.11427`。aggregate activation 恢复量与静态权重 NMSE 恢复量的 Pearson 为 `0.07037`、
+Spearman 为 `-0.19978`。这些结果共同表明静态权重误差、动态激活误差和离散业务正确性是三个不同信号。
+
+因此 7.1.3 激活误差采集可以验收，但不据此改写 7.1.2 的业务候选结论：pilot 第一梯队仍是
+`{10,22,23}`，零退化保守子集仍是 `{22,23}`；layer 26 应作为“强激活传播敏感层”保留观察，不能仅凭
+激活排名直接加入最终保护层。后续完整 883 条 dev、高风险集及候选组合实测仍以配对业务质量为主，激活指标
+用于解释、异常排查和同等业务结果下的辅助选择。
+
+### 7.1.4–7.1.5 剩余业务评测与最终验收实现
+
+激活探针完成后，7.1 尚不能直接给出最终保护层。80 条 pilot 中一题等于 1.25 个百分点，而且已观察到大量
+并列和少数边界样本驱动排名。最终阶段必须扩大到完整 883 条 FinQA dev，并补充业务类别、长上下文、独立
+高风险集及确定性证据。实现新增 `src/quantization/layer_sensitivity_final.py`，由原有
+`scripts/run_layer_sensitivity.py` 统一提供以下命令，`tests/test_layer_sensitivity_final.py` 覆盖分组计数、
+配对 bootstrap、排名顺序、保护层过滤和 CLI 合同：
+
+- `prepare-final`：校验并冻结 final contract，不加载模型；
+- `pending-final`：按 suite 列出未完成计划；
+- `run-final-plan`：运行某个 suite 的单个计划，已完成结果会按预测哈希幂等跳过；
+- `audit-determinism`：立即将两项复跑与原 pilot 做逐行及预测 SHA256 严格比较；
+- `finalize`：严格审计全部运行，派生子集统计、bootstrap、最终排名、保护层建议和验收文件。
+
+final contract 定义三个 suite：
+
+| Suite | 数据 | 计划 | 用途 |
+| --- | ---: | ---: | --- |
+| `determinism` | 固定 80 条 pilot | `ALL-I4`、`layer-22` | 与原 pilot 逐行及 SHA256 完全复现 |
+| `full_dev` | 完整 883 条 dev | `ALL-I4/ALL-I8 + 28 L-i-I8` | 最终业务排名与 bootstrap |
+| `high_risk` | 91 条 contextual 高风险集 | `ALL-I4/ALL-I8 + 28 L-i-I8` | 独立恢复/退化和格式稳定性 |
+
+contract SHA256 还覆盖完整 evaluation 参数、W4A16-g32/W8A16 精度合同和 symmetric fake-quant 后端；
+`prepare-final` 后若有人修改 dtype、batch size、生成长度、位宽、group size、排除模块或后端，后续命令会拒绝
+混用旧 manifest，必须重新明确准备实验。
+
+确定性 suite 优先运行；如果 `ALL-I4` 或 layer 22 不能与原始 pilot 逐行一致，应停止后续约 60 次昂贵运行并
+先排查环境。full-dev 预测完成后，金额、比例/利率、日期/期限不再单独执行推理，而是按冻结的多标签文件从
+883 条预测派生。三个类别的固定总数是 338、567、709，标签允许重叠。最长 10% 上下文同样从 full-dev
+预测按冻结的 89 个 source index 派生。每个分组都同时写出基线和候选的 `正确数/总数`、accuracy、
+recovered、regressed、net gain、解析数/率及结构化输出数/率，避免小样本只报告百分比。
+
+最终排名口径在看到 full-dev 结果前固定为：
+
+1. full-dev `net_correct_gain` 降序；
+2. full-dev `recovered_count` 降序；
+3. 91 条高风险集 `recovered` 降序；
+4. 89 条长上下文 `recovered` 降序；
+5. structured output 净恢复量降序；
+6. schema v2 权重 NMSE 恢复量降序；
+7. layer index 升序。
+
+每个层相对 `ALL-I4` 的 full-dev 正确率差使用 10,000 次确定性配对非参数 percentile bootstrap 生成 95%
+区间。bootstrap 每次对同一组 source index 成对重采样，不能把基线和候选分别抽样；否则会丢失逐题相关性。
+若第一、第二名区间重叠或最高净增存在并列，`ranking_conclusion_strength` 自动降为 `low`，不得把细小名次差
+解释成稳定优劣。
+
+保护层建议也在运行前冻结：最多选择排名最前的 3 层，并要求完整 dev 净增大于 0、高风险净增不小于 0、
+长上下文净增不小于 0。不满足条件的层即使静态量化误差或激活误差突出，也不会自动进入 7.4 的保护集合。
+
+`finalize` 运行前会检查 62 次新增运行全部存在，并逐一核对 suite、plan、comparison report SHA256、预测
+SHA256、数据角色、样本数及 determinism pilot 索引哈希。任一错配都会终止，失败结果不会进入排名。成功后
+生成以下 7 个正式产物：
+
+```text
+out/layer_sensitivity/final_evaluation/
+├── experiment_manifest.json
+├── layer_metrics.jsonl
+├── sample_transitions.jsonl
+├── ranking.json
+├── ranking.csv
+├── report.md
+└── validation.json
+```
+
+服务器建议按“先确定性、再完整 dev、最后高风险”的顺序执行：
+
+```bash
+python3 scripts/run_layer_sensitivity.py prepare-final
+
+python3 scripts/run_layer_sensitivity.py run-final-plan \
+  --suite determinism --plan-id all_int4
+python3 scripts/run_layer_sensitivity.py run-final-plan \
+  --suite determinism --plan-id layer_22_int8
+
+python3 scripts/run_layer_sensitivity.py pending-final --suite determinism
+python3 scripts/run_layer_sensitivity.py audit-determinism
+
+for suite in full_dev high_risk; do
+  python3 scripts/run_layer_sensitivity.py run-final-plan \
+    --suite "$suite" --plan-id all_int4 || break
+  python3 scripts/run_layer_sensitivity.py run-final-plan \
+    --suite "$suite" --plan-id all_int8 || break
+  for i in $(seq -w 0 27); do
+    python3 scripts/run_layer_sensitivity.py run-final-plan \
+      --suite "$suite" --plan-id "layer_${i}_int8" || break 2
+  done
+done
+
+python3 scripts/run_layer_sensitivity.py pending-final
+python3 scripts/run_layer_sensitivity.py finalize
+```
+
+也可以直接运行等价的一键脚本；它使用相同的幂等跳过逻辑，意外中断后重新执行即可从未完成计划继续：
+
+```bash
+bash scripts/run_layer_sensitivity_final.sh
+```
+
+如服务器需要指定虚拟环境解释器，可使用独立环境变量，而不修改脚本：
+
+```bash
+LAYER_SENSITIVITY_PYTHON=.venv/bin/python \
+  bash scripts/run_layer_sensitivity_final.sh
+```
+
+每次计划使用独立 Python 进程，因此 7B 模型退出后会释放 CUDA allocator；脚本支持安全重跑，已完成计划按
+结果和预测哈希跳过。最终只有在 `pending-final` 的三个列表全空、`validation.json status=pass`、28 层全部
+进入 ranking、两项 determinism 均 exact match 后，才能勾选 7.1.4/7.1.5 剩余验收项，并把
+`recommended_protected_layers` 写成 7.4 的唯一层级输入。

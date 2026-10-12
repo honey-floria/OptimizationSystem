@@ -72,6 +72,50 @@
     "reference_dir": "out/layer_sensitivity/activation_reference",
     "report_filename": "activation_error.json"
   },
+  "final_evaluation": {
+    "output_root": "out/layer_sensitivity/final_evaluation",
+    "suites": {
+      "full_dev": {
+        "dataset_role": "evaluation_dev",
+        "expected_size": 883,
+        "frozen_subset": "evaluation_dev",
+        "plans": "all_runnable"
+      },
+      "high_risk": {
+        "dataset_role": "high_risk_regression",
+        "expected_size": 91,
+        "frozen_subset": "contextual_high_risk",
+        "plans": "all_runnable"
+      },
+      "determinism": {
+        "dataset_role": "evaluation_dev",
+        "pilot_size": 80,
+        "pilot_seed": 20261004,
+        "expected_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+        "plans": ["all_int4", "layer_22_int8"]
+      }
+    },
+    "bootstrap": {
+      "iterations": 10000,
+      "confidence": 0.95,
+      "seed": 20261012
+    },
+    "ranking_tie_break": [
+      "net_correct_gain_desc",
+      "recovered_count_desc",
+      "high_risk_recovered_desc",
+      "long_context_recovered_desc",
+      "structured_output_recovery_desc",
+      "quantization_error_recovery_desc",
+      "layer_index_asc"
+    ],
+    "protection_policy": {
+      "max_layers": 3,
+      "require_positive_full_dev_gain": true,
+      "require_nonnegative_high_risk_gain": true,
+      "require_nonnegative_long_context_gain": true
+    }
+  },
   "ranking": {
     "baseline_plan": "all_int4",
     "exclude_failed": true,
