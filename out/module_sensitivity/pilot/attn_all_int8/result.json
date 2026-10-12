@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.2",
+  "status": "completed",
+  "completed_at": "2026-10-12T11:48:06.936350+00:00",
+  "plan": {
+    "plan_id": "attn_all_int8",
+    "kind": "attention_all_int8",
+    "runnable": true,
+    "comparison": "recovery"
+  },
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 36,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.45
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 1,
+  "predictions_sha256": "6ad5a4c5f3f9a50dd668aa745b266e85403b3662d9e3c42b9ca8ddd1a689ac95",
+  "quantization_error_sha256": "cdc953fa3191986a9dbf587cf610e68b6242548f2127696317dbe33f7303542a",
+  "transition_semantics": "recovery",
+  "transitions_vs_all_int4": {
+    "recovered": 4,
+    "regressed": 4,
+    "net_correct_gain": 0,
+    "stable_correct": 32,
+    "stable_wrong": 40,
+    "changed_raw_predictions": 34
+  },
+  "duration_seconds": 204.37167588691227,
+  "kv_cache_runtime_arguments": null,
+  "all_int8_equivalence": null,
+  "deployment_performance_claims_allowed": false
+}
