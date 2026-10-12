@@ -1814,6 +1814,122 @@ W8A16 量化—反量化。反量化后的权重仍以 FP16 运行，因此该�
 模型大小、显存、延迟或吞吐收益。所有量化只作用于 28 个 Transformer block 内的 Linear，Embedding、
 LayerNorm、lm_head 和 KV Cache 保持不变。
 
+#### 为什么 7.1 只量化 Transformer block 内的 Linear
+
+Qwen2.5 的 Transformer block 中，绝大多数权重和矩阵乘法集中在二维 Linear 权重矩阵。Attention
+包含 `q_proj/k_proj/v_proj/o_proj`，MLP 包含 `gate_proj/up_proj/down_proj`，主要计算形式均为
+`y = xW^T`。量化这些矩阵能够覆盖模型主体的大部分参数和计算，也与后续 W4A16/W8A16 部署方案的主要
+压缩对象一致。7.1 要比较的是各个完整 Transformer block 对低比特权重量化的相对敏感性，因此必须让
+每个单层计划只改变目标 block 内的 Linear，其他全局模块保持一致。
+
+未在本节量化的对象及原因如下：
+
+| 对象 | 7.1 保持不变的原因 |
+|---|---|
+| Embedding | 词表查表矩阵会影响所有 block 的输入，加入逐层实验会破坏单层归因 |
+| RMSNorm/LayerNorm | 参数量很小、压缩收益有限，同时可能具有较高数值敏感性 |
+| `lm_head` | 直接控制全局输出 logits，不属于任一 Transformer block；即使实现类型为 Linear 也明确排除 |
+| KV Cache | 是推理时动态生成的 activation/cache，不是固定模型权重，需要独立的 cache 量化实验 |
+| RoPE、Softmax 等算子 | 没有可按权重位宽量化的持久二维权重 |
+| Activation | 本节固定为 FP16/BF16，即 A16，避免把权重量化与激活量化影响混在一起 |
+
+Embedding、Norm、`lm_head` 和 KV Cache 的独立敏感性留给 7.2。这样的范围限制不是认为这些对象永远
+不能量化，而是保证 7.1 的 `L-i-I8` 结果可以解释为第 `i` 个 Transformer block 的权重敏感度。
+
+#### 对称量化、INT4 分组和 INT8 输出通道粒度
+
+对称量化以 0 为固定中心，不使用额外的非零 `zero_point`。对一组浮点权重 `w`，先根据该组最大绝对值
+计算 scale，再取整和裁剪：
+
+```text
+qmax  = 2^(bits - 1) - 1
+scale = max(abs(w)) / qmax
+q     = clip(round(w / scale), -qmax, qmax)
+w_hat = q * scale
+```
+
+当前实现中，INT4 使用 `qmax=7`，对称整数范围为 `[-7, 7]`；INT8 使用 `qmax=127`，范围为
+`[-127, 127]`。零权重仍映射为整数 0，正负权重共享同一尺度。fake-quant 将 `w_hat` 写回 FP16 权重，
+所以真实推理仍由 FP16 tensor 执行，但权重已经带有相应 INT4/INT8 的取整和裁剪误差。
+
+对 Linear 权重 `W[out_features, in_features]`，INT4 的 W4A16 g32 沿每个输出行的输入维度每 32 个权重
+划为一组，每组独立计算一个 scale：
+
+```text
+W[output 0, input  0..31]  -> scale_0_0
+W[output 0, input 32..63]  -> scale_0_1
+W[output 1, input  0..31]  -> scale_1_0
+...
+```
+
+INT4 的可用离散等级较少，若整行只用一个 scale，单个大离群值会放大 scale，使大量较小权重被粗糙
+舍入甚至变为 0。g32 把离群值的影响限制在所在的 32 个权重内，通常能显著降低误差，代价是需要保存
+更多 scale 元数据。输入维度不能整除 32 时，fake-quant 仅为计算分组临时补零，写回时会去除补齐部分。
+
+INT8 的 W8A16 则采用 per-output-channel 对称量化：`W[o, :]` 对应一个输出神经元/输出通道的全部输入
+权重，每个输出行独立使用一个 scale：
+
+```text
+scale[o] = max(abs(W[o, :])) / 127
+```
+
+这样不同数值范围的输出通道互不干扰。INT8 约有 255 个对称离散等级，分辨率远高于 INT4，通常按输出
+通道一个 scale 已能保持很小的权重误差，无需像 INT4 一样每 32 个权重再细分。两种配置的比较应理解为
+“低成本 W4A16 g32”与“较高精度 W8A16 per-output-channel”的业务质量差异，而不是只有位宽不同、其他
+量化粒度也完全相同的数学对照。
+
+#### 为什么是 28 个 Transformer 层
+
+这里的 `28` 来自模型架构本身，不是脚本根据“7B”参数规模推算出的数字。Qwen2.5-7B-Instruct 的
+`config.json` 明确声明：
+
+```json
+{
+  "architectures": ["Qwen2ForCausalLM"],
+  "hidden_size": 3584,
+  "intermediate_size": 18944,
+  "num_attention_heads": 28,
+  "num_key_value_heads": 4,
+  "num_hidden_layers": 28
+}
+```
+
+`num_hidden_layers=28` 表示模型主体按顺序堆叠了 28 个 Transformer decoder block。在 Transformers
+加载后的 Qwen2 模型对象中，这组 block 表现为 `model.layers`，有效下标为 `0` 到 `27`；每个 block
+包含自注意力、MLP 及相应归一化结构。`num_attention_heads=28` 表示每一层内部有 28 个 query attention
+head，虽然数值也恰好为 28，但它与层数是两个独立的架构维度，不能把 attention head 当成 Transformer
+层。类似地，“7B”表示模型总参数量的大致等级，也不等于层数；参数量由层数、hidden size、MLP 宽度、
+词表和输出头等因素共同决定。
+
+7.1.1 没有只信任配置文件，而是对合并后的实际模型调用 block 自动发现，确认路径为 `model.layers`、
+`len(model.layers)=28`，再把该结果和冻结配置写入 manifest。LoRA merge 只把 adapter 增量合并进既有
+Linear 权重，不增加或删除 Transformer block，因此合并后的 step 724 模型仍为 28 层。7.1.2 在运行时
+再次发现并核对层路径和数量；如果实际模型不再是 28 层，程序会拒绝执行，而不会静默漏跑或多跑。
+
+#### 为什么需要分别运行 28 个单层计划
+
+逐层计划采用单变量隔离设计。`ALL-I4` 先把 28 个 block 全部设为 W4A16 g32；随后每个
+`layer_XX_int8` 都重新加载同一个干净的 merged FP16 母版，并从相同的 `ALL-I4` 精度分配出发，只把
+一个目标 block 恢复为 W8A16：
+
+```text
+layer_00_int8: layer 0 为 INT8，layer 1..27 为 INT4
+layer_01_int8: layer 1 为 INT8，其余 27 层为 INT4
+...
+layer_27_int8: layer 27 为 INT8，layer 0..26 为 INT4
+```
+
+这些计划彼此独立、不会累积；`layer_01_int8` 不会继承 `layer_00_int8` 的权重修改。只有遍历全部 28
+个 block，才能为每一层取得“从 INT4 恢复到 INT8 后挽回多少业务质量”的独立观测。如果只运行
+`ALL-I4` 和 `ALL-I8`，只能判断全模型 INT8 与 INT4 的总体差异，无法定位差异由哪些层造成；少跑一个
+`layer_XX_int8`，该层的敏感度就仍然未知。
+
+完整矩阵共有 32 个条目：已有结果注册为 2 个只读参考组 `REF-FP/REF-NF4`，新执行 2 个全局对照
+`ALL-I4/ALL-I8`，再执行 28 个单层恢复计划。因此 `plan_count=32`，但真正需要服务器推理的是
+`2 + 28 = 30` 个计划。每个可运行计划都使用相同的固定 80 条 pilot、Prompt、tokenizer、生成参数、
+评分器和样本顺序。汇总时以 `ALL-I4` 为配对基准，计算每层的 `recovered`、`regressed` 和
+`net_correct_gain`，用于筛选后续混合精度方案中应保留为 INT8 的敏感层。
+
 模型在 CPU 上加载和反量化，再整体移入 GPU 评测，避免 16GB GPU 在保留 FP16 模型时叠加大型 FP32
 临时量化张量。每次只运行一个计划；已完成且 `result.json` 状态为 `completed` 的计划会被续跑机制跳过。
 完成后以 `ALL-I4` 为基准做 source-index 严格对齐的逐样本配对，输出恢复、退化、稳定正确、稳定错误和

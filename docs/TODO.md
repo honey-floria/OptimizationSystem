@@ -466,10 +466,10 @@ Prompt，确认有效后再恢复 883 条完整评测。
 
 #### 6.7.3 模型升级与选择
 
-- [ ] 在相同评测配置下比较 0.5B、1.5B、3B 和 7B 候选模型
+- [x] 在相同评测配置下比较 0.5B、1.5B、3B 和 7B 候选模型
 - [x] 确认候选模型的上下文长度能够覆盖最长 FinQA 输入：最长 10% 为 1521～2225 tokens，准确率不低于完整 dev
-- [ ] 同时记录准确率、解析率、显存、延迟和吞吐
-- [ ] 选择满足质量门槛的最小模型作为新的 FP16 基线
+- [x] 同时记录准确率、解析率、显存、延迟和吞吐
+- [x] 选择满足质量门槛的最小模型作为新的 FP16 基线
 - [x] 固定模型版本、权重哈希、推理框架和生成参数；身份与选择结果见 `frozen_adapter.json` 和对应评测 manifest
 
 #### 6.7.4 金融推理微调
@@ -550,6 +550,20 @@ Transformer block 恢复为 INT8，测量该层带来的量化误差下降和金
 - [x] 实现从模型实例自动发现 Transformer block 路径与层数，服务器实际发现路径为 `model.layers`、层数为 `28`
 
 #### 7.1.2 工具与实验矩阵
+
+执行口径：Qwen2.5-7B-Instruct 的模型配置声明 `num_hidden_layers=28`，7.1.1 对 merged 实例再次自动发现并
+确认 `model.layers` 长度为 28。这里的 28 是 Transformer decoder block 数量；它与同为 28 的
+`num_attention_heads` 是两个独立维度，也不是由“7B”参数规模直接换算而来。逐层矩阵必须建立 28 个彼此
+独立的 `L-i-I8`：每个计划都从相同的 `ALL-I4` 分配重新开始，仅将第 `i` 层恢复为 INT8，不继承前一个计划
+的修改。加上 `ALL-I4/ALL-I8` 共需执行 30 个计划；`REF-FP/REF-NF4` 复用 7.1.1 证据，只注册不重跑，
+所以 manifest 总计 32 个条目。少跑任意一个 `L-i-I8`，对应层的敏感度仍为未知。
+
+量化范围：7.1 只量化每个 block 内承担主要参数量和矩阵乘法的 Attention
+`q/k/v/o_proj` 与 MLP `gate/up/down_proj` Linear 权重。Embedding、Norm、`lm_head`、KV Cache 和
+activation 保持不变，分别避免全局输入/输出干扰、低收益高敏感参数、动态 cache 与激活量化混入单层归因。
+INT4 为 W4A16 g32 对称量化，即每个输出行沿输入维度每 32 个权重共享一个 scale；INT8 为 W8A16
+per-output-channel 对称量化，即每个输出行共享一个 scale。对称量化固定零点为 0，使用
+`scale=max(abs(w))/qmax`；当前 fake-quant 在取整后反量化回 FP16，只用于质量敏感度，不代表真实压缩收益。
 
 - [x] 新增 `configs/layer_sensitivity.json`，定义模型、位宽、group size、数据子集、生成参数、排名规则和输出路径
 - [x] 新增 `src/quantization/layer_sensitivity.py` 和 `scripts/run_layer_sensitivity.py`，支持模型身份校验、逐层精度替换、误差采集、评测、断点续跑、配对转移和预览排名汇总
