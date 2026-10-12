@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.4-7.1.5",
+  "status": "prepared",
+  "created_at": "2026-10-12T05:58:11.627423+00:00",
+  "matrix_manifest": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/matrix/experiment_manifest.json",
+  "matrix_manifest_sha256": "0fe74c8f0c3812931a4a75cb0e0ce6bbe7ab4946650eb65b66815ee938987fdc",
+  "input_freeze": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
+  "input_freeze_sha256": "f08a9e0a79ffcfa135357b98fd145ddbbda5f288146872fddb78fd43e6bc1385",
+  "subset_hashes": {
+    "calibration": "dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092",
+    "pilot": "225c221200a11b7281fc7505ca34f77f7d77c362636bba1b4b993abb47a1d7d7",
+    "evaluation_dev": "d9a4a3818e0ac2612a16c388574e5d9c888a2f1563da115457bcb48097f700eb",
+    "contextual_high_risk": "441fdc055de9b7b9a1c24872153da9278c102630ce3d235f97d0c70523994c44",
+    "long_context": "4b8c2d16ae3b053aed47a0fb502a0f6e44d0e233ad506040813a188377a6b936"
+  },
+  "business_labels_sha256": "fcc2b8e02fb2add515eecef26d2c920af9dc35651243c7ddb64b158bf9cdee34",
+  "business_label_counts": {
+    "amount": 338,
+    "rate_or_ratio": 567,
+    "date_or_term": 709
+  },
+  "suites": {
+    "full_dev": {
+      "dataset_role": "evaluation_dev",
+      "expected_size": 883,
+      "frozen_subset": "evaluation_dev",
+      "plans": "all_runnable",
+      "plan_ids": [
+        "all_int4",
+        "all_int8",
+        "layer_00_int8",
+        "layer_01_int8",
+        "layer_02_int8",
+        "layer_03_int8",
+        "layer_04_int8",
+        "layer_05_int8",
+        "layer_06_int8",
+        "layer_07_int8",
+        "layer_08_int8",
+        "layer_09_int8",
+        "layer_10_int8",
+        "layer_11_int8",
+        "layer_12_int8",
+        "layer_13_int8",
+        "layer_14_int8",
+        "layer_15_int8",
+        "layer_16_int8",
+        "layer_17_int8",
+        "layer_18_int8",
+        "layer_19_int8",
+        "layer_20_int8",
+        "layer_21_int8",
+        "layer_22_int8",
+        "layer_23_int8",
+        "layer_24_int8",
+        "layer_25_int8",
+        "layer_26_int8",
+        "layer_27_int8"
+      ]
+    },
+    "high_risk": {
+      "dataset_role": "high_risk_regression",
+      "expected_size": 91,
+      "frozen_subset": "contextual_high_risk",
+      "plans": "all_runnable",
+      "plan_ids": [
+        "all_int4",
+        "all_int8",
+        "layer_00_int8",
+        "layer_01_int8",
+        "layer_02_int8",
+        "layer_03_int8",
+        "layer_04_int8",
+        "layer_05_int8",
+        "layer_06_int8",
+        "layer_07_int8",
+        "layer_08_int8",
+        "layer_09_int8",
+        "layer_10_int8",
+        "layer_11_int8",
+        "layer_12_int8",
+        "layer_13_int8",
+        "layer_14_int8",
+        "layer_15_int8",
+        "layer_16_int8",
+        "layer_17_int8",
+        "layer_18_int8",
+        "layer_19_int8",
+        "layer_20_int8",
+        "layer_21_int8",
+        "layer_22_int8",
+        "layer_23_int8",
+        "layer_24_int8",
+        "layer_25_int8",
+        "layer_26_int8",
+        "layer_27_int8"
+      ]
+    },
+    "determinism": {
+      "dataset_role": "evaluation_dev",
+      "pilot_size": 80,
+      "pilot_seed": 20261004,
+      "expected_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "plans": [
+        "all_int4",
+        "layer_22_int8"
+      ],
+      "plan_ids": [
+        "all_int4",
+        "layer_22_int8"
+      ]
+    }
+  },
+  "runtime_contract": {
+    "evaluation": {
+      "mode": "pilot",
+      "dataset_role": "evaluation_dev",
+      "variant": "structured_json",
+      "pilot_size": 80,
+      "pilot_seed": 20261004,
+      "batch_size": 1,
+      "max_new_tokens": 256,
+      "device": "cuda:0",
+      "dtype": "float16"
+    },
+    "precision": {
+      "int4": {
+        "weight_bits": 4,
+        "activation_bits": 16,
+        "group_size": 32,
+        "scheme": "symmetric_groupwise",
+        "label": "W4A16-g32"
+      },
+      "int8": {
+        "weight_bits": 8,
+        "activation_bits": 16,
+        "group_size": null,
+        "scheme": "symmetric_per_output_channel",
+        "label": "W8A16"
+      },
+      "excluded_modules": [
+        "embedding",
+        "layernorm",
+        "lm_head",
+        "kv_cache"
+      ]
+    },
+    "backend": {
+      "name": "symmetric_fake_quant",
+      "artifact_kind": "ephemeral_dequantized_weights",
+      "deployment_performance_claims_allowed": false,
+      "description": "Sensitivity-only weight fake quantization; weights remain FP16 after quantize-dequantize."
+    }
+  },
+  "bootstrap": {
+    "iterations": 10000,
+    "confidence": 0.95,
+    "seed": 20261012
+  },
+  "ranking_tie_break": [
+    "net_correct_gain_desc",
+    "recovered_count_desc",
+    "high_risk_recovered_desc",
+    "long_context_recovered_desc",
+    "structured_output_recovery_desc",
+    "quantization_error_recovery_desc",
+    "layer_index_asc"
+  ],
+  "protection_policy": {
+    "max_layers": 3,
+    "require_positive_full_dev_gain": true,
+    "require_nonnegative_high_risk_gain": true,
+    "require_nonnegative_long_context_gain": true
+  },
+  "contract_sha256": "a2eb08a2341f1c96afce07de8df48aba912532362d24eac6af5ce7547c6fc515"
+}

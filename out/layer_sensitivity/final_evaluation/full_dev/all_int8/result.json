@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "stage": "7.1.4",
+  "status": "completed",
+  "completed_at": "2026-10-12T06:45:44.933137+00:00",
+  "suite": "full_dev",
+  "plan": {
+    "plan_id": "all_int8",
+    "kind": "all_int8",
+    "runnable": true,
+    "default_precision": "int8",
+    "overrides": {}
+  },
+  "dataset": {
+    "role": "evaluation_dev",
+    "size": 883,
+    "source_size": 883,
+    "version": "main",
+    "sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8"
+  },
+  "metrics": {
+    "total": 883,
+    "parsed": 881,
+    "correct": 338,
+    "parse_rate": 0.9977349943374858,
+    "numeric_accuracy": 0.3827859569648924
+  },
+  "structured_output_rate": 0.9966024915062288,
+  "format_retry_count": 5,
+  "predictions_sha256": "d5603abf7163420e21b7df379bd27db003a25a3f35986b8f37939740e6097480",
+  "comparison_report_sha256": "86e4d4031693031ad1db50ccd06c1728852daebc066d1e3574360e17b37ad16e",
+  "duration_seconds": 1174.243217674084
+}
