@@ -2617,8 +2617,16 @@ Embedding INT4 沿 embedding dimension 使用 g32 对称分组，INT8 按 embedd
 - 共享时，只生成 `shared_embedding_lm_head_int8/int4` 两个联合计划，禁止把同一矩阵重复量化后宣称两个独立
   因果结论。
 
-这也是总计划数存在两种情况的原因：tied weights 时共 69 个计划、67 个可运行；untied weights 时共 71 个
-计划、69 个可运行。两个不可运行项是复用已有证据的 `all_int4_ref` 和 `kv_cache_fp16_ref`。
+这也是基础矩阵计划数存在两种情况的原因：tied weights 时共 69 个计划、67 个可运行；untied weights 时共
+71 个计划、69 个可运行。两个不可运行项是复用已有证据的 `all_int4_ref` 和 `kv_cache_fp16_ref`。基础
+拆分结果完成后，可以在配置中追加预注册的 `candidate_recovery_plans`，但必须记录选择依据并继续执行相同的
+模块隔离校验，不能用追加候选改变已经观察过的单模块计划。
+
+当前根据 7.1 full-dev 推荐的第 23/10 层以及 7.2 pilot 子模块归因，追加一个
+`candidate_l23_all_l10_mlp_int8`：第 23 层 Attention 与 MLP、以及第 10 层 MLP 使用 INT8，其余
+Transformer Linear 使用 INT4。该候选只修改 10 个 Linear；因为当前模型的 Embedding 与 `lm_head`
+不共享权重，实际矩阵增至 72 个计划、70 个可运行。该计划用于验证跨层收益是否能够同时保留，不得把三个
+单项 pilot 收益直接相加后当作组合结果。
 
 当前实现已记录 Embedding/`lm_head` 权重误差和完整业务质量变化。`lm_head` 的 logits MSE、top-1/top-k token
 一致率及目标数值 token 排名仍属于待补充的专项 probe；在这些指标生成前，不能仅凭权重 MSE 解释具体 token

@@ -10,6 +10,8 @@ from src.quantization.layer_sensitivity_setup import (
     write_json,
 )
 from src.quantization.module_sensitivity import (
+    ATTENTION_MODULES,
+    MLP_MODULES,
     discover_module_inventory,
     inspect_kv_cache_capability,
     inspect_model_contract,
@@ -430,6 +432,42 @@ class ModuleSensitivityContractTest(unittest.TestCase):
                 "model.layers.1.self_attn.v_proj",
                 "model.layers.1.self_attn.o_proj",
             },
+        )
+
+    def test_candidate_mixed_plan_changes_only_declared_families(self):
+        candidates = [
+            {
+                "plan_id": "candidate_l02_all_l01_mlp_int8",
+                "int8_attention_layers": [2],
+                "int8_mlp_layers": [1, 2],
+                "selection_basis": "test",
+            }
+        ]
+        plans = build_experiment_plans(3, False, candidates)
+        validate_experiment_plans(plans, 3, False)
+        validate_plan_isolation(plans, 3, False)
+        candidate = next(plan for plan in plans if plan["kind"] == "candidate_mixed_int8")
+        baseline = effective_weight_assignment(plans[0], 3, False)
+        assignment = effective_weight_assignment(candidate, 3, False)
+        changed = {key for key in baseline if baseline[key] != assignment[key]}
+        self.assertEqual(len(changed), len(ATTENTION_MODULES) + 2 * len(MLP_MODULES))
+        self.assertTrue(
+            all(
+                assignment[f"model.layers.2.{name}"] == "int8"
+                for name in ATTENTION_MODULES
+            )
+        )
+        self.assertTrue(
+            all(
+                assignment[f"model.layers.1.{name}"] == "int8"
+                for name in MLP_MODULES
+            )
+        )
+        self.assertTrue(
+            all(
+                assignment[f"model.layers.2.{name}"] == "int8"
+                for name in MLP_MODULES
+            )
         )
 
     def test_prepares_experiment_matrix_only_after_real_inspection_validation(self):

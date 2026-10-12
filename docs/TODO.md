@@ -625,7 +625,7 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 
 #### 7.2.2 Attention 与 MLP 受控恢复矩阵
 
-- [x] 实现 7.2.2/7.2.3 共用实验框架：自动按实际 tied-weight 状态生成 69（tied）或 71（untied）个计划，其中包含 59 个 Attention/MLP 可运行计划；支持合同哈希、隔离校验、单计划独立进程、断点续跑和 `unsupported` 终态，待服务器完成 7.2.1 后生成真实矩阵
+- [x] 实现 7.2.2/7.2.3 共用实验框架：基础矩阵按实际 tied-weight 状态生成 69（tied）或 71（untied）个计划，其中包含 59 个 Attention/MLP 可运行计划；当前依据 7.1 full-dev 与 7.2 pilot 另预注册 1 个跨层候选 `candidate_l23_all_l10_mlp_int8`，实际 untied 矩阵为 72 个计划、70 个可运行；支持合同哈希、隔离校验、单计划独立进程、断点续跑和 `unsupported` 终态
 - [ ] 生成 `ATTN-ALL-I8`：所有层仅 Attention 的 `q/k/v/o_proj` 恢复为 INT8，全部 MLP Linear 保持 INT4，用于测量 Attention 模块族的总体恢复量
 - [ ] 生成 `MLP-ALL-I8`：所有层仅 MLP 的 `gate/up/down_proj` 恢复为 INT8，全部 Attention Linear 保持 INT4，用于测量 MLP 模块族的总体恢复量
 - [ ] 为全部 28 个 block 分别生成 `L-i-ATTN-I8`：仅第 `i` 层 Attention 恢复为 INT8，其余受量化 Linear 保持与 `ALL-I4` 完全一致
@@ -634,6 +634,7 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 - [ ] 逐模块记录参数量、权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例；模块族汇总按权重元素数加权，同时保留每个 Linear 明细
 - [ ] 使用 7.1 相同的 calibration 子集采集目标模块输出或 block 输出误差，至少记录 activation MSE、normalized MSE、cosine similarity 和异常值比例
 - [ ] 计算相对 `ALL-I4` 的 `recovered_count`、`regressed_count`、`net_correct_gain` 和准确率变化；另生成只用于组合审计的 `ATTN+MLP-ALL-I8`，确认其生效权重与 `ALL-I8` 完全一致，不一致即视为实现错误
+- [x] 根据已完成的候选拆分结果预注册跨层组合验证：第 23 层 Attention/MLP 为 INT8、第 10 层仅 MLP 为 INT8，其余 Transformer Linear 为 INT4；计划合同逐项确认只修改声明的 10 个 Linear，待服务器运行后判断跨层收益是否可叠加
 
 #### 7.2.3 Embedding、Norm、lm_head 与 KV Cache 降精度实验
 

@@ -119,6 +119,14 @@
     "artifact_kind": "ephemeral_dequantized_weights",
     "deployment_performance_claims_allowed": false
   },
+  "candidate_recovery_plans": [
+    {
+      "plan_id": "candidate_l23_all_l10_mlp_int8",
+      "int8_attention_layers": [23],
+      "int8_mlp_layers": [10, 23],
+      "selection_basis": "7.1 full-dev selected layers 23/10; 7.2 pilot attributes layer 23 gains to both families and layer 10 net gain to MLP"
+    }
+  ],
   "kv_cache": {
     "requested_precisions": ["fp16", "int8", "int4"],
     "cache_tensors": ["key", "value"],

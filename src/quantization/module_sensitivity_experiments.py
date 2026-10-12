@@ -39,6 +39,7 @@ RECOVERY_KINDS = {
     "combined_all_int8_audit",
     "layer_attention_int8",
     "layer_mlp_int8",
+    "candidate_mixed_int8",
 }
 SPECIAL_WEIGHT_KINDS = {
     "embedding_quantized",
@@ -49,7 +50,11 @@ SPECIAL_WEIGHT_KINDS = {
 }
 
 
-def build_experiment_plans(block_count: int, embedding_lm_head_tied: bool) -> list[dict[str, Any]]:
+def build_experiment_plans(
+    block_count: int,
+    embedding_lm_head_tied: bool,
+    candidate_recovery_plans: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     if block_count <= 0:
         raise ValueError("block_count must be positive.")
     plans: list[dict[str, Any]] = [
@@ -96,6 +101,37 @@ def build_experiment_plans(block_count: int, embedding_lm_head_tied: bool) -> li
                     "layer_index": index,
                 },
             ]
+        )
+    for candidate in candidate_recovery_plans or []:
+        plan_id = candidate.get("plan_id")
+        attention_layers = candidate.get("int8_attention_layers")
+        mlp_layers = candidate.get("int8_mlp_layers")
+        if not isinstance(plan_id, str) or not plan_id.startswith("candidate_"):
+            raise ValueError("Candidate recovery plan IDs must start with candidate_.")
+        if not isinstance(attention_layers, list) or not isinstance(mlp_layers, list):
+            raise ValueError("Candidate recovery plans must list INT8 Attention and MLP layers.")
+        if not attention_layers and not mlp_layers:
+            raise ValueError("Candidate recovery plans must change at least one module family.")
+        for field, indices in (
+            ("int8_attention_layers", attention_layers),
+            ("int8_mlp_layers", mlp_layers),
+        ):
+            if (
+                any(not isinstance(index, int) or isinstance(index, bool) for index in indices)
+                or len(indices) != len(set(indices))
+                or any(index < 0 or index >= block_count for index in indices)
+            ):
+                raise ValueError(f"Candidate recovery plan has invalid {field}.")
+        plans.append(
+            {
+                "plan_id": plan_id,
+                "kind": "candidate_mixed_int8",
+                "runnable": True,
+                "comparison": "recovery",
+                "int8_attention_layers": sorted(attention_layers),
+                "int8_mlp_layers": sorted(mlp_layers),
+                "selection_basis": candidate.get("selection_basis"),
+            }
         )
     if embedding_lm_head_tied:
         for precision in ("int8", "int4"):
@@ -196,6 +232,14 @@ def linear_precision_for(plan: dict[str, Any], layer_index: int, family: str) ->
         return "int8"
     if kind == "layer_mlp_int8" and family == "mlp" and plan["layer_index"] == layer_index:
         return "int8"
+    if kind == "candidate_mixed_int8":
+        target_layers = (
+            plan["int8_attention_layers"]
+            if family == "attention"
+            else plan["int8_mlp_layers"]
+        )
+        if layer_index in target_layers:
+            return "int8"
     return "int4"
 
 
@@ -255,6 +299,13 @@ def validate_plan_isolation(
             raise ValueError(f"{plan['plan_id']} does not isolate one Attention group.")
         if plan["kind"] == "layer_mlp_int8" and len(changed) != len(MLP_MODULES):
             raise ValueError(f"{plan['plan_id']} does not isolate one MLP group.")
+        if plan["kind"] == "candidate_mixed_int8":
+            expected_count = (
+                len(plan["int8_attention_layers"]) * len(ATTENTION_MODULES)
+                + len(plan["int8_mlp_layers"]) * len(MLP_MODULES)
+            )
+            if len(changed) != expected_count:
+                raise ValueError(f"{plan['plan_id']} does not match its candidate module set.")
         if plan["kind"] in SPECIAL_WEIGHT_KINDS | {"kv_cache_quantized"}:
             expected_count = 2 if plan["kind"] == "shared_embedding_lm_head_quantized" else 1
             if len(changed) != expected_count:
@@ -530,7 +581,11 @@ def prepare_experiment_matrix(project_root: str | Path, config: dict[str, Any]) 
         raise ValueError("The 7.1 ALL-I8 quantization-error reference is incompatible.")
     tied = bool(inventory["embedding_lm_head_tied"])
     block_count = int(inventory["block_count"])
-    plans = build_experiment_plans(block_count, tied)
+    plans = build_experiment_plans(
+        block_count,
+        tied,
+        config.get("candidate_recovery_plans", []),
+    )
     validate_plan_isolation(plans, block_count, tied)
     output_root = resolve_project_path(root, config["paths"]["experiment_output_root"])
     output_root.mkdir(parents=True, exist_ok=True)
