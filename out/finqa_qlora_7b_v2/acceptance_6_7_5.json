@@ -50,10 +50,10 @@
     {
       "name": "adapter_weight_sha256_recorded",
       "status": "pass",
-      "actual": "771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260",
+      "actual": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4",
       "threshold": "non-empty SHA256",
       "evidence": "models/data/finqa_qlora_7b_v2/adapter_model.safetensors",
-      "detail": "SHA256 produced by sha256sum on the training server and supplied on 2026-10-12"
+      "detail": "Git LFS object ID, confirmed by sha256sum of the hydrated 161533192-byte file on the training server on 2026-10-12; 771482db... is the 134-byte LFS pointer SHA256"
     }
   ],
   "blocking_items": []

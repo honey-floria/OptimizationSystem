@@ -512,7 +512,7 @@ Prompt，确认有效后再恢复 883 条完整评测。
 - [x] 结构化输出成功率不低于 `90%`：step 724 为 `99.89%`
 - [x] 最长上下文样本质量不低于完整 dev：最长 10% 样本为 `35/89`（`39.33%`），高于全量 `37.15%`；最长单条样本回答正确
 - [x] 完整 dev 重复要求经用户决定豁免：step 724 使用确定性生成，固定 80 条在 pilot 与 full 中逐条完全复现，并直接冻结
-- [x] 冻结新的 QLoRA/NF4 基线制品：`adapter_model.safetensors` SHA256 为 `771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`
+- [x] 冻结新的 QLoRA/NF4 基线制品：hydrated `adapter_model.safetensors` 大小为 `161533192` 字节，SHA256 为 `c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4`
 - [ ] 基于新基线重新运行 AWQ、GPTQ 和 INT8 质量对比
 
 质量修复交付物：
@@ -538,7 +538,7 @@ Transformer block 恢复为 INT8，测量该层带来的量化误差下降和金
 
 - [x] 实现 `configs/layer_sensitivity_setup.json`、`src/quantization/layer_sensitivity_setup.py` 和 `scripts/prepare_layer_sensitivity.py`，提供 `merge/freeze/compare-pilot` 三个独立且不覆盖旧证据的命令
 - [x] 实现 7.1.1 单元测试，覆盖精度契约、层自动发现、目录哈希、pilot 索引哈希、多标签分类、长上下文选择和配对对比
-- [x] 根据用户于 2026-10-12 的服务器核对结果，确认训练服务器 `models/data/finqa_qlora_7b_v2/adapter_model.safetensors` SHA256 为 `771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`，与 6.7.5 冻结记录一致；本地副本不作为 7.1.1 输入
+- [x] 根据用户于 2026-10-12 的服务器核对结果，确认训练服务器 hydrated `models/data/finqa_qlora_7b_v2/adapter_model.safetensors` 大小为 `161533192` 字节，SHA256 为 `c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4`，与修正后的 6.7.5 冻结记录一致；`771482db...` 仅为 LFS 指针哈希
 - [ ] 记录 Qwen2.5-7B-Instruct 基座模型、step 724 adapter、tokenizer 和数据集的绝对路径、版本与 SHA256
 - [ ] 将冻结的 step 724 LoRA adapter 合并到 BF16/FP16 基座模型，导出专用的 7.1 实验母版和 manifest
 - [ ] 在固定 80 条 pilot 上核对 merged BF16/FP16 与已冻结 QLoRA/NF4 的输出和质量差异；不要覆盖 6.7.5 冻结证据

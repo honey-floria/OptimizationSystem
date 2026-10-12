@@ -1589,8 +1589,10 @@ BitsAndBytes NF4 4-bit 基座加载加 QLoRA adapter，因此该结果不再标�
 
 至此，step 724 已通过完整 dev 准确率、解析率、结构化输出、最长上下文和 contextual 高风险回归五项质量
 门禁。训练服务器上的冻结权重文件为 `models/data/finqa_qlora_7b_v2/adapter_model.safetensors`，2026-10-12
-执行 `sha256sum` 得到 SHA256
-`771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`。该哈希已写入
+对 Git LFS 文件完成 hydration 后，实际权重大小为 `161533192` 字节，Git LFS 对象 ID 与
+`sha256sum` 均为 `c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4`。此前记录的
+`771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260` 是 134 字节 LFS 指针文件的
+SHA256，不是实际权重哈希。正确哈希已写入
 `out/finqa_qlora_7b_v2/frozen_adapter.json`，6.7.5 质量与制品身份验收全部完成，第 7 章可以启动。完整验收清单
 见 `out/finqa_qlora_7b_v2/acceptance_6_7_5.json`。
 
@@ -1745,7 +1747,7 @@ python3 scripts/prepare_layer_sensitivity.py compare-pilot \
 
 当前本地环境没有 7B 基座、FinQA assets 及 PyTorch/Transformers/PEFT，因此真实合并、冻结产物和 pilot
 对比需在 4080/训练服务器执行。用户于 2026-10-12 确认训练服务器上
-`models/data/finqa_qlora_7b_v2/adapter_model.safetensors` 的 SHA256 为
-`771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260`，与 6.7.5 冻结记录一致，可作为
+`models/data/finqa_qlora_7b_v2/adapter_model.safetensors` 完成 Git LFS hydration 后大小为 `161533192` 字节，
+SHA256 为 `c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4`，与修正后的 6.7.5 冻结记录一致，可作为
 7.1.1 合并输入。仓库本地副本不参与本次服务器实验，不再视为执行阻塞。`merge` 命令仍会在服务器上
 对权重执行 SHA256 硬校验，避免路径误传或权重被后续覆盖。

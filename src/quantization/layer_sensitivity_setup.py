@@ -249,6 +249,36 @@ def write_jsonl(path: str | Path, rows: Iterable[dict[str, Any]]) -> None:
             stream.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def freeze_evaluation_contract(
+    quality_config: dict[str, Any],
+    baseline_config: dict[str, Any],
+    expected: dict[str, Any],
+) -> dict[str, Any]:
+    variants = [
+        item
+        for item in quality_config.get("variants", [])
+        if item.get("name") == expected.get("variant")
+    ]
+    if len(variants) != 1:
+        raise ValueError("Quality config must contain exactly one frozen variant.")
+    generation = quality_config.get("generation")
+    if generation != expected.get("generation"):
+        raise ValueError("Quality generation settings do not match the 7.1.1 contract.")
+    if float(quality_config.get("tolerance")) != float(expected.get("tolerance")):
+        raise ValueError("Quality tolerance does not match the 7.1.1 contract.")
+    if not bool(baseline_config.get("deterministic")):
+        raise ValueError("Layer-sensitivity evaluation requires deterministic inference.")
+    return {
+        "variant": variants[0],
+        "generation": generation,
+        "tolerance": quality_config["tolerance"],
+        "baseline_seed": baseline_config.get("seed"),
+        "deterministic": baseline_config.get("deterministic"),
+        "max_input_tokens": baseline_config.get("max_input_tokens"),
+        "scorer": expected.get("scorer"),
+    }
+
+
 def freeze_inputs(
     *,
     project_root: str | Path,
@@ -319,6 +349,16 @@ def freeze_inputs(
             label_counts[label] += 1
     quality_config_path = resolve_project_path(root, paths["quality_config"])
     baseline_config_path = resolve_project_path(root, paths["baseline_config"])
+    quality_config = load_json(quality_config_path)
+    baseline_config = load_json(baseline_config_path)
+    frozen_evaluation = freeze_evaluation_contract(
+        quality_config, baseline_config, evaluation
+    )
+    frozen_adapter_path = resolve_project_path(root, paths["frozen_adapter"])
+    frozen_adapter = load_json(frozen_adapter_path)
+    recorded_adapter_sha = frozen_adapter.get("adapter_weights_sha256")
+    if recorded_adapter_sha != expected["adapter_weights_sha256"]:
+        raise ValueError("6.7.5 frozen-adapter record does not match the 7.1.1 contract.")
     scorer_path = root / "src" / "evaluation" / "finqa_metrics.py"
     output = Path(output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -340,6 +380,14 @@ def freeze_inputs(
         },
         "precision_contract": config["precision_contract"],
         "evaluation_contract": config["evaluation_contract"],
+        "frozen_evaluation": frozen_evaluation,
+        "frozen_adapter_record": {
+            "path": str(frozen_adapter_path),
+            "sha256": sha256_file(frozen_adapter_path),
+            "status": frozen_adapter.get("status"),
+            "global_step": frozen_adapter.get("selection", {}).get("global_step"),
+            "adapter_weights_sha256": recorded_adapter_sha,
+        },
         "quality_config": {
             "path": str(quality_config_path),
             "sha256": sha256_file(quality_config_path),

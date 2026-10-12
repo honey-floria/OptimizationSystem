@@ -14,7 +14,7 @@
     "long_context_log": "out/quality_repair_7b_qlora_step724_full/quality_service.jsonl"
   },
   "expected_identity": {
-    "adapter_weights_sha256": "771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260",
+    "adapter_weights_sha256": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4",
     "evaluation_dev_sha256": "7ba8d507634daa266268414448444421a18868e926632d805949058118b8a6d8",
     "contextual_high_risk_sha256": "064f379a0c63ea9cfe49681b1c9a477f8246f9aaf853c85799812bb2feda0693",
     "pilot_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61"

@@ -12,6 +12,7 @@ from src.quantization.layer_sensitivity_setup import (
     classify_business_question,
     compare_pilot_reports,
     discover_transformer_blocks,
+    freeze_evaluation_contract,
     hash_directory,
     long_context_indices_from_log,
     tokenizer_identity,
@@ -96,6 +97,36 @@ class LayerSensitivitySetupTest(unittest.TestCase):
                 "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8"
             )
             self.assertEqual(long_context_indices_from_log(log_path, 3, 0.34), [1, 2])
+
+    def test_freezes_exact_prompt_generation_and_scorer_contract(self):
+        expected = {
+            "variant": "structured_json",
+            "generation": {
+                "max_new_tokens": 256,
+                "do_sample": False,
+                "num_beams": 1,
+            },
+            "tolerance": 0.0001,
+            "scorer": "module:score",
+        }
+        quality = {
+            "tolerance": 0.0001,
+            "generation": expected["generation"],
+            "variants": [
+                {
+                    "name": "structured_json",
+                    "prompt_suffix": "Return one JSON object.",
+                }
+            ],
+        }
+        baseline = {"seed": 42, "deterministic": True, "max_input_tokens": 4096}
+        frozen = freeze_evaluation_contract(quality, baseline, expected)
+        self.assertEqual(frozen["variant"]["prompt_suffix"], "Return one JSON object.")
+        self.assertEqual(frozen["generation"]["max_new_tokens"], 256)
+        self.assertEqual(frozen["scorer"], "module:score")
+        quality["generation"] = {**expected["generation"], "do_sample": True}
+        with self.assertRaisesRegex(ValueError, "generation settings"):
+            freeze_evaluation_contract(quality, baseline, expected)
 
     def test_pilot_comparison_requires_aligned_samples(self):
         report = {

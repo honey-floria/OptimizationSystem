@@ -14,8 +14,9 @@
   "training_manifest_sha256": "9516b333a15a8c060c198640304f47446ba257dcb4e6916241d298e867171b26",
   "adapter_config_sha256": "cfd908ddadd2951248227a95da94d31b934395c28e1b5e728a30a7a1cac6d742",
   "adapter_weights_file": "models/data/finqa_qlora_7b_v2/adapter_model.safetensors",
-  "adapter_weights_sha256": "771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260",
-  "adapter_weights_hash_source": "sha256sum on training server, supplied 2026-10-12",
+  "adapter_weights_sha256": "c92a6058f668b0273393e85443b978b3e1620ed0c3a2ef01905e1124bda52fa4",
+  "adapter_weights_hash_source": "Git LFS object ID and sha256sum of the hydrated 161533192-byte file on the training server, verified 2026-10-12",
+  "adapter_weights_lfs_pointer_sha256": "771482dbd581e6909b8d4af3be2854d3dc89aae5c4d78ee0344aa50a6039a260",
   "selection_report": "out/quality_repair_7b_qlora_step724_full/comparison_report.json",
   "selection_metrics": {
     "total": 883,
