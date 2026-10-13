@@ -68,8 +68,9 @@ scripts/
 ├── run_quality_repair_4080.py         # 在 NVIDIA 上运行 FP16、LoRA、AWQ 或 GPTQ 质量评测
 ├── prepare_layer_sensitivity.py       # 合并 adapter、冻结 7.1.1 输入并比较 pilot
 ├── run_layer_sensitivity.py           # 准备、续跑和汇总 7.1.2 逐层矩阵
-├── run_module_sensitivity.py          # 7.2 合同、模块审计、KV probe 和单计划入口
-└── run_module_sensitivity_pilot.sh    # 逐进程续跑 7.2.2/7.2.3 完整 pilot 矩阵
+├── run_module_sensitivity.py          # 7.2 合同、pilot、晋级、最终评测和汇总入口
+├── run_module_sensitivity_pilot.sh    # 逐进程续跑 7.2.2/7.2.3 完整 pilot 矩阵
+└── run_module_sensitivity_final.sh    # 冻结晋级并续跑 7.2.4/7.2.5 最终评测
 
 notebooks/
 └── optimization_system_all_colab.ipynb
@@ -143,7 +144,8 @@ src/
     ├── comparison.py                 # 汇总 FP16/INT8/AWQ/GPTQ 的质量与性能报告
     ├── module_sensitivity.py         # 7.2.1 上游合同、模块发现、tied weights 与 KV Cache 审计
     ├── module_sensitivity_experiments.py
-    │                                  # 7.2.2/7.2.3 计划矩阵、隔离量化、评测和续跑
+    │                                  # 7.2.2/7.2.3 计划矩阵、专项 probe、评测和续跑
+    ├── module_sensitivity_final.py    # 7.2.4/7.2.5 晋级冻结、完整评测、排名与保护策略
     └── stage6_acceptance.py          # 第 6 章定制量化阶段验收
 ```
 

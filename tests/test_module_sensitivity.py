@@ -29,6 +29,10 @@ from src.quantization.module_sensitivity_experiments import (
     validate_experiment_plans,
     validate_plan_isolation,
 )
+from src.quantization.module_sensitivity_final import (
+    _validate_dataset_against_freeze,
+    select_advancement,
+)
 
 
 class _Weight:
@@ -402,7 +406,7 @@ class ModuleSensitivityContractTest(unittest.TestCase):
     def test_builds_complete_tied_module_and_special_plan_matrix(self):
         plans = build_experiment_plans(28, True)
         self.assertEqual(len(plans), 69)
-        self.assertEqual(sum(bool(plan["runnable"]) for plan in plans), 67)
+        self.assertEqual(sum(bool(plan["runnable"]) for plan in plans), 68)
         validate_experiment_plans(plans, 28, True)
         validate_plan_isolation(plans, 28, True)
         kinds = {plan["kind"] for plan in plans}
@@ -515,6 +519,125 @@ class ModuleSensitivityContractTest(unittest.TestCase):
         probe = _parse_args(["probe-kv-cache", "--precision", "int4"])
         self.assertEqual(probe.command, "probe-kv-cache")
         self.assertEqual(probe.precision, "int4")
+
+    def test_cli_exposes_advancement_final_suites_and_finalize(self):
+        self.assertEqual(_parse_args(["select-advancement"]).command, "select-advancement")
+        self.assertEqual(_parse_args(["prepare-final"]).command, "prepare-final")
+        pending = _parse_args(["pending-final", "--suite", "high_risk"])
+        self.assertEqual(pending.suite, "high_risk")
+        run = _parse_args(
+            ["run-final-plan", "--suite", "full_dev", "--plan-id", "embedding_int8"]
+        )
+        self.assertEqual(run.plan_id, "embedding_int8")
+        self.assertEqual(_parse_args(["finalize"]).command, "finalize")
+
+    def test_advancement_is_frozen_from_pilot_results(self):
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            config = _base_config()
+            config["final_evaluation"] = {
+                "output_root": "final",
+                "advancement_output": "final/advancement.json",
+                "reference_baselines": {"full_dev": "full", "high_risk": "risk"},
+                "required_special_pilot_plans": [
+                    "embedding_int8", "kv_cache_fp16_ref", "kv_cache_int8"
+                ],
+                "recovery_candidate_plans": ["layer_01_attn_int8"],
+                "determinism_sentinel_plans": [],
+                "advancement_rules": {
+                    "recovery_min_net_correct_gain": 1,
+                    "special_min_net_correct_change": 0,
+                    "require_positive_storage_savings": True,
+                    "kv_cache_require_low_bit_residency": True,
+                },
+                "suites": {
+                    "full_dev": {}, "high_risk": {}, "determinism": {}
+                },
+                "bootstrap": {"iterations": 10, "confidence": 0.95, "seed": 1},
+                "quality_gates": {},
+            }
+            results = {
+                "layer_01_attn_int8": {
+                    "status": "completed",
+                    "plan": {"kind": "layer_attention_int8"},
+                    "transitions_vs_all_int4": {"net_correct_gain": 2},
+                },
+                "embedding_int8": {
+                    "status": "completed",
+                    "plan": {"kind": "embedding_quantized"},
+                    "transitions_vs_all_int4": {"net_correct_change": 0},
+                    "special_storage": {"savings_bytes": 128},
+                },
+                "kv_cache_fp16_ref": {
+                    "status": "completed",
+                    "plan": {"kind": "kv_cache_reference"},
+                    "transitions_vs_all_int4": {"net_correct_change": 0},
+                    "kv_cache_benchmark": {"cache_tensor_bytes": 1024},
+                },
+                "kv_cache_int8": {
+                    "status": "unsupported",
+                    "plan": {"kind": "kv_cache_quantized"},
+                    "reason": "backend unavailable",
+                },
+            }
+            for plan_id, result in results.items():
+                write_json(root / "experiments" / plan_id / "result.json", result)
+            frozen = select_advancement(root, config)
+            self.assertEqual(frozen["selected_recovery_plans"], ["layer_01_attn_int8"])
+            self.assertEqual(frozen["selected_special_plans"], ["embedding_int8"])
+            self.assertIn("kv_cache_int8", frozen["excluded_plans"])
+            self.assertEqual(
+                frozen["selection_sha256"],
+                canonical_json_sha256(
+                    {key: value for key, value in frozen.items() if key != "selection_sha256"}
+                ),
+            )
+
+    def test_advancement_rejects_an_incomplete_pilot_matrix(self):
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            config = _base_config()
+            config["final_evaluation"] = {
+                "output_root": "final",
+                "advancement_output": "final/advancement.json",
+                "reference_baselines": {"full_dev": "full", "high_risk": "risk"},
+                "required_special_pilot_plans": [],
+                "recovery_candidate_plans": [],
+                "determinism_sentinel_plans": [],
+                "require_complete_pilot_matrix": True,
+                "advancement_rules": {},
+                "suites": {"full_dev": {}, "high_risk": {}, "determinism": {}},
+                "bootstrap": {"iterations": 10, "confidence": 0.95, "seed": 1},
+                "quality_gates": {},
+            }
+            write_json(
+                root / "experiments" / "experiment_manifest.json",
+                {
+                    "status": "matrix_prepared",
+                    "plans": [
+                        {"plan_id": "layer_00_attn_int8", "runnable": True}
+                    ],
+                },
+            )
+            with self.assertRaisesRegex(ValueError, "must be complete"):
+                select_advancement(root, config)
+
+    def test_final_dataset_validation_rejects_reordered_or_changed_rows(self):
+        rows = [{"qa": {"question": "first"}}, {"qa": {"question": "second"}}]
+        from src.quantization.layer_sensitivity_setup import build_sample_entries
+
+        frozen = build_sample_entries(rows)
+        expected_hash = canonical_json_sha256(frozen)
+        _validate_dataset_against_freeze(
+            rows, frozen_entries=frozen, expected_hash=expected_hash, suite="full_dev"
+        )
+        with self.assertRaisesRegex(ValueError, "frozen sample list"):
+            _validate_dataset_against_freeze(
+                list(reversed(rows)),
+                frozen_entries=frozen,
+                expected_hash=expected_hash,
+                suite="full_dev",
+            )
 
     def test_combined_attention_mlp_audit_matches_layer_all_int8(self):
         metric = {

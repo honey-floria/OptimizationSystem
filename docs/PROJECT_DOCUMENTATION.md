@@ -2592,6 +2592,83 @@ w_hat = q * scale
 计划已经修改的权重。`result.json status=completed` 或经过能力审计的 `status=unsupported` 都属于终态；
 中断后重新执行会跳过终态计划，只继续缺失或失败项。
 
+#### 为什么第 10 层与第 23 层进入候选
+
+本节的层号沿用代码的零基索引：`model.layers.10` 是按自然语言计数的第 11 个 decoder block，
+`model.layers.23` 是第 24 个；模型共有 28 个 block。两个 block 的结构与其他层相同，都按
+“RMSNorm → Self-Attention → 残差 → RMSNorm → MLP → 残差”处理隐藏状态，不存在预先写死的“金融计算层”。
+Attention 的 `q/k/v/o_proj` 负责选择并汇总上下文 token 信息；MLP 的 `gate/up/down_proj` 对每个 token 的
+表示执行门控非线性变换。对 FinQA 而言，可以把前者理解为关联问题、年份、表格字段和值，把后者理解为转换
+已经汇集的特征，但具体语义不是架构能够直接保证的，必须由业务评测验证。
+
+按深度位置，第 10 层位于模型中部约 39%，此时隐藏状态通常已经包含基础语义，并继续形成问题、表格证据和
+运算关系的中间表示；第 23 层位于后段约 86%，后面只剩四个 block，其输出更接近最终 logits，因此量化扰动
+留给后续层修正的空间更少。这里的“中部组合、后部收敛”只是基于层位置的机制解释，不是证明某一层固定负责
+某一种金融运算。
+
+选择两层的直接依据来自 7.1 的配对业务结果，而不是权重误差大小：
+
+| 层 | full-dev 正确数 | 恢复/退化 | 净增 | 95% 配对 bootstrap 区间 | 结论强度 |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| ALL-I4 | 328/883 | — | — | — | 对照 |
+| 23 | 344/883 | 22/6 | +16 | `[+0.68%, +3.06%]` | 较强，区间未跨 0 |
+| 10 | 330/883 | 12/10 | +2 | `[-0.79%, +1.25%]` | 较弱，区间跨 0 |
+
+第 23 层的收益覆盖金额、比例/利率、日期/期限三类业务标签，分别净增 6、13、15 题；89 条最长上下文净增
+1 题，91 条高风险集持平。7.2 的 80 条子模块拆分进一步显示：第 23 层 Attention 单独恢复 source index
+`611`，MLP 单独恢复 `31`，整层恢复时恰好恢复 `31/611`，三者均无退化。这说明 pilot 中两类模块提供了互补
+收益，与 full-dev 的整层正收益方向一致，因此质量优先时暂时同时保护第 23 层 Attention 与 MLP。
+
+第 10 层则需要更保守地解释。80 条 pilot 中，Attention 恢复 `191/611`、退化 `440`，净增 1；MLP 恢复
+`191/402`、无退化，净增 2；整层恢复 `191/402/611`、退化 `440`，仍只净增 2。加入 Attention 没有在总正确
+数上超过 MLP 单独恢复，因此当前候选只保护第 10 层 MLP。第 10 层 full-dev 的置信区间跨 0，不能把它描述为
+已经确认的重要层，只能称为需要组合验证的次级候选。
+
+权重和激活误差也说明不能从数值误差直接推断业务重要性。第 23 层的 activation recovery 只排第 14，第 10 层
+排第 27；它们并不是激活误差恢复最大的层。量化误差只有在改变年份选择、表格行、运算符、单位或数值 token
+的决策边界时才会改变最终正确性。因此本项目的保护顺序以配对业务恢复和风险子集非退化为主，MSE/NMSE、
+cosine 等只作为机制证据和复核指标。
+
+根据这些已观察结果，配置中预注册 `candidate_l23_all_l10_mlp_int8`：第 23 层 Attention 与 MLP、以及
+第 10 层 MLP 使用 INT8，其余 Transformer Linear 使用 INT4。该计划只修改 10 个 Linear，并通过模块隔离
+测试；因为不同层的扰动可能放大或抵消，禁止把三个单项 pilot 收益直接相加。对应原始证据保存在
+`out/layer_sensitivity/final_evaluation/ranking.json` 和 `out/module_sensitivity/pilot/<plan_id>/result.json`。
+
+#### 跨层组合验证结果
+
+组合计划已在相同的冻结 80 条 pilot 上完成，得到 38/80 正确、解析率与结构化输出率均为 100%，相对
+`ALL-I4` 恢复 2 题、退化 0 题、净增 2 题。它没有达到两个单项结果简单相加所暗示的 40/80：
+
+| 配置 | 正确数 | 恢复/退化 | 净增 |
+| --- | ---: | ---: | ---: |
+| `ALL-I4` | 36/80 | — | — |
+| 第 23 层 Attention + MLP INT8 | 38/80 | 2/0 | +2 |
+| 第 10 层 MLP INT8 | 38/80 | 2/0 | +2 |
+| 第 23 层全部 + 第 10 层 MLP INT8 | 38/80 | 2/0 | +2 |
+
+逐题对照显示组合不是单项恢复集合的并集。第 23 层单独恢复 source index `31/611`，第 10 层 MLP 单独恢复
+`191/402`，组合只保留 `191/611`。其中 `31` 从基线的 `86.5%` 经第 23 层单项变为正确的 `87.0%`，组合后
+变为 `86.7%`；`402` 从基线的 `6.5` 经第 10 层 MLP 单项变为正确的 `103.1`，组合后变为 `648.5`。
+这些是“单项恢复没有保留”，不是相对 `ALL-I4` 的退化；组合仍未破坏任何基线正确题。
+
+原因是第 10 层产生的隐藏状态还要经过第 11～22 层后进入第 23 层。两处权重同时改变后，第 23 层面对的输入
+已不同于单项实验，扰动可能相互放大、抵消或跨越新的 token 决策边界。组合的 80 条输出中，62 条与
+`ALL-I4` 原始输出完全一致、63 条与第 23 层单项一致、66 条与第 10 层 MLP 单项一致，另有 8 条与三个对照
+都不同，确认它形成了新的生成轨迹，而不是机械选择某个单项结果。
+
+组合把全模型权重 NMSE 从 `0.0101377` 降至 `0.0094809`，约下降 6.48%，但业务正确数没有超过任一单项。
+它把约 4.37 亿个权重元素从 INT4 恢复为 INT8，理论权重存储比 `ALL-I4` 增加约 218 MB，其中相对“仅第
+23 层”额外保护第 10 层 MLP 约增加 102 MB，却没有带来 pilot 增量正确题。因此当前质量—存储权衡下，组合
+方案被第 23 层单项支配，不作为默认推荐。
+
+还需注意，当前主指标按最终数值评分。组合恢复的数值虽然匹配参考答案，但部分生成 `formula` 不能严格推出
+对应 `value`，所以 `+2` 只证明最终数值命中，不等价于证据和计算链完全正确。后续晋级应同时检查公式一致性，
+不能把该 pilot 结果描述为金融推理能力已经稳定提高。
+
+阶段性建议调整为：质量与工程效率优先时，只保护第 23 层 Attention 和 MLP 为 INT8；第 10 层 MLP 保留为
+独立备选，但因其 full-dev 证据尚缺失且组合没有增量，暂不并入默认策略。第 23 层拥有 883 条 full-dev 的
+`+16` 证据，而组合是否值得进入 full-dev 只在需要排除 80 条小样本偶然性时再评估。
+
 ### 7.2.3 Embedding、Norm、lm_head 与 KV Cache
 
 #### 为什么这些对象单独测试
@@ -2617,20 +2694,20 @@ Embedding INT4 沿 embedding dimension 使用 g32 对称分组，INT8 按 embedd
 - 共享时，只生成 `shared_embedding_lm_head_int8/int4` 两个联合计划，禁止把同一矩阵重复量化后宣称两个独立
   因果结论。
 
-这也是基础矩阵计划数存在两种情况的原因：tied weights 时共 69 个计划、67 个可运行；untied weights 时共
-71 个计划、69 个可运行。两个不可运行项是复用已有证据的 `all_int4_ref` 和 `kv_cache_fp16_ref`。基础
+这也是基础矩阵计划数存在两种情况的原因：tied weights 时共 69 个计划、68 个可运行；untied weights 时共
+71 个计划、70 个可运行。唯一不可运行项是复用已有证据的 `all_int4_ref`；`kv_cache_fp16_ref` 现在会真实
+执行，作为 KV Cache INT8/INT4 的时延、显存和 cache bytes 对照。基础
 拆分结果完成后，可以在配置中追加预注册的 `candidate_recovery_plans`，但必须记录选择依据并继续执行相同的
 模块隔离校验，不能用追加候选改变已经观察过的单模块计划。
 
-当前根据 7.1 full-dev 推荐的第 23/10 层以及 7.2 pilot 子模块归因，追加一个
-`candidate_l23_all_l10_mlp_int8`：第 23 层 Attention 与 MLP、以及第 10 层 MLP 使用 INT8，其余
-Transformer Linear 使用 INT4。该候选只修改 10 个 Linear；因为当前模型的 Embedding 与 `lm_head`
-不共享权重，实际矩阵增至 72 个计划、70 个可运行。该计划用于验证跨层收益是否能够同时保留，不得把三个
-单项 pilot 收益直接相加后当作组合结果。
+当前已追加一个候选计划，因此在 Embedding 与 `lm_head` 不共享权重的真实模型上，实际矩阵为 72 个计划、
+71 个可运行。候选的选择依据、模块集合和解释限制见上一节。
 
-当前实现已记录 Embedding/`lm_head` 权重误差和完整业务质量变化。`lm_head` 的 logits MSE、top-1/top-k token
-一致率及目标数值 token 排名仍属于待补充的专项 probe；在这些指标生成前，不能仅凭权重 MSE 解释具体 token
-为什么发生变化。
+当前实现会记录 Embedding/`lm_head` 的量化前后范围、NaN/Inf、误差和理论低比特存储（packed weight 与 FP16
+scale 分开计数）。`lm_head` 还在固定 calibration prompt 上保存 logits MSE、top-1 一致率、top-k 重合率，
+以及参考最高数值 token 的排名变化。该 probe 使用同一份经过 `ALL-I4` 处理的 decoder hidden state，只替换
+原始/量化 `lm_head` 权重，因此测到的是输出头本身造成的 logits 扰动；它仍是 fake-quant 机制证据，不代表
+部署 kernel 的实际吞吐或显存。
 
 #### Block Norm 与最终 Norm
 
@@ -2641,7 +2718,7 @@ Qwen2.5 使用 RMSNorm，因此文档和产物统一称为 Norm，不把它误�
 
 Norm 权重是一维向量，不适用 Linear 的 per-output-channel/g32 规则。当前使用对称 per-tensor INT8/INT4，零点
 固定为 0，并单独实现一维量化路径。两组 Norm 分开测试，是为了避免“所有 Norm 一起变化”后无法判断风险来自
-层内缩放还是最终输出缩放。真实运行还需结合 NaN/Inf、激活范围和输出误差审计后才能决定是否允许量化；考虑
+层内缩放还是最终输出缩放。运行产物会记录权重范围与量化前后 NaN/Inf；考虑
 到 Norm 参数量很小，即使质量无损，也必须证明存在实际工程收益才值得降低精度。
 
 #### KV Cache 为什么必须走真实后端
@@ -2660,9 +2737,39 @@ HQQ 的 key/value 推荐量化轴固定为 1。依据是
 2. `probe-kv-cache` 在真实模型和设备上执行短生成，检查 HQQ 依赖、INT8/INT4 参数及后端实际可运行性。
 
 只有 probe 成功的位宽才允许进入 80 条业务评测。缺少 HQQ、版本不支持或运行失败时，计划写入
-`status=unsupported` 和原始错误，不静默回退为 FP16，也不阻塞其他权重计划。短 probe 成功只证明接口可运行，
-不等于已经证明低比特 cache 在请求期间持续驻留，也不允许直接声称显存或性能收益；后续仍需记录
-cache bytes/token、峰值显存、TTFT、TPOT、端到端延迟和吞吐，并审计真实 cache residency。
+`status=unsupported` 和原始错误，不静默回退为 FP16，也不阻塞其他权重计划。短 probe 成功后，正式计划会在
+相同输入长度和生成长度下分别运行 FP16、INT8、INT4，记录 cache class、cache tensor bytes、峰值显存、
+TTFT、TPOT、端到端延迟和吞吐。只有返回的 cache 对象可识别为真实量化 cache、能够观察到 cache tensor 且
+通过低比特驻留门禁时，才设置 `performance_claims_allowed=true`；否则不得声称真实显存或速度收益。
+
+### 7.2.4 两阶段评测与统计实现
+
+完整 pilot 矩阵完成后，`select-advancement` 严格读取预注册规则，而不是根据 full-dev 结果临时挑选计划；任何
+可运行计划仍为 pending 时都会拒绝晋级。恢复候选从全部独立 Attention/MLP 全局及逐层计划中筛选，要求 80 条
+pilot 至少净增 1 题；特殊模块要求质量不下降且理论存储为正；KV Cache 还必须通过真实低比特驻留门禁。
+晋级决策、排除原因和规则写入 `advancement.json` 并计算内容哈希。只有这一步完成，才能执行
+`prepare-final`。
+
+最终评测准备会冻结晋级计划、7.1 `ALL-I4` full-dev/high-risk 基线、883 条 dev、91 条 contextual 高风险集、
+89 条最长上下文索引、业务标签以及 80 条确定性复跑样本。每次加载最终计划时都会重新校验文件 SHA256；完整
+数据集还会逐条比较问题和原始记录哈希，防止只校验数量却误用了重排或修改后的数据。
+
+每个晋级计划运行 883 条 full-dev 和 91 条高风险集；最长上下文与金额、比例/利率、日期/期限指标由冻结索引
+从完整 dev 的逐样本预测中配对计算。另固定复跑第 23 层 Attention、第 23 层 MLP 和 Embedding INT8 三个
+哨兵的冻结 80 条 pilot，并要求逐行预测完全一致。统计汇总保存 recovered/regressed/unchanged 转移、解析率、结构化输出率、format retry、业务子集
+正确数，以及固定种子 10,000 次配对 bootstrap 的 95% 区间。
+
+### 7.2.5 排名、保护策略与验收实现
+
+最终汇总明确分成两张榜：Attention/MLP 恢复榜按 full-dev 净恢复、恢复数、高风险和长上下文表现排序；特殊
+模块/KV Cache 榜先看质量门禁，再比较实际或理论收益。两类分数不混排。保护策略只接纳 full-dev、高风险、
+长上下文均通过门禁的候选；同一特殊组件若多个位宽通过，只选择榜中最优位宽。KV Cache 若没有验证低比特
+驻留则保持 FP16。
+
+最终产物包括 `experiment_manifest.json`、`module_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、
+`ranking.csv`、`protection_policy.json`、`report.md` 和 `validation.json`。代码会在汇总前检查计划状态、样本数、
+预测文件哈希和确定性复跑，失败或缺失运行不能进入排名。报告状态使用 `candidate_subset_final`，明确它只覆盖
+预注册晋级子集，不冒充 28 层完整模块排名；权重结果仍标注为 fake-quant，部署性能需要真实 kernel 验证。
 
 ### 当前实现文件、执行顺序与产物
 
@@ -2672,8 +2779,10 @@ cache bytes/token、峰值显存、TTFT、TPOT、端到端延迟和吞吐，并�
 configs/module_sensitivity.json
 src/quantization/module_sensitivity.py
 src/quantization/module_sensitivity_experiments.py
+src/quantization/module_sensitivity_final.py
 scripts/run_module_sensitivity.py
 scripts/run_module_sensitivity_pilot.sh
+scripts/run_module_sensitivity_final.sh
 tests/test_module_sensitivity.py
 ```
 
@@ -2691,6 +2800,17 @@ bash scripts/run_module_sensitivity_pilot.sh
 
 # 查看仍缺少结果的可运行计划
 python3 scripts/run_module_sensitivity.py pending
+
+# 7.2.4：pilot 完成后冻结晋级决策与最终评测合同
+python3 scripts/run_module_sensitivity.py select-advancement
+python3 scripts/run_module_sensitivity.py prepare-final
+
+# 7.2.4/7.2.5：运行确定性、full-dev、高风险评测并生成排名
+bash scripts/run_module_sensitivity_final.sh
+
+# 单独检查或收口
+python3 scripts/run_module_sensitivity.py pending-final
+python3 scripts/run_module_sensitivity.py finalize
 ```
 
 如服务器模型路径与 7.1 manifest 中记录的路径不同，可在 `inspect-model`、`probe-kv-cache` 和单独的
@@ -2706,16 +2826,27 @@ out/module_sensitivity/
 │   ├── module_inventory.json
 │   ├── kv_cache_capability.json
 │   └── validation.json
-└── pilot/
+├── pilot/
+│   ├── experiment_manifest.json
+│   ├── <plan_id>/plan.json
+│   ├── <plan_id>/quantization_error.json
+│   ├── <plan_id>/comparison_report.json
+│   ├── <plan_id>/structured_json/predictions.jsonl
+│   └── <plan_id>/result.json
+└── final_evaluation/
+    ├── advancement.json
     ├── experiment_manifest.json
-    ├── <plan_id>/plan.json
-    ├── <plan_id>/quantization_error.json
-    ├── <plan_id>/comparison_report.json
-    ├── <plan_id>/structured_json/predictions.jsonl
-    └── <plan_id>/result.json
+    ├── full_dev|high_risk|determinism/<plan_id>/...
+    ├── module_metrics.jsonl
+    ├── sample_transitions.jsonl
+    ├── ranking.json / ranking.csv
+    ├── protection_policy.json
+    ├── report.md
+    └── validation.json
 ```
 
-截至当前，合同、矩阵生成、隔离 fake-quant、KV Cache runtime probe、单计划业务评测、逐样本转移、
-`ALL-I8` 一致性审计、断点续跑和 `unsupported` 门禁已经实现并通过自动化测试。尚未完成的是服务器真实矩阵
-结果、模块输出 activation probe、`lm_head` logits 专项指标，以及 KV Cache 的正式显存/时延/吞吐和 residency
-审计。这些未完成项继续保持 TODO 未勾选，不能把“代码入口已实现”写成“真实实验已完成”。
+截至当前，合同、矩阵生成、隔离 fake-quant、特殊模块统计、`lm_head` logits probe、KV Cache runtime/性能
+probe、单计划业务评测、逐样本转移、`ALL-I8` 一致性审计、预注册晋级、冻结 full-dev/high-risk 评测、配对
+bootstrap、双榜排名、保护策略、断点续跑和 `unsupported` 门禁均已实现并通过自动化测试。尚未完成的是服务器
+真实特殊模块/KV Cache pilot、晋级后的完整 dev/high-risk 运行和模块输出 activation probe。这些实验结果项继续
+保持 TODO 未勾选，不能把“代码入口已实现”写成“真实实验已完成”。

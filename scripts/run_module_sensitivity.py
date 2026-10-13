@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare and inspect the TODO 7.2.1 module-sensitivity contract."""
+"""Run the frozen TODO 7.2 module-sensitivity workflow."""
 
 from __future__ import annotations
 
@@ -22,6 +22,13 @@ from src.quantization.module_sensitivity_experiments import (
     pending_plan_ids,
     prepare_experiment_matrix,
     run_experiment_plan,
+)
+from src.quantization.module_sensitivity_final import (
+    finalize_module_sensitivity,
+    pending_final_plan_ids,
+    prepare_final_evaluation,
+    run_final_plan,
+    select_advancement,
 )
 
 
@@ -72,6 +79,34 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         help="Override the server-local merged model path recorded by 7.1.1.",
     )
+    subparsers.add_parser(
+        "select-advancement",
+        help="Apply and freeze the pre-registered pilot-to-full-dev promotion rules.",
+    )
+    subparsers.add_parser(
+        "prepare-final",
+        help="Freeze promoted plans, datasets, references, and final evaluation suites.",
+    )
+    pending_final_parser = subparsers.add_parser(
+        "pending-final",
+        help="List final-evaluation plans without a completed result.",
+    )
+    pending_final_parser.add_argument(
+        "--suite", choices=["full_dev", "high_risk", "determinism"]
+    )
+    final_plan_parser = subparsers.add_parser(
+        "run-final-plan",
+        help="Run one frozen promoted plan on a final-evaluation suite.",
+    )
+    final_plan_parser.add_argument(
+        "--suite", required=True, choices=["full_dev", "high_risk", "determinism"]
+    )
+    final_plan_parser.add_argument("--plan-id", required=True)
+    final_plan_parser.add_argument("--model-path", type=Path)
+    subparsers.add_parser(
+        "finalize",
+        help="Audit final runs and emit rankings, report, and protection policy.",
+    )
     return parser.parse_args(argv)
 
 
@@ -100,13 +135,29 @@ def main(argv: list[str] | None = None) -> int:
         payload = prepare_experiment_matrix(root, config)
     elif args.command == "pending":
         payload = {"pending": pending_plan_ids(root, config)}
-    else:
+    elif args.command == "run-plan":
         payload = run_experiment_plan(
             root,
             config,
             args.plan_id,
             model_path=args.model_path,
         )
+    elif args.command == "select-advancement":
+        payload = select_advancement(root, config)
+    elif args.command == "prepare-final":
+        payload = prepare_final_evaluation(root, config)
+    elif args.command == "pending-final":
+        payload = {"pending": pending_final_plan_ids(root, config, args.suite)}
+    elif args.command == "run-final-plan":
+        payload = run_final_plan(
+            root,
+            config,
+            args.suite,
+            args.plan_id,
+            model_path=args.model_path,
+        )
+    else:
+        payload = finalize_module_sensitivity(root, config)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 

@@ -2,13 +2,13 @@
   "schema_version": 1,
   "stage": "7.2.2-7.2.3",
   "status": "matrix_prepared",
-  "created_at": "2026-10-12T14:28:36.187174+00:00",
+  "created_at": "2026-10-13T03:58:21.523974+00:00",
   "contract_sha256": "15d4f11aefe1b0063dcfa638c5179464e1dad7d0f0e19ba5e7e0ed77d3517688",
   "module_inventory_sha256": "1459bec6aea1dd474e00ed29b1bf3f35bcd3d719783eb5eb5519c62fab045226",
   "embedding_lm_head_tied": false,
   "block_count": 28,
   "plan_count": 72,
-  "runnable_plan_count": 70,
+  "runnable_plan_count": 71,
   "plans": [
     {
       "plan_id": "all_int4_ref",
@@ -499,7 +499,7 @@
     {
       "plan_id": "kv_cache_fp16_ref",
       "kind": "kv_cache_reference",
-      "runnable": false,
+      "runnable": true,
       "comparison": "reference",
       "target_precision": "fp16"
     },
@@ -532,9 +532,9 @@
   },
   "all_int4_report": "out/layer_sensitivity/matrix/all_int4/comparison_report.json",
   "all_int8_error": {
-    "path": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/matrix/all_int8/quantization_error.json",
+    "path": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/matrix/all_int8/quantization_error.json",
     "sha256": "7779eff9e632d6b58a1f008c046a6a15499c4a6f2e13c1bd9aeb0aeb49ae3874"
   },
   "fake_quant_performance_claims_allowed": false,
-  "matrix_sha256": "55698cfa7ee5150fd7227b988f71d7c8329e5358db116abaceb33688bdb9e8fc"
+  "matrix_sha256": "f6cf4631221c76954977d6292714402976ebaadb03694f278fdbaba5a8047ff9"
 }
