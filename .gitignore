@@ -21,7 +21,11 @@ env/
 # Downloaded model weights
 models/
 datasets/
+datasets_contextual/
 out/*.pt
+
+# Regenerable layer-sensitivity activation tensors; keep manifest.json tracked
+out/layer_sensitivity/activation_reference/*.pt
 
 # Test and tool caches
 .pytest_cache/

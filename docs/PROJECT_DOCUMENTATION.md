@@ -2709,6 +2709,35 @@ scale 分开计数）。`lm_head` 还在固定 calibration prompt 上保存 logi
 原始/量化 `lm_head` 权重，因此测到的是输出头本身造成的 logits 扰动；它仍是 fake-quant 机制证据，不代表
 部署 kernel 的实际吞吐或显存。
 
+##### `lm_head` 专项探针的含义与实现
+
+业务评测只告诉我们最终答案是否正确，不能解释错误是在中间推理阶段产生，还是最终 hidden state 映射到词表
+时被 `lm_head` 的量化误差改变。`lm_head` 专项探针就是补充这一层机制证据：观察完全相同的最后一层 hidden
+state 经过原始 FP16 输出头和 fake-quant INT8/INT4 输出头后，下一 token 的 logits 排序发生多大变化。
+
+`lm_head_int8` 和 `lm_head_int4` 计划按以下步骤执行：
+
+1. 模型刚加载时，先把原始 FP16 `lm_head.weight` 复制到 CPU，避免量化后丢失参考；
+2. 按计划把 Transformer Linear 置为相同的 `ALL-I4`，并只把 `lm_head` 量化成目标位宽；
+3. 从冻结 calibration 集顺序取前 4 条，使用统一 FinQA prompt，并追加严格 JSON 输出提示；输入最多截断为
+   1024 token；
+4. 只运行 Qwen decoder body（`model.model`），取得最后一个输入位置的 hidden state；同一 hidden state 同时乘以
+   原始和量化后的 `lm_head` 权重，从而隔离输出头本身的影响；
+5. 词表矩阵在 CPU 上按 4096 行分块做矩阵—向量乘法，避免同时构造两份巨大的 GPU logits/权重副本。
+
+每条样本记录四类指标：
+
+- `logits_mse`：原始与量化 logits 的均方误差；
+- `top1_consistent`：两个输出头的 argmax token 是否相同；
+- `topk_overlap`：默认 top-5 token 集合的重合比例；
+- `reference_top_numeric_rank_change`：先从 tokenizer 词表识别数字、金额、百分比等数值形 token，找到原始输出中
+  分数最高的数值 token，再观察它在量化输出中的排名变化。
+
+汇总项为 mean logits MSE、top-1 一致率、平均 top-k 重合率和数值 token 平均绝对排名变化，逐样本明细与汇总
+写入 `<plan_id>/lm_head_probe.json`。这里的“数值 token”是词表层面的诊断对象，不保证就是该题最终正确答案；
+探针也只看给定 prompt 后的下一 token，不替代后续 80 条完整自回归业务评测。其额外耗时主要来自保存约一份
+输出头权重和在 CPU 上计算两组完整词表 logits。
+
 #### Block Norm 与最终 Norm
 
 Qwen2.5 使用 RMSNorm，因此文档和产物统一称为 Norm，不把它误标成 LayerNorm。实现把 Norm 分为：
@@ -2741,6 +2770,39 @@ HQQ 的 key/value 推荐量化轴固定为 1。依据是
 相同输入长度和生成长度下分别运行 FP16、INT8、INT4，记录 cache class、cache tensor bytes、峰值显存、
 TTFT、TPOT、端到端延迟和吞吐。只有返回的 cache 对象可识别为真实量化 cache、能够观察到 cache tensor 且
 通过低比特驻留门禁时，才设置 `performance_claims_allowed=true`；否则不得声称真实显存或速度收益。
+
+##### KV Cache 专项探针的含义与实现
+
+KV Cache 探针分为“能力探测”和“正式 benchmark”两层。前者回答“后端能不能运行”，后者回答“这次运行是否
+真的保留了低比特 cache，以及时间和显存表现如何”。两者都不能用静态权重 fake-quant 代替。
+
+能力探测由 `probe-kv-cache` 执行。程序先检查 HQQ 依赖和 Transformers QuantizedCache API，再使用固定短文本
+生成 8 个 token，分别传入 INT8/INT4 的 `cache_implementation="quantized"`、`backend="hqq"` 和 `nbits`。
+调用成功只会把该位宽加入 `runtime_verified_precisions`，允许它进入 pilot；此时仍明确记录
+`low_bit_cache_residency_verified=false` 和 `performance_claims_allowed=false`。缺依赖、参数不兼容或运行异常会
+写成 `unsupported`，绝不静默回退到 FP16。
+
+正式 benchmark 在 `kv_cache_fp16_ref`、`kv_cache_int8` 和 `kv_cache_int4` 计划内执行：
+
+1. 从 calibration 集选择渲染后最长的一条 prompt，并统一截断到 1024 token；三个计划使用相同 batch、输入上限
+   和生成长度；
+2. 先生成 2 token 预热；再独立生成 1 token 测近似 TTFT，最后独立生成固定 32 token 测端到端时间；
+3. CUDA 运行前清空缓存统计、重置 peak memory，并在计时前后同步设备；记录首 token/完整生成峰值显存、端到端
+   延迟、吞吐，以及 `(32-token 总时间 - TTFT) / 31` 得到的近似 TPOT；
+4. 使用 `return_dict_in_generate=true` 取得返回的 `past_key_values`，递归遍历其中的 tensor；按底层指针去重后记录
+   cache tensor 总字节数、tensor 数、各 dtype 的字节分布，以及除以输入加生成 token 数后的
+   `cache_bytes_per_token`；
+5. 只有请求位宽为 4/8、cache 类名明确包含 Quantized/HQQ、能够观察到 cache tensor，并且内部确有整数存储时，
+   才设置 `low_bit_residency_verified=true`。这可以防止“接受了量化参数，却长期只保存 FP16 cache”的假阳性。
+
+结果写入 `<plan_id>/kv_cache_benchmark.json`，同时嵌入 `result.json`。其中 peak memory 是该次生成期间 CUDA
+allocator 的整体峰值，并非纯 cache 独占值；TTFT 和 TPOT 来自两次独立的 `generate` 调用，也属于工程近似。
+因此最终必须将 INT8/INT4 与相同输入的 FP16 对照一起解释，并结合 `cache_dtype_bytes`、输出质量和多次运行波动，
+不能只凭一次延迟或类名宣称部署收益。正式计划仍会额外运行冻结的 80 条完整业务评测，用于判断 cache 量化是否
+改变最终答案。
+
+简而言之，`lm_head` 探针定位“输出词表决策是否被权重量化扰动”，KV Cache 探针验证“动态历史状态是否真的
+以低位宽驻留并带来可测收益”。它们都是对业务准确率的机制补充，而不是另一个准确率评分器。
 
 ### 7.2.4 两阶段评测与统计实现
 
