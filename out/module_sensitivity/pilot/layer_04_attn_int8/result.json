@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.2",
+  "status": "completed",
+  "completed_at": "2026-10-13T04:50:30.492464+00:00",
+  "plan": {
+    "plan_id": "layer_04_attn_int8",
+    "kind": "layer_attention_int8",
+    "runnable": true,
+    "comparison": "recovery",
+    "layer_index": 4
+  },
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 36,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.45
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 0,
+  "predictions_sha256": "ccb1e58764563210f35ddb61ead1b0647d68857583d23bb68959cc7e05b979b7",
+  "quantization_error_sha256": "e572d315b5d1054bf448ca3407c0614c9ced1f644cf595c0311702b463b438da",
+  "transition_semantics": "recovery",
+  "transitions_vs_all_int4": {
+    "recovered": 0,
+    "regressed": 0,
+    "net_correct_gain": 0,
+    "stable_correct": 36,
+    "stable_wrong": 44,
+    "changed_raw_predictions": 8
+  },
+  "duration_seconds": 158.3740336538758,
+  "kv_cache_runtime_arguments": null,
+  "all_int8_equivalence": null,
+  "deployment_performance_claims_allowed": false
+}

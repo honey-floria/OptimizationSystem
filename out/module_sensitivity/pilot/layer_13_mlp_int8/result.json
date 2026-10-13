@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.2",
+  "status": "completed",
+  "completed_at": "2026-10-13T05:35:07.513658+00:00",
+  "plan": {
+    "plan_id": "layer_13_mlp_int8",
+    "kind": "layer_mlp_int8",
+    "runnable": true,
+    "comparison": "recovery",
+    "layer_index": 13
+  },
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 34,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.425
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 1,
+  "predictions_sha256": "3be4a9a6c350b9df0e9e71731922d57c6b86c6af7340ea266edce1a102c02934",
+  "quantization_error_sha256": "0529162a602a79c525e2ea6e63f86d4802fcaa263fc8d11b335cd038d4027f9b",
+  "transition_semantics": "recovery",
+  "transitions_vs_all_int4": {
+    "recovered": 0,
+    "regressed": 2,
+    "net_correct_gain": -2,
+    "stable_correct": 34,
+    "stable_wrong": 44,
+    "changed_raw_predictions": 14
+  },
+  "duration_seconds": 166.88506144704297,
+  "kv_cache_runtime_arguments": null,
+  "all_int8_equivalence": null,
+  "deployment_performance_claims_allowed": false
+}
