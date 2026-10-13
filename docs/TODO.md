@@ -612,43 +612,52 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的退化实验。两类分数方向不同，必须分榜报告，
 不得直接混成一个排名。
 
+当前进度（2026-10-13）：7.2.1 已完成真实模型验收；untied 模型矩阵共有 71 个可运行计划，已完成 10 个
+7.2.2 计划（两个全局模块族、ALL-I8 审计、层 7/10/23 的 Attention/MLP 拆分和一个跨层组合），其余 50 个
+逐层拆分与 11 个 7.2.3 特殊模块/KV Cache（含 FP16 对照）计划仍为 pending。当前结论属于定向 pilot，
+不等同于完整矩阵验收。7.2.3 专项 probe、7.2.4 晋级/冻结评测和 7.2.5 双榜/保护策略的代码已实现，真实
+服务器运行仍按下列实验项保持未完成。
+
 #### 7.2.1 前置条件与实验契约
 
 - [x] 复用并校验 7.1.1 的模型身份、目录哈希、tokenizer、calibration/pilot/dev/high-risk/长上下文样本哈希、Prompt、生成参数、随机种子和评分器；本地 `prepare` 合同审计已通过，禁止重新抽样形成不可比结果
 - [x] 校验 `ALL-I4` 计划、plan SHA256、80 条 pilot 样本哈希、结果与预测哈希完整可追溯；以其逐样本预测作为 Attention/MLP 恢复实验的唯一主对照，不重复生成另一份同名基线
-- [ ] 自动发现并登记实际模块路径：代码已覆盖每层 Attention 的 `q/k/v/o_proj`、MLP 的 `gate/up/down_proj`、Embedding、全部 RMSNorm/LayerNorm、最终 Norm 和 `lm_head`，不硬编码层数；待训练服务器执行真实模型 `inspect-model` 后验收
+- [x] 自动发现并登记实际模块路径：训练服务器 `inspect-model` 已通过，确认 28 个 block、112 个 Attention Linear、84 个 MLP Linear、57 个 Norm，以及独立的 Embedding 和 `lm_head`；真实路径与 inventory SHA256 已写入 7.2.1 产物
 - [x] 冻结模块分组与精度规则：Linear 沿用 7.1 的 W4A16 g32 和 per-output-channel W8A16；Embedding、Norm、`lm_head` 已独立记录量化轴、group size 与共享权重策略，配置不适用时失败而非静默回退
-- [ ] 检查 Embedding 与 `lm_head` 是否共享权重：已实现参数对象及底层 storage 双重检测与 `joint_plan_only` 约束，待训练服务器真实模型检查后确定计划类型
+- [x] 检查 Embedding 与 `lm_head` 是否共享权重：训练服务器使用参数对象及底层 storage 双重检测，实际结果为 `embedding_lm_head_tied=false`，因此后续使用四个独立 Embedding/`lm_head` 计划而不是共享权重计划
 - [x] 为 KV Cache 单独冻结能力审计契约：记录请求位宽、真实后端声明、模型 `use_cache/past_key_values` 接口和 Transformers QuantizedCache API；禁止把权重 fake-quant 当作 KV Cache 量化，真实 K/V 粒度、scale、layout 在 7.2.3 runtime probe 前保持未验证
 - [x] 明确 fake-quant 结果只用于质量敏感性；配置与 validation 在真实低比特存储和 kernel runtime probe 前固定 `deployment_performance_claims_allowed=false`
 - [x] 新增 `configs/module_sensitivity.json`、`src/quantization/module_sensitivity.py`、`scripts/run_module_sensitivity.py` 和 `tests/test_module_sensitivity.py`；当前覆盖上游身份、精度契约、模块发现、缺失模块失败、tied weights、Norm、KV Cache 能力检测与 CLI，两项运行矩阵相关覆盖随 7.2.2 实现
 
 #### 7.2.2 Attention 与 MLP 受控恢复矩阵
 
-- [x] 实现 7.2.2/7.2.3 共用实验框架：基础矩阵按实际 tied-weight 状态生成 69（tied）或 71（untied）个计划，其中包含 59 个 Attention/MLP 可运行计划；当前依据 7.1 full-dev 与 7.2 pilot 另预注册 1 个跨层候选 `candidate_l23_all_l10_mlp_int8`，实际 untied 矩阵为 72 个计划、70 个可运行；支持合同哈希、隔离校验、单计划独立进程、断点续跑和 `unsupported` 终态
-- [ ] 生成 `ATTN-ALL-I8`：所有层仅 Attention 的 `q/k/v/o_proj` 恢复为 INT8，全部 MLP Linear 保持 INT4，用于测量 Attention 模块族的总体恢复量
-- [ ] 生成 `MLP-ALL-I8`：所有层仅 MLP 的 `gate/up/down_proj` 恢复为 INT8，全部 Attention Linear 保持 INT4，用于测量 MLP 模块族的总体恢复量
-- [ ] 为全部 28 个 block 分别生成 `L-i-ATTN-I8`：仅第 `i` 层 Attention 恢复为 INT8，其余受量化 Linear 保持与 `ALL-I4` 完全一致
-- [ ] 为全部 28 个 block 分别生成 `L-i-MLP-I8`：仅第 `i` 层 MLP 恢复为 INT8，其余受量化 Linear 保持与 `ALL-I4` 完全一致
-- [ ] 对每个计划校验只有声明的模块发生变化，并保存生效模块清单、权重前后哈希、量化配置和父基线引用；缺层、重复层、越界模块或意外修改均判失败
-- [ ] 逐模块记录参数量、权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例；模块族汇总按权重元素数加权，同时保留每个 Linear 明细
+- [x] 实现 7.2.2/7.2.3 共用实验框架：基础矩阵按实际 tied-weight 状态生成 69（tied）或 71（untied）个计划，其中包含 59 个 Attention/MLP 可运行计划；当前依据 7.1 full-dev 与 7.2 pilot 另预注册 1 个跨层候选 `candidate_l23_all_l10_mlp_int8`，实际 untied 矩阵为 72 个计划、71 个可运行；支持合同哈希、隔离校验、单计划独立进程、断点续跑和 `unsupported` 终态
+- [x] 完成 `ATTN-ALL-I8`：所有层仅 Attention 的 `q/k/v/o_proj` 恢复为 INT8，MLP 保持 INT4；80 条 pilot 为 `36/80`，恢复/退化 `4/4`、净增 0，未观察到模块族总体质量收益
+- [x] 完成 `MLP-ALL-I8`：所有层仅 MLP 的 `gate/up/down_proj` 恢复为 INT8，Attention 保持 INT4；80 条 pilot 为 `35/80`，恢复/退化 `4/5`、净增 -1，未观察到模块族总体质量收益
+- [x] 为全部 28 个 block 分别生成 `L-i-ATTN-I8`：计划覆盖 0～27 层且无缺失/重复，每个计划仅将目标层四个 Attention Linear 恢复为 INT8；当前已执行层 7/10/23，其余 25 个运行留在 7.2.4
+- [x] 为全部 28 个 block 分别生成 `L-i-MLP-I8`：计划覆盖 0～27 层且无缺失/重复，每个计划仅将目标层三个 MLP Linear 恢复为 INT8；当前已执行层 7/10/23，其余 25 个运行留在 7.2.4
+- [x] 对每个计划校验只有声明的模块发生变化，并保存生效模块清单、量化配置、父基线引用和计划合同 SHA256；缺层、重复层、越界模块或意外修改均判失败
+- [ ] 补充每个实际运行计划的量化前后权重 SHA256；当前已有生效模块清单、合同哈希和逐模块数值误差，但尚未保存逐权重 tensor 的前后哈希
+- [x] 对已执行计划逐模块记录参数量、权重 MSE、normalized MSE、cosine similarity、最大绝对误差和裁剪/饱和比例；模块族汇总按权重元素数加权，同时保留 196 个 Linear 明细
 - [ ] 使用 7.1 相同的 calibration 子集采集目标模块输出或 block 输出误差，至少记录 activation MSE、normalized MSE、cosine similarity 和异常值比例
-- [ ] 计算相对 `ALL-I4` 的 `recovered_count`、`regressed_count`、`net_correct_gain` 和准确率变化；另生成只用于组合审计的 `ATTN+MLP-ALL-I8`，确认其生效权重与 `ALL-I8` 完全一致，不一致即视为实现错误
-- [x] 根据已完成的候选拆分结果预注册跨层组合验证：第 23 层 Attention/MLP 为 INT8、第 10 层仅 MLP 为 INT8，其余 Transformer Linear 为 INT4；计划合同逐项确认只修改声明的 10 个 Linear，待服务器运行后判断跨层收益是否可叠加
+- [x] 计算相对 `ALL-I4` 的 `recovered_count`、`regressed_count`、`net_correct_gain` 和准确率变化；`ATTN+MLP-ALL-I8` 审计已完成并与 7.1 `ALL-I8` 的 196 个 Linear、8 类误差/精度字段及预测 SHA256 完全一致
+- [x] 根据候选拆分结果完成跨层组合验证：第 23 层 Attention/MLP 为 INT8、第 10 层仅 MLP 为 INT8，其余 Transformer Linear 为 INT4；计划合同只修改声明的 10 个 Linear，80 条 pilot 为 `38/80`、恢复/退化 `2/0`，与两个单项的 `+2` 持平而未叠加，额外保护第 10 层 MLP 约增加 102 MB 理论权重存储但无增量正确题，因此阶段性默认建议仅保护第 23 层，第 10 层 MLP 保留为独立备选
 
 #### 7.2.3 Embedding、Norm、lm_head 与 KV Cache 降精度实验
 
 - [x] 实现特殊模块计划与运行路径：根据实际 tied-weight 状态生成独立或联合 Embedding/`lm_head` 计划，区分 block/final Norm，并为 KV Cache 提供 HQQ INT8/INT4 runtime probe、能力门禁和明确的 `unsupported` 结果；真实质量与性能结论待服务器运行
+- [x] 实现特殊模块专项证据：记录量化前后范围、NaN/Inf、packed weight/scale/FP16 对照存储；`lm_head` 保存 logits MSE、top-1/top-k 一致率与数值 token 排名变化；KV Cache 增加可运行 FP16 对照及等长 prefill/decode 的 cache bytes、峰值显存、TTFT、TPOT、延迟、吞吐和低比特驻留门禁
 - [ ] 对 Embedding 分别执行 INT8 和 INT4 单模块降精度实验，其余模块固定为 `ALL-I4` 配置；记录质量损失、量化误差和实际参数/存储占比
 - [ ] 对 `lm_head` 分别执行 INT8 和 INT4 单模块降精度实验，其余模块固定；除业务指标外记录 logits MSE、top-1/top-k token 一致率和目标数值 token 的排名变化
 - [ ] 对 Norm 执行 FP16、INT8 和 INT4 对比；至少区分 block 内 input/post-attention Norm 与最终 Norm，并记录 scale/range、异常值和 NaN/Inf，避免将 Qwen 的 RMSNorm 错标为 LayerNorm
-- [ ] 若 Embedding 与 `lm_head` 权重共享，改为执行共享权重计划，并在报告中单列其参数收益和不可独立归因限制
+- [x] 完成共享权重适用性判定：真实模型的 Embedding 与 `lm_head` 不共享权重，因此共享权重联合计划不适用，矩阵已生成四个独立 INT8/INT4 计划
 - [ ] 在同一权重基线上对 KV Cache 执行 FP16、INT8 和 INT4 对比；分别覆盖 prefill 与逐 token decode，并检查生成长度、batch size 和上下文长度完全一致
 - [ ] KV Cache 后端不支持真实 INT8/INT4 时，输出明确的 `unsupported` 能力审计；可增加标记为 sensitivity-only 的量化—反量化 hook，但不得据此声称真实 cache 显存或性能收益
 - [ ] 对真实 KV Cache 量化记录 cache bytes/token、峰值显存、TTFT、TPOT、端到端延迟、吞吐及输出质量，并验证请求期间低比特 cache 确实驻留而非立即反量化后长期保存为 FP16
 
 #### 7.2.4 两阶段业务评测与统计
 
+- [x] 实现预注册晋级与最终评测流水线：`select-advancement` 要求完整 pilot 矩阵无 pending，再从全部独立 Attention/MLP 计划按预注册规则筛选并在 full-dev 前冻结规则/候选和 SHA256；`prepare-final` 冻结 7.1 基线、883/91/89 条样本、业务标签及确定性哨兵，`run-final-plan` 支持断点续跑并逐条校验冻结数据；真实运行完成度由以下实验项单独记录
 - [ ] 第一阶段在冻结的 80 条 pilot 上运行全部 Attention/MLP、特殊模块和可用 KV Cache 计划；失败、OOM、非有限值或输出数量不符的计划不得进入排名
 - [ ] pilot 后预注册完整 dev 晋级规则：优先选择正向恢复的 Attention/MLP 候选，以及质量损失最小且存在实际存储或计算收益的特殊模块候选；不得看完 full-dev 结果后改规则
 - [ ] 第二阶段在完整 883 条 FinQA dev 上评测晋级候选，并运行 91 条 contextual 高风险集和 89 条最长上下文子集；KV Cache 候选必须包含长上下文评测
@@ -659,6 +668,7 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 
 #### 7.2.5 排名、产物与验收
 
+- [x] 实现最终汇总与验收代码：分离恢复榜和损失—收益榜，生成固定种子配对 bootstrap、逐样本转移、双格式排名、机器可读保护策略、确定性复跑审计和全产物 SHA256；未完成服务器运行时 `finalize` 会拒绝生成最终结论
 - [ ] 分别生成 Attention/MLP“质量恢复榜”和特殊模块/KV Cache“质量损失—收益榜”；前者优先 `net_correct_gain` 和高风险非退化，后者先满足质量门禁，再比较真实显存、延迟和吞吐收益
 - [ ] 输出 `experiment_manifest.json`、`module_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`，所有汇总项均能回溯到计划、模型身份、样本哈希和逐样本预测
 - [ ] 报告 Attention 与 MLP 的全局模块族对比、逐层子模块排名、特殊模块保护建议、KV Cache 支持结论、置信区间和已知限制；明确哪些结论来自 fake-quant、哪些来自真实部署后端

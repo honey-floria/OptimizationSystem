@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -172,7 +173,7 @@ def build_experiment_plans(
             {
                 "plan_id": "kv_cache_fp16_ref",
                 "kind": "kv_cache_reference",
-                "runnable": False,
+                "runnable": True,
                 "comparison": "reference",
                 "target_precision": "fp16",
             },
@@ -399,6 +400,10 @@ def _quantize_special_module(
         raise ValueError(f"Special module has no weight: {path}")
     bits = 4 if precision_name == "int4" else 8
     rule = rules[precision_name]
+    source = weight.detach().to(dtype=torch_module.float32, device="cpu")
+    finite = torch_module.isfinite(source)
+    source_min = float(source[finite].min().item()) if bool(finite.any()) else None
+    source_max = float(source[finite].max().item()) if bool(finite.any()) else None
     if weight.ndim == 1:
         restored, metrics = _fake_quantize_vector(weight.data, bits=bits, torch_module=torch_module)
     elif weight.ndim == 2:
@@ -411,6 +416,16 @@ def _quantize_special_module(
     else:
         raise ValueError(f"Unsupported special-module weight rank at {path}: {weight.ndim}")
     weight.data.copy_(restored)
+    if weight.ndim == 1:
+        scale_count = 1
+    elif rule.get("group_size"):
+        scale_count = int(weight.shape[0]) * math.ceil(
+            int(weight.shape[1]) / int(rule["group_size"])
+        )
+    else:
+        scale_count = int(weight.shape[0])
+    packed_weight_bytes = math.ceil(int(weight.numel()) * bits / 8)
+    scale_bytes = scale_count * 2
     return {
         "module": path,
         "family": family,
@@ -421,7 +436,249 @@ def _quantize_special_module(
         "scheme": rule["scheme"],
         "zero_point": rule["zero_point"],
         "numel": int(weight.numel()),
+        "source_min": source_min,
+        "source_max": source_max,
+        "source_nan_count": int(torch_module.isnan(source).sum().item()),
+        "source_inf_count": int(torch_module.isinf(source).sum().item()),
+        "quantized_nan_count": int(torch_module.isnan(restored).sum().item()),
+        "quantized_inf_count": int(torch_module.isinf(restored).sum().item()),
+        "theoretical_storage": {
+            "packed_weight_bytes": packed_weight_bytes,
+            "scale_count": scale_count,
+            "scale_bytes_fp16": scale_bytes,
+            "total_bytes": packed_weight_bytes + scale_bytes,
+            "fp16_reference_bytes": int(weight.numel()) * 2,
+            "savings_bytes": int(weight.numel()) * 2 - packed_weight_bytes - scale_bytes,
+        },
         **metrics,
+    }
+
+
+def _tensor_storage_profile(value: Any, torch_module: Any) -> dict[str, Any]:
+    seen_tensors: set[int] = set()
+    seen_objects: set[int] = set()
+    dtype_bytes: dict[str, int] = {}
+
+    def visit(item: Any) -> None:
+        if torch_module.is_tensor(item):
+            identity = int(item.data_ptr()) if item.numel() else id(item)
+            if identity in seen_tensors:
+                return
+            seen_tensors.add(identity)
+            dtype = str(item.dtype).replace("torch.", "")
+            dtype_bytes[dtype] = dtype_bytes.get(dtype, 0) + int(item.numel()) * int(item.element_size())
+            return
+        if isinstance(item, dict):
+            for child in item.values():
+                visit(child)
+            return
+        if isinstance(item, (list, tuple)):
+            for child in item:
+                visit(child)
+            return
+        attributes = getattr(item, "__dict__", None)
+        if isinstance(attributes, dict):
+            identity = id(item)
+            if identity in seen_objects:
+                return
+            seen_objects.add(identity)
+            for child in attributes.values():
+                visit(child)
+
+    visit(value)
+    return {
+        "total_bytes": sum(dtype_bytes.values()),
+        "dtype_bytes": dict(sorted(dtype_bytes.items())),
+        "tensor_count": len(seen_tensors),
+    }
+
+
+def benchmark_kv_cache_runtime(
+    model: Any,
+    tokenizer: Any,
+    prompt: str,
+    *,
+    generation_arguments: dict[str, Any] | None,
+    config: dict[str, Any],
+    torch_module: Any,
+) -> dict[str, Any]:
+    settings = config["kv_cache"].get("benchmark", {})
+    device = config["pilot_evaluation"]["device"]
+    encoded = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=int(settings.get("max_input_tokens", 1024)),
+    )
+    encoded = {name: tensor.to(device) for name, tensor in encoded.items()}
+    base_arguments = {
+        "do_sample": False,
+        "num_beams": 1,
+        "pad_token_id": tokenizer.pad_token_id,
+        "return_dict_in_generate": True,
+        "use_cache": True,
+    }
+    base_arguments.update(generation_arguments or {})
+
+    def timed_generate(tokens: int) -> tuple[Any, float, int | None]:
+        arguments = {**base_arguments, "max_new_tokens": tokens}
+        if device.startswith("cuda"):
+            torch_module.cuda.empty_cache()
+            torch_module.cuda.reset_peak_memory_stats()
+            torch_module.cuda.synchronize()
+        started = time.perf_counter()
+        with torch_module.no_grad():
+            output = model.generate(**encoded, **arguments)
+        if device.startswith("cuda"):
+            torch_module.cuda.synchronize()
+            peak = int(torch_module.cuda.max_memory_allocated())
+        else:
+            peak = None
+        return output, (time.perf_counter() - started) * 1000.0, peak
+
+    warmup_tokens = int(settings.get("warmup_new_tokens", 2))
+    if warmup_tokens:
+        timed_generate(warmup_tokens)
+    _, ttft_ms, first_peak = timed_generate(1)
+    decode_tokens = int(settings.get("decode_new_tokens", 32))
+    full, total_ms, full_peak = timed_generate(decode_tokens)
+    cache = getattr(full, "past_key_values", None)
+    cache_class = type(cache).__name__ if cache is not None else None
+    storage = (
+        _tensor_storage_profile(cache, torch_module)
+        if cache is not None
+        else {"total_bytes": 0, "dtype_bytes": {}, "tensor_count": 0}
+    )
+    cache_bytes = int(storage["total_bytes"])
+    quantized = bool(generation_arguments)
+    requested_bits = (
+        (generation_arguments or {}).get("cache_config", {}).get("nbits")
+        if quantized else 16
+    )
+    integer_cache_bytes = sum(
+        byte_count
+        for dtype, byte_count in storage["dtype_bytes"].items()
+        if dtype.startswith(("int", "uint"))
+    )
+    low_bit_residency = bool(
+        quantized
+        and cache_bytes > 0
+        and cache_class
+        and ("quant" in cache_class.lower() or "hqq" in cache_class.lower())
+        and requested_bits in {4, 8}
+        and integer_cache_bytes > 0
+    )
+    total_cache_tokens = int(encoded["attention_mask"].sum().item()) + decode_tokens
+    return {
+        "status": "completed",
+        "method": "generate_one_token_plus_fixed_decode",
+        "input_tokens": int(encoded["attention_mask"].sum().item()),
+        "generated_tokens": decode_tokens,
+        "ttft_ms": ttft_ms,
+        "end_to_end_ms": total_ms,
+        "tpot_ms": (total_ms - ttft_ms) / max(decode_tokens - 1, 1),
+        "throughput_tokens_per_second": decode_tokens / (total_ms / 1000.0),
+        "peak_memory_bytes": full_peak,
+        "first_token_peak_memory_bytes": first_peak,
+        "cache_class": cache_class,
+        "cache_tensor_bytes": cache_bytes,
+        "cache_bytes_per_token": cache_bytes / total_cache_tokens if total_cache_tokens else None,
+        "cache_tensor_count": storage["tensor_count"],
+        "cache_dtype_bytes": storage["dtype_bytes"],
+        "integer_cache_bytes": integer_cache_bytes,
+        "requested_bits": requested_bits,
+        "low_bit_residency_verified": low_bit_residency,
+        "generation_arguments": generation_arguments,
+        "performance_claims_allowed": (not quantized) or low_bit_residency,
+    }
+
+
+def _numeric_token_ids(tokenizer: Any) -> list[int]:
+    numeric = re.compile(r"^[\s▁Ġ]*[-+]?[$€£]?[0-9][0-9,._%]*$")
+    return sorted(
+        int(index)
+        for token, index in tokenizer.get_vocab().items()
+        if numeric.match(str(token))
+    )
+
+
+def _chunked_logits(hidden: Any, weight: Any, torch_module: Any, chunk_size: int) -> Any:
+    pieces = []
+    vector = hidden.detach().to(device="cpu", dtype=torch_module.float32)
+    for start in range(0, int(weight.shape[0]), chunk_size):
+        chunk = weight[start : start + chunk_size].to(dtype=torch_module.float32)
+        pieces.append(torch_module.mv(chunk, vector))
+    return torch_module.cat(pieces)
+
+
+def probe_lm_head_logits(
+    model: Any,
+    tokenizer: Any,
+    rows: list[dict[str, Any]],
+    *,
+    original_weight: Any,
+    config: dict[str, Any],
+    torch_module: Any,
+) -> dict[str, Any]:
+    from src.baseline.service import InferenceRequest
+
+    settings = config.get("special_probes", {}).get("lm_head", {})
+    sample_count = min(int(settings.get("sample_count", 4)), len(rows))
+    suffix = str(settings.get("prompt_suffix", ""))
+    numeric_ids = _numeric_token_ids(tokenizer)
+    records = []
+    target = getattr(model, "model", None)
+    if target is None:
+        raise ValueError("lm_head probe requires the decoder body at model.model.")
+    candidate_weight = model.lm_head.weight.detach().to(device="cpu")
+    for index, row in enumerate(rows[:sample_count]):
+        prompt = InferenceRequest.from_finqa_row(row).render_prompt() + suffix
+        encoded = tokenizer(
+            prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=int(settings.get("max_input_tokens", 1024)),
+        )
+        encoded = {name: tensor.to(config["pilot_evaluation"]["device"]) for name, tensor in encoded.items()}
+        with torch_module.no_grad():
+            output = target(**encoded, use_cache=False, return_dict=True)
+        hidden = output.last_hidden_state[0, -1].to(device="cpu")
+        chunk_size = int(settings.get("vocab_chunk_size", 4096))
+        reference_logits = _chunked_logits(hidden, original_weight, torch_module, chunk_size)
+        candidate_logits = _chunked_logits(hidden, candidate_weight, torch_module, chunk_size)
+        delta = candidate_logits - reference_logits
+        reference_top = int(reference_logits.argmax().item())
+        top_k = int(settings.get("top_k", 5))
+        reference_topk = set(reference_logits.topk(top_k).indices.tolist())
+        candidate_topk = set(candidate_logits.topk(top_k).indices.tolist())
+        numeric_rank_change = None
+        if numeric_ids:
+            numeric_tensor = torch_module.tensor(numeric_ids, dtype=torch_module.long)
+            best_numeric = int(numeric_tensor[reference_logits[numeric_tensor].argmax()].item())
+            reference_rank = int((reference_logits > reference_logits[best_numeric]).sum().item()) + 1
+            candidate_rank = int((candidate_logits > candidate_logits[best_numeric]).sum().item()) + 1
+            numeric_rank_change = candidate_rank - reference_rank
+        records.append(
+            {
+                "sample_index": index,
+                "logits_mse": float((delta * delta).mean().item()),
+                "top1_consistent": reference_top == int(candidate_logits.argmax().item()),
+                "topk_overlap": len(reference_topk & candidate_topk) / top_k,
+                "reference_top_numeric_rank_change": numeric_rank_change,
+            }
+        )
+    return {
+        "status": "completed",
+        "sample_count": len(records),
+        "numeric_token_count": len(numeric_ids),
+        "mean_logits_mse": sum(row["logits_mse"] for row in records) / len(records),
+        "top1_consistency": sum(row["top1_consistent"] for row in records) / len(records),
+        "mean_topk_overlap": sum(row["topk_overlap"] for row in records) / len(records),
+        "mean_abs_numeric_rank_change": (
+            sum(abs(row["reference_top_numeric_rank_change"]) for row in records if row["reference_top_numeric_rank_change"] is not None)
+            / max(sum(row["reference_top_numeric_rank_change"] is not None for row in records), 1)
+        ),
+        "records": records,
     }
 
 
@@ -765,6 +1022,9 @@ def run_experiment_plan(
         str(resolved_model_path), local_files_only=True, trust_remote_code=False,
         dtype=dtype, low_cpu_mem_usage=True,
     )
+    original_lm_head_weight = None
+    if plan["kind"] == "lm_head_quantized":
+        original_lm_head_weight = model.lm_head.weight.detach().to(device="cpu").clone()
     error_report = quantize_model_for_module_plan(model, plan, config, inventory, torch)
     all_int8_equivalence = None
     if plan["kind"] == "combined_all_int8_audit":
@@ -775,6 +1035,36 @@ def run_experiment_plan(
     write_json(plan_dir / "quantization_error.json", error_report)
     model.to(evaluation["device"])
     model.eval()
+    assets = load_assets(resolve_project_path(root, config["paths"]["dataset_dir"]))
+    lm_head_probe = None
+    if original_lm_head_weight is not None:
+        lm_head_probe = probe_lm_head_logits(
+            model,
+            tokenizer,
+            list(assets.calibration),
+            original_weight=original_lm_head_weight,
+            config=config,
+            torch_module=torch,
+        )
+        write_json(plan_dir / "lm_head_probe.json", lm_head_probe)
+        del original_lm_head_weight
+    kv_cache_benchmark = None
+    if plan["kind"] in {"kv_cache_reference", "kv_cache_quantized"}:
+        from src.baseline.service import InferenceRequest
+
+        benchmark_row = max(
+            assets.calibration,
+            key=lambda row: len(InferenceRequest.from_finqa_row(row).render_prompt()),
+        )
+        kv_cache_benchmark = benchmark_kv_cache_runtime(
+            model,
+            tokenizer,
+            InferenceRequest.from_finqa_row(benchmark_row).render_prompt(),
+            generation_arguments=kv_arguments,
+            config=config,
+            torch_module=torch,
+        )
+        write_json(plan_dir / "kv_cache_benchmark.json", kv_cache_benchmark)
     service = BaselineService(
         model=model,
         tokenizer=tokenizer,
@@ -787,7 +1077,6 @@ def run_experiment_plan(
         },
         log_file=plan_dir / "quality_service.jsonl",
     )
-    assets = load_assets(resolve_project_path(root, config["paths"]["dataset_dir"]))
     report = run_quality_repair_experiment(
         service, assets.quality_dev, assets.manifest, quality, plan_dir,
         calibration=assets.calibration,
@@ -806,6 +1095,15 @@ def run_experiment_plan(
         transition_summary = {
             "recovered_from_fp16_component_baseline": transitions["recovered"],
             "degraded_from_fp16_component_baseline": transitions["regressed"],
+            "net_correct_change": correct_delta,
+            "stable_correct": transitions["stable_correct"],
+            "stable_wrong": transitions["stable_wrong"],
+            "changed_raw_predictions": transitions["changed_raw_predictions"],
+        }
+    elif plan["comparison"] == "reference":
+        transition_summary = {
+            "recovered": transitions["recovered"],
+            "regressed": transitions["regressed"],
             "net_correct_change": correct_delta,
             "stable_correct": transitions["stable_correct"],
             "stable_wrong": transitions["stable_wrong"],
@@ -835,8 +1133,27 @@ def run_experiment_plan(
         "transitions_vs_all_int4": transition_summary,
         "duration_seconds": time.perf_counter() - started,
         "kv_cache_runtime_arguments": kv_arguments,
+        "kv_cache_benchmark": kv_cache_benchmark,
+        "lm_head_probe": lm_head_probe,
+        "special_storage": {
+            "fp16_reference_bytes": sum(
+                row.get("theoretical_storage", {}).get("fp16_reference_bytes", 0)
+                for row in error_report["special_modules"]
+            ),
+            "quantized_total_bytes": sum(
+                row.get("theoretical_storage", {}).get("total_bytes", 0)
+                for row in error_report["special_modules"]
+            ),
+            "savings_bytes": sum(
+                row.get("theoretical_storage", {}).get("savings_bytes", 0)
+                for row in error_report["special_modules"]
+            ),
+        } if error_report["special_modules"] else None,
         "all_int8_equivalence": all_int8_equivalence,
-        "deployment_performance_claims_allowed": False,
+        "deployment_performance_claims_allowed": bool(
+            kv_cache_benchmark
+            and kv_cache_benchmark.get("performance_claims_allowed")
+        ),
     }
     write_json(result_path, result)
     return result

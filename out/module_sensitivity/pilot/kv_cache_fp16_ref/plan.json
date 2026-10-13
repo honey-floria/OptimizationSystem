@@ -4,7 +4,7 @@
   "plan": {
     "plan_id": "kv_cache_fp16_ref",
     "kind": "kv_cache_reference",
-    "runnable": false,
+    "runnable": true,
     "comparison": "reference",
     "target_precision": "fp16"
   },
@@ -299,5 +299,5 @@
       "numeric_accuracy": 0.45
     }
   },
-  "plan_sha256": "8616496c832b5a035bc75c63969b4ce95b6794afb7ece673a7956353ec06fd18"
+  "plan_sha256": "f6e951c4a23825dcdf15c17d8821377ef2bd36bc3ea707de503bd15986b19e4c"
 }

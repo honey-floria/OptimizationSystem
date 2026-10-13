@@ -5,6 +5,7 @@
   "paths": {
     "merged_manifest": "out/layer_sensitivity/setup/merged_model_manifest.json",
     "input_freeze": "out/layer_sensitivity/setup/input_freeze.json",
+    "setup_dir": "out/layer_sensitivity/setup",
     "layer_matrix_manifest": "out/layer_sensitivity/matrix/experiment_manifest.json",
     "all_int4_plan": "out/layer_sensitivity/matrix/all_int4/plan.json",
     "all_int4_result": "out/layer_sensitivity/matrix/all_int4/result.json",
@@ -164,6 +165,20 @@
           }
         }
       }
+    },
+    "benchmark": {
+      "max_input_tokens": 1024,
+      "warmup_new_tokens": 2,
+      "decode_new_tokens": 32
+    }
+  },
+  "special_probes": {
+    "lm_head": {
+      "sample_count": 4,
+      "max_input_tokens": 1024,
+      "top_k": 5,
+      "vocab_chunk_size": 4096,
+      "prompt_suffix": "\nReturn exactly one JSON object with evidence, formula, value, and unit."
     }
   },
   "pilot_evaluation": {
@@ -181,5 +196,70 @@
     "dtype": "float16",
     "local_files_only": true,
     "trust_remote_code": false
+  },
+  "final_evaluation": {
+    "output_root": "out/module_sensitivity/final_evaluation",
+    "advancement_output": "out/module_sensitivity/final_evaluation/advancement.json",
+    "reference_baselines": {
+      "full_dev": "out/layer_sensitivity/final_evaluation/full_dev/all_int4",
+      "high_risk": "out/layer_sensitivity/final_evaluation/high_risk/all_int4"
+    },
+    "required_special_pilot_plans": [
+      "embedding_int8",
+      "embedding_int4",
+      "lm_head_int8",
+      "lm_head_int4",
+      "block_norm_int8",
+      "block_norm_int4",
+      "final_norm_int8",
+      "final_norm_int4",
+      "kv_cache_fp16_ref",
+      "kv_cache_int8",
+      "kv_cache_int4"
+    ],
+    "require_complete_pilot_matrix": true,
+    "recovery_candidate_scope": "all_isolated_attention_mlp",
+    "recovery_candidate_plans": [],
+    "determinism_sentinel_plans": [
+      "layer_23_attn_int8",
+      "layer_23_mlp_int8",
+      "embedding_int8"
+    ],
+    "advancement_rules": {
+      "recovery_min_net_correct_gain": 1,
+      "special_min_net_correct_change": 0,
+      "require_positive_storage_savings": true,
+      "kv_cache_require_low_bit_residency": true
+    },
+    "suites": {
+      "full_dev": {
+        "dataset_role": "evaluation_dev",
+        "expected_size": 883,
+        "frozen_subset": "evaluation_dev"
+      },
+      "high_risk": {
+        "dataset_role": "high_risk_regression",
+        "expected_size": 91,
+        "frozen_subset": "contextual_high_risk"
+      },
+      "determinism": {
+        "dataset_role": "evaluation_dev",
+        "pilot_size": 80,
+        "pilot_seed": 20261004,
+        "expected_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61"
+      }
+    },
+    "bootstrap": {
+      "iterations": 10000,
+      "confidence": 0.95,
+      "seed": 20261013
+    },
+    "quality_gates": {
+      "recovery_require_positive_full_dev_gain": true,
+      "require_nonnegative_high_risk_gain": true,
+      "require_nonnegative_long_context_gain": true,
+      "special_max_full_dev_loss": 0,
+      "special_max_high_risk_loss": 0
+    }
   }
 }
