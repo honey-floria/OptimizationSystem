@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.3",
+  "status": "completed",
+  "completed_at": "2026-10-13T07:38:53.934866+00:00",
+  "plan": {
+    "plan_id": "kv_cache_fp16_ref",
+    "kind": "kv_cache_reference",
+    "runnable": true,
+    "comparison": "reference",
+    "target_precision": "fp16"
+  },
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 36,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.45
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 1,
+  "predictions_sha256": "4bcd0dac2343e532c14b7838d43d6d7dbe3cd7786542a41ef3490e7d6456c11b",
+  "quantization_error_sha256": "57c866d550ce5c8f2075c2871b9d1c46c57c886ebc724b50b2aeb00bc0bd6747",
+  "transition_semantics": "reference",
+  "transitions_vs_all_int4": {
+    "recovered": 0,
+    "regressed": 0,
+    "net_correct_change": 0,
+    "stable_correct": 36,
+    "stable_wrong": 44,
+    "changed_raw_predictions": 0
+  },
+  "duration_seconds": 173.11328517692164,
+  "kv_cache_runtime_arguments": null,
+  "kv_cache_benchmark": {
+    "status": "completed",
+    "method": "generate_one_token_plus_fixed_decode",
+    "input_tokens": 1024,
+    "generated_tokens": 32,
+    "ttft_ms": 152.42256596684456,
+    "end_to_end_ms": 886.331306071952,
+    "tpot_ms": 23.674475487261528,
+    "throughput_tokens_per_second": 36.103880998875894,
+    "peak_memory_bytes": 15551748608,
+    "first_token_peak_memory_bytes": 15493019648,
+    "cache_class": "DynamicCache",
+    "cache_tensor_bytes": 60497920,
+    "cache_bytes_per_token": 57289.69696969697,
+    "cache_tensor_count": 56,
+    "cache_dtype_bytes": {
+      "float16": 60497920
+    },
+    "integer_cache_bytes": 0,
+    "requested_bits": 16,
+    "low_bit_residency_verified": false,
+    "generation_arguments": null,
+    "performance_claims_allowed": true
+  },
+  "lm_head_probe": null,
+  "special_storage": null,
+  "all_int8_equivalence": null,
+  "deployment_performance_claims_allowed": true
+}

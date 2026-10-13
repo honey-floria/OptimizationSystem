@@ -1,0 +1,24 @@
+{
+  "status": "completed",
+  "method": "generate_one_token_plus_fixed_decode",
+  "input_tokens": 1024,
+  "generated_tokens": 32,
+  "ttft_ms": 152.42256596684456,
+  "end_to_end_ms": 886.331306071952,
+  "tpot_ms": 23.674475487261528,
+  "throughput_tokens_per_second": 36.103880998875894,
+  "peak_memory_bytes": 15551748608,
+  "first_token_peak_memory_bytes": 15493019648,
+  "cache_class": "DynamicCache",
+  "cache_tensor_bytes": 60497920,
+  "cache_bytes_per_token": 57289.69696969697,
+  "cache_tensor_count": 56,
+  "cache_dtype_bytes": {
+    "float16": 60497920
+  },
+  "integer_cache_bytes": 0,
+  "requested_bits": 16,
+  "low_bit_residency_verified": false,
+  "generation_arguments": null,
+  "performance_claims_allowed": true
+}

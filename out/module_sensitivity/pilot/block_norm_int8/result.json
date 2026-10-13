@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.3",
+  "status": "completed",
+  "completed_at": "2026-10-13T07:21:31.110534+00:00",
+  "plan": {
+    "plan_id": "block_norm_int8",
+    "kind": "block_norm_quantized",
+    "runnable": true,
+    "comparison": "degradation",
+    "target_precision": "int8"
+  },
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 37,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.4625
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 0,
+  "predictions_sha256": "32b65a84431d5134617de96e3067a3ae8318a54fe1e417669a0bdb297273c2c8",
+  "quantization_error_sha256": "50ae396c5de6c7e89b841f096f0d303eb50c311cd7892b8ac0f4e54483fb3a37",
+  "transition_semantics": "degradation",
+  "transitions_vs_all_int4": {
+    "recovered_from_fp16_component_baseline": 1,
+    "degraded_from_fp16_component_baseline": 0,
+    "net_correct_change": 1,
+    "stable_correct": 36,
+    "stable_wrong": 43,
+    "changed_raw_predictions": 12
+  },
+  "duration_seconds": 162.73024354083464,
+  "kv_cache_runtime_arguments": null,
+  "kv_cache_benchmark": null,
+  "lm_head_probe": null,
+  "special_storage": {
+    "fp16_reference_bytes": 401408,
+    "quantized_total_bytes": 200816,
+    "savings_bytes": 200592
+  },
+  "all_int8_equivalence": null,
+  "deployment_performance_claims_allowed": false
+}

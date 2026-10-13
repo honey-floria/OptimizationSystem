@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.3",
+  "status": "unsupported",
+  "plan": {
+    "plan_id": "kv_cache_int4",
+    "kind": "kv_cache_quantized",
+    "runnable": true,
+    "comparison": "degradation",
+    "target_precision": "int4"
+  },
+  "reason": "Real KV Cache backend and runtime probe are not verified for this precision.",
+  "capability_sha256": "a517220fc2191f171a976501c9155575b4bfad78902a96355785cef9ef54d3fb",
+  "deployment_performance_claims_allowed": false
+}
