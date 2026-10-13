@@ -2804,6 +2804,101 @@ allocator 的整体峰值，并非纯 cache 独占值；TTFT 和 TPOT 来自两�
 简而言之，`lm_head` 探针定位“输出词表决策是否被权重量化扰动”，KV Cache 探针验证“动态历史状态是否真的
 以低位宽驻留并带来可测收益”。它们都是对业务准确率的机制补充，而不是另一个准确率评分器。
 
+### 7.2 完整 pilot 结果分析（2026-10-13）
+
+71 个可运行计划已经全部取得终态，`pending=[]`：69 个计划完成，KV Cache INT8/INT4 因真实 HQQ capability
+probe 尚未执行而以 `unsupported` 结束。全部有时长的 69 个计划累计约 195.3 分钟，中位数约 164.1 秒；
+block Norm INT4 因大量格式/生成扰动耗时约 444.6 秒，是明显离群项。以下结论仅针对固定 80 条 pilot，完整
+dev/high-risk 尚未运行。
+
+#### Attention 与 MLP 全局及逐层结果
+
+全局模块族恢复没有收益：`ATTN-ALL-I8` 为 36/80、恢复/退化 4/4、净变化 0；`MLP-ALL-I8` 为 35/80、
+恢复/退化 4/5、净变化 -1；Attention+MLP 全 INT8 审计也只有 36/80、净变化 0。因此不能使用“整个模块族统一
+升到 INT8”的粗粒度策略，收益集中在少数层。
+
+逐层 Attention 中，12 层净正、9 层持平、7 层净负，28 个计划净变化合计为 +5；逐层 MLP 中，14 层净正、
+6 层持平、8 层净负，合计为 +9。这个汇总显示 MLP 有略强的恢复倾向，但各计划复用同一批样本，合计数不能
+解释为一个可直接部署的组合收益。
+
+pilot 中较强的候选为：
+
+| 候选 | 正确数 | 恢复/退化 | 净变化 |
+| --- | ---: | ---: | ---: |
+| layer 6 Attention INT8 | 39/80 | 3/0 | +3 |
+| layer 26 MLP INT8 | 39/80 | 3/0 | +3 |
+| layer 10 MLP INT8 | 38/80 | 2/0 | +2 |
+| layer 17 MLP INT8 | 38/80 | 2/0 | +2 |
+| layer 25 MLP INT8 | 38/80 | 2/0 | +2 |
+| layer 23 Attention INT8 | 37/80 | 1/0 | +1 |
+| layer 23 MLP INT8 | 37/80 | 1/0 | +1 |
+
+这些恢复高度重叠：layer 6 Attention 和 layer 26 MLP 都只恢复 source index `191/402/611`；layer 10、17、25
+分别恢复这三题中的两个。加上 layer 23 的结果，七个候选的恢复并集也只有 `31/191/402/611` 四题。这再次
+证明单项收益不能相加，多个位置可能只是把同一条生成轨迹推过相同的决策边界。
+
+固定种子 10,000 次配对 bootstrap 的 pilot 区间也不支持强排名：`+3` 候选的 95% 区间约为 `[0,+8.75]`
+个百分点，`+2` 约为 `[0,+6.25]`，`+1` 约为 `[0,+3.75]`，下界都没有严格大于 0。因此当前只能形成晋级
+梯队，不能宣称 layer 6 一定优于 layer 26，或任一 `+1` 层已经稳定有效。
+
+#### Embedding 结果
+
+Embedding INT8 与 INT4 都保持 36/80，恢复/退化均为 0；原始输出分别有 4/7 条变化，但没有改变最终数值
+正确性。INT8 理论上从 1039.5 MiB 降至约 520.0 MiB，节省 519.5 MiB（约 50%）；INT4 降至约
+292.4 MiB，节省 747.1 MiB（约 71.9%）。两者均无 NaN/Inf。
+
+因此 Embedding INT4 是当前特殊模块中收益最大的候选，INT8 可作为保守对照。由于 80 条样本不能排除低频
+token、长上下文或特定金融词汇退化，仍需 full-dev/high-risk 后才能写入部署策略。
+
+#### `lm_head` 结果
+
+`lm_head` INT8 为 36/80、净变化 0，INT4 为 37/80、恢复/退化 2/1、净变化 +1。专项 probe 中两者的四条
+样本 top-1 一致率均为 100%，但机制指标差异明显：
+
+| 指标 | INT8 | INT4 |
+| --- | ---: | ---: |
+| mean logits MSE | 0.00723 | 0.17405 |
+| mean top-5 overlap | 1.00 | 0.90 |
+| 数值 token 平均绝对排名变化 | 49.0 | 394.25 |
+| 理论存储节省 | 519.5 MiB | 747.1 MiB |
+
+INT4 logits MSE 约为 INT8 的 24 倍，数值 token 排名扰动约为 8 倍，个别样本排名移动 700～872 位；其 pilot
+`+1` 的配对区间跨 0，不能解释为 INT4 提升了质量。当前建议把 INT8 作为稳健候选，INT4 只作为高压缩率的
+探索候选进入完整评测。
+
+#### Norm 结果
+
+block Norm INT8 为 37/80、恢复/退化 1/0，但全部 56 个 block Norm 量化后理论上仅节省约 0.191 MiB；如此小
+的收益不足以抵消额外 kernel/数值风险。block Norm INT4 则降至 8/80，恢复/退化 2/30，79/80 条原始输出发生
+变化；其特殊权重 normalized MSE 约 0.0341、最大绝对误差 0.787，说明 per-tensor INT4 无法安全表示这些
+RMSNorm scale 的范围。
+
+final Norm INT8 保持 36/80，但只节省约 3.5 KiB；INT4 为 34/80、净退化 2 题，且只节省约 5.2 KiB。
+综合质量和收益，block/final Norm 均应默认保持 FP16；block Norm INT4 作为明确负结果禁止进入后续候选。
+
+#### KV Cache 结果与限制
+
+FP16 KV Cache 对照完成：1024 个输入 token、32 个生成 token 下，返回 `DynamicCache`，观测 cache tensor
+约 60,497,920 bytes，即约 57,290 bytes/token；TTFT 约 152.4 ms、近似 TPOT 23.67 ms、吞吐 36.1 token/s，
+CUDA allocator 峰值约 14.48 GiB。cache 的 56 个 tensor 全部为 FP16，与 28 层 key/value 对应。
+
+INT8/INT4 当前结果不能解释为“HQQ 后端确定不支持”。`kv_cache_capability.json` 仍显示
+`runtime_probe_completed=false`，两个计划只是因为真实后端没有先完成验证而写入 `unsupported`。因此当前
+部署策略只能保留 FP16，且不得声称 INT8/INT4 的显存、延迟或吞吐收益。若要补测，必须先执行
+`probe-kv-cache`；probe 成功后还需显式重跑两个已有 `unsupported` 计划，断点续跑不能直接复用它们。
+
+#### full-dev 候选规模与建议
+
+按当前配置的自动规则，26 个独立 Attention/MLP 计划满足 `net_correct_gain >= 1`；Embedding INT8/INT4、
+`lm_head` INT8/INT4、block Norm INT8、final Norm INT8 六个特殊计划也满足现有门禁，共会晋级 32 个计划。
+按照 7.1 实测每个候选 full-dev 加 high-risk 约 23.6 分钟计算，直接运行预计需要约 12.7～14 小时，而且大量
+候选只有 `+1`，会把明显的 pilot 噪声带入昂贵评测。
+
+更有工程效率的完整评测集合约为 11 个：layer 6 Attention、layer 26/10/17/25 MLP、已有 7.1 full-dev 证据
+支撑的 layer 23 Attention/MLP，以及 Embedding INT8/INT4、`lm_head` INT8/INT4。预计耗时约 4.5 小时。
+Norm 默认保留 FP16，KV Cache 等真实 probe 后再决定。若采用这一缩减集合，必须在任何新 full-dev 结果产生前
+修改并冻结晋级规则，记录这是基于 pilot 成本控制和机制证据作出的预注册修订，而不是看完 full-dev 后挑结果。
+
 ### 7.2.4 两阶段评测与统计实现
 
 完整 pilot 矩阵完成后，`select-advancement` 严格读取预注册规则，而不是根据 full-dev 结果临时挑选计划；任何
@@ -2907,8 +3002,8 @@ out/module_sensitivity/
     └── validation.json
 ```
 
-截至当前，合同、矩阵生成、隔离 fake-quant、特殊模块统计、`lm_head` logits probe、KV Cache runtime/性能
-probe、单计划业务评测、逐样本转移、`ALL-I8` 一致性审计、预注册晋级、冻结 full-dev/high-risk 评测、配对
-bootstrap、双榜排名、保护策略、断点续跑和 `unsupported` 门禁均已实现并通过自动化测试。尚未完成的是服务器
-真实特殊模块/KV Cache pilot、晋级后的完整 dev/high-risk 运行和模块输出 activation probe。这些实验结果项继续
-保持 TODO 未勾选，不能把“代码入口已实现”写成“真实实验已完成”。
+截至当前，合同、矩阵生成、隔离 fake-quant、单计划业务评测、逐样本转移、`ALL-I8` 一致性审计、断点续跑和
+`unsupported` 门禁均已实现；71 个可运行 pilot 计划已经全部终止，Attention/MLP、特殊权重模块和 FP16 KV
+Cache 结果已完成。预注册晋级、冻结 full-dev/high-risk、配对 bootstrap、双榜排名和保护策略代码也已通过测试。
+尚未完成的是 HQQ KV Cache INT8/INT4 capability/runtime 实测、晋级后的完整 dev/high-risk、确定性复跑和模块
+输出 activation probe。这些实验结果项继续保持 TODO 未勾选，不能把 pilot 排名表述为最终可部署方案。
