@@ -1,0 +1,3 @@
+category,rank,plan_id,kind,target_precision,full_dev_correct,full_dev_total,net_correct_change,recovered,regressed,high_risk_net,long_context_net,bootstrap_lower,bootstrap_upper,benefit_bytes
+recovery,1,candidate_l10_mlp_lm_head_embedding_int8,candidate_mixed_int8,,339,883,11,14,3,0,0,0.0033975084937712344,0.021517553793884484,1089386496
+recovery,2,candidate_l10_mlp_lm_head_int8,candidate_mixed_int8,,337,883,9,13,4,0,0,0.0011325028312570782,0.01925254813137033,544693248
