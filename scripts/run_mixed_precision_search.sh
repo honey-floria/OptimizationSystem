@@ -4,7 +4,8 @@ set -euo pipefail
 MODEL_PATH="${MODEL_PATH:-}"
 DEVICE="${DEVICE:-cuda:0}"
 PROMPT_FILE="${PROMPT_FILE:-inputs/mixed_precision_benchmark_prompt.txt}"
-OUTPUT_ROOT="out/mixed_precision_search"
+OUTPUT_ROOT="${MIXED_PRECISION_OUTPUT_ROOT:-out/mixed_precision_search}"
+export MIXED_PRECISION_OUTPUT_ROOT="${OUTPUT_ROOT}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 
 if [[ -n "${MODEL_PATH}" && ! -f "${MODEL_PATH}/config.json" ]]; then
@@ -16,10 +17,7 @@ fi
 plans=(
   all_linear_int4
   all_linear_int8
-  mixed_l10_mlp_int8
-  mixed_l10_mlp_bf16
   mixed_l10_mlp_lm_head_int8
-  mixed_l10_l23_mlp_lm_head_int8
 )
 
 python3 scripts/run_mixed_precision_search.py prepare

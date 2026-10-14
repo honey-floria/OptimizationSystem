@@ -3106,6 +3106,10 @@ Embedding / LayerNorm / KV Cache BF16
 
 ### 冻结候选矩阵
 
+考虑服务器当前仅剩约 37 GiB 空间，实际闭环范围收缩为三个核心计划：`all_linear_int4`、`all_linear_int8` 和
+`mixed_l10_mlp_lm_head_int8`。其余可运行候选继续保留在冻结矩阵中，但标记为本轮不评测，不再要求其证据即可完成
+`pending`/`finalize`。两个批处理脚本都会按该核心列表执行，并依据 `quantized_model_manifest.json` 自动跳过已成功导出的制品。
+
 | 计划 | 用途 | 默认 Linear | 保护项 | 后端状态 |
 | --- | --- | --- | --- | --- |
 | `all_linear_int4` | 部署基线 | INT4 | 无 | 可运行 |
@@ -3130,6 +3134,70 @@ SHA256 不一致时拒绝加载。
 OOM。实现会把高精度母版留在 CPU，并对单个 Linear 调用 TorchAO `quantize_(..., device=cuda)`，逐模块流式搬运和量化；全部 packed
 权重建立后，才把保持 BF16 的 Embedding、Norm 和敏感层搬入 GPU。脚本同时启用 expandable segments 以降低缓存碎片。
 
+### 7.4 导出问题与排障记录
+
+首次在 16 GiB NVIDIA GPU 上执行真实混合精度导出时，先后遇到了四类问题。它们发生在不同阶段，不能只根据
+Traceback 最后一行之外的 warning 判断原因。
+
+| 现象 | 根因 | 修复 | 如何确认 |
+| --- | --- | --- | --- |
+| `Frozen merged model is unavailable` | 示例路径 `/models/data/...` 并不是服务器真实模型目录，或目录缺少 `config.json` | 使用服务器上的合并模型绝对路径；一键脚本在导入 TorchAO 前检查 `MODEL_PATH/config.json` | `test -f "$MODEL_PATH/config.json"` |
+| `Custom filter_fn and FqnToConfig were both specified` | TorchAO 0.17 的 `quantize_` 默认带 Linear filter，而 FQN 配置禁止同时使用 filter | 中间修复曾显式传 `filter_fn=None`；最终实现改为按完整模块名解析策略，再逐个 Linear 调用普通 `quantize_`，不再依赖 `ModuleFqnToConfig` | 源码中应出现 `for name, precision in sorted(assignment.items())` |
+| `ImportError: Requires mslk >= 1.0.0` | TorchAO `plain` INT4 packing 依赖可选 MSLK 包 | 将 `int4_packing_format` 改为 PyTorch 内置的 `tile_packed_to_4d`，不再要求额外安装 MSLK | `grep int4_packing_format configs/mixed_precision_search.json` |
+| `CUDA out of memory ... allocate 1.16 GiB` | 先把完整 7B BF16 权重放进 16 GiB GPU，再为大矩阵建立 padding/packing 临时张量；当时 GPU 仅余约 463 MiB | 高精度母版留在 CPU，每次只移动一个 Linear 到 GPU 完成 packing；量化结束后再移动 BF16 特殊模块 | 导出时用 `nvidia-smi` 观察，不应先出现约 14～15 GiB 的完整 BF16 常驻 |
+| `basic_ios::clear: iostream error` 出现在 `torch.save` | 量化已经完成，但输出文件系统空间不足、用户 quota 超限，或网络文件系统无法完成约 4～8 GiB 的大文件 | 改为 `.partial` 临时文件原子写入，失败时自动清理；必要时用 `MIXED_PRECISION_OUTPUT_ROOT` 改到大容量 scratch | 同时检查 `df -h`、`df -i`、`quota -s` 和输出目录已有占用 |
+
+日志中的以下内容只是 TorchAO/PyTorch 弃用警告，不是上述失败的直接原因：
+
+```text
+KernelPreference is an Enum subclass ... register_constant() ... is deprecated
+```
+
+最终导出数据流如下：
+
+```text
+合并模型 BF16（CPU，约 14 GiB）
+  → 根据完整 FQN 生成每个 Linear 的 int4 / int8 / bf16 分配
+  → 单个 Linear 搬到 GPU
+  → INT4 tile packing 或 INT8 weight-only 量化
+  → packed 权重留在 GPU，继续处理下一个 Linear
+  → 最后搬运 Embedding、Norm 和被保护的 BF16 Linear
+  → 审计每个模块的期望/实际位宽
+  → 直接保存量化 state_dict 和 SHA256
+```
+
+该方案用 CPU 内存换取较低 GPU 峰值：导出时需要约 15～20 GiB 系统内存，但不再要求 GPU 同时容纳完整 BF16
+模型和 INT4 packing 临时缓冲。失败进程退出后通常会自动释放 CUDA 显存；重跑前仍应使用 `nvidia-smi` 检查是否有
+其他进程占用显存。导出目录只有在写出 `quantized_model_manifest.json` 后才视为完成，因此上述中途失败不会被断点脚本
+误判为成功。
+
+推荐排障顺序：
+
+```bash
+# 1. 确认真实模型目录
+test -f "$MODEL_PATH/config.json" && echo OK
+
+# 2. 确认当前代码使用无 MSLK 依赖的 packing
+grep int4_packing_format configs/mixed_precision_search.json
+
+# 3. 确认已同步逐 Linear 流式量化实现
+grep -n "for name, precision" src/quantization/mixed_precision.py
+
+# 4. 检查 GPU 上没有遗留进程
+nvidia-smi
+
+# 5. 检查输出盘空间、inode 和用户 quota
+df -h .
+df -i .
+quota -s 2>/dev/null || true
+du -sh out/mixed_precision_search 2>/dev/null || true
+
+# 6. 先只运行导出阶段；空间不足时把制品写到服务器的大容量 scratch
+MODEL_PATH=/服务器上的真实合并模型目录 \
+MIXED_PRECISION_OUTPUT_ROOT=/大容量磁盘/mixed_precision_search \
+  bash scripts/run_mixed_precision_exports.sh
+```
+
 质量门禁要求：full-dev 解析率至少 99%，并且相对真实 `all_linear_int4`，full-dev、高风险集和冻结长上下文集的正确数
 净变化都不得小于 0。性能门禁要求：峰值显存和最差 P95 延迟不超过全 INT4 的 1.15 倍，平均吞吐不低于其 0.85 倍。
 只有四套证据都齐全的候选才进入最终排名；排序优先 full-dev 净增，其次峰值显存和 P95 延迟。
@@ -3146,11 +3214,11 @@ inputs/mixed_precision_benchmark_prompt.txt
 tests/test_mixed_precision.py
 ```
 
-完整流程支持按证据文件断点续跑：
+核心三计划流程支持按 manifest 和证据文件断点续跑：
 
 ```bash
 # requirements-server.txt 已加入 torchao；先安装与服务器 PyTorch/CUDA 匹配的版本
-MODEL_PATH=/models/data/Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16 \
+MODEL_PATH=/服务器上的真实合并模型目录 \
   bash scripts/run_mixed_precision_search.sh
 
 # 查看缺失证据或在证据齐全后重新收口
@@ -3162,3 +3230,38 @@ python3 scripts/run_mixed_precision_search.py finalize
 `benchmark`、`record-evidence` 子命令；外部已有报告可登记而无需重跑。输出统一位于
 `out/mixed_precision_search/`，其中 `exports/` 是真实量化制品，`runs/` 是原始执行结果，`evidence/` 是冻结筛选证据，
 最终推荐写入 `ranking.json`。在 `finalize` 成功且 `deployment_claims_allowed=true` 之前，不把任何候选称为已验证部署配置。
+
+目前正在做的是 7.4 的“真实量化模型导出”，还没有开始跑质量评测。
+之前 7.2 使用的是 fake-quant：临时把权重量化再反量化，用来判断哪些层敏感。它能帮助选择候选，但不能证明模型真正减少了显存，也不能测真实推理速度。
+这一轮则要生成真正采用低比特存储的 TorchAO 模型。
+具体流程是：
+合并后的 BF16 模型
+  ↓
+按模块分配精度
+  ↓
+逐个 Linear 执行真实 INT4/INT8 packing
+  ↓
+检查每个模块是否真的变成目标位宽
+  ↓
+保存真实量化权重、配置、Tokenizer 和 SHA256
+需要导出的六个候选是：
+1. all_linear_int4
+   - 所有可量化 Linear 都是 INT4。
+   - 是后续质量、显存和速度比较的基准。
+2. all_linear_int8
+   - 所有 Linear 都是 INT8。
+   - 作为质量上界，但占用空间更多。
+3. mixed_l10_mlp_int8
+   - 其他 Linear 为 INT4。
+   - 只有 Layer 10 MLP 为 INT8。
+   - 验证只保护最敏感层是否足够。
+4. mixed_l10_mlp_bf16
+   - 其他 Linear 为 INT4。
+   - Layer 10 MLP 保持 BF16。
+   - 判断更高精度保护是否比 INT8 更有价值。
+5. mixed_l10_mlp_lm_head_int8
+   - Layer 10 MLP 和 lm_head 为 INT8。
+   - 这是目前最重要的主候选。
+6. mixed_l10_l23_mlp_lm_head_int8
+   - 再额外保护 Layer 23 MLP。
+   - 用来比较保护一组和两组敏感层的区别，不是默认推荐。

@@ -26,6 +26,11 @@ def test_candidate_matrix_covers_required_74_variants():
     embedding = candidate_by_id(CONFIG, "mixed_l10_mlp_lm_head_embedding_int8")
     assert not embedding.runnable
     assert "Embedding" in embedding.unsupported_reason
+    assert CONFIG["evaluation_plan_ids"] == [
+        "all_linear_int4",
+        "all_linear_int8",
+        "mixed_l10_mlp_lm_head_int8",
+    ]
 
 
 def test_longest_prefix_module_precision():
@@ -85,3 +90,8 @@ def test_finalize_rejects_missing_evidence(tmp_path):
     prepare_search(tmp_path, config)
     with pytest.raises(ValueError, match="incomplete"):
         finalize_search(tmp_path, config)
+
+
+def test_pending_only_requires_active_evaluation_plans(tmp_path):
+    config = _config_for_tmp(tmp_path)
+    assert set(pending_evidence(tmp_path, config)) == set(config["evaluation_plan_ids"])

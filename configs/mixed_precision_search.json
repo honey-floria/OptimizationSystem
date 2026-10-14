@@ -29,6 +29,11 @@
     "lm_head": "lm_head",
     "embedding": "model.embed_tokens"
   },
+  "evaluation_plan_ids": [
+    "all_linear_int4",
+    "all_linear_int8",
+    "mixed_l10_mlp_lm_head_int8"
+  ],
   "candidates": [
     {
       "plan_id": "all_linear_int4",

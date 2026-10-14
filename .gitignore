@@ -24,6 +24,7 @@ datasets/
 datasets_contextual/
 out/*.pt
 out/mixed_precision_search/exports/*/mixed_precision_state_dict.pt
+out/mixed_precision_search/exports/*/mixed_precision_state_dict.pt.partial
 
 # Regenerable layer-sensitivity activation tensors; keep manifest.json tracked
 out/layer_sensitivity/activation_reference/*.pt

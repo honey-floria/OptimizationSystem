@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -48,6 +49,9 @@ def main(argv: list[str] | None = None) -> int:
     args = _args(argv)
     config_path = args.config if args.config.is_absolute() else ROOT / args.config
     config = json.loads(config_path.read_text(encoding="utf-8"))
+    output_override = os.environ.get("MIXED_PRECISION_OUTPUT_ROOT", "").strip()
+    if output_override:
+        config["paths"]["output_root"] = str(Path(output_override).expanduser().resolve())
     if args.command == "prepare":
         result = prepare_search(ROOT, config)
     elif args.command == "export":

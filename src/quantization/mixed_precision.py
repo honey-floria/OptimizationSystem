@@ -293,10 +293,29 @@ def export_candidate(
     model.config.save_pretrained(str(output))
     tokenizer.save_pretrained(str(output))
     weights_path = output / "mixed_precision_state_dict.pt"
+    temporary_weights_path = output / "mixed_precision_state_dict.pt.partial"
     # Save directly from the accelerator. Moving a tile-packed INT4 tensor back
     # to CPU is backend-dependent; torch.load(map_location="cpu") handles the
     # portable relocation when the artifact is loaded.
-    torch.save(model.state_dict(), weights_path)
+    # A previous interrupted torch.save may leave a corrupt destination. Write
+    # atomically and remove only these known, plan-local incomplete artifacts.
+    for incomplete in (temporary_weights_path, weights_path):
+        if incomplete.exists():
+            incomplete.unlink()
+    try:
+        torch.save(model.state_dict(), temporary_weights_path)
+        temporary_weights_path.replace(weights_path)
+    except (OSError, RuntimeError) as exc:
+        if temporary_weights_path.exists():
+            temporary_weights_path.unlink()
+        free_gib = shutil.disk_usage(output).free / (1024 ** 3)
+        raise RuntimeError(
+            "Failed to save the mixed-precision state_dict. "
+            f"Filesystem free space reported by df is {free_gib:.2f} GiB. "
+            "Check both `df -h` and the account quota (`quota -s`). "
+            "The artifact can be redirected to a large filesystem by setting "
+            "MIXED_PRECISION_OUTPUT_ROOT=/path/to/scratch/mixed_precision_search."
+        ) from exc
     _write_json(output / "module_assignment.json", {"plan_id": plan_id, "modules": audit})
     manifest = {
         "schema_version": 1,
@@ -495,13 +514,26 @@ def run_performance_benchmark(
 
 def pending_evidence(project_root: str | Path, config: dict[str, Any]) -> dict[str, list[str]]:
     output = Path(project_root).resolve() / config["paths"]["output_root"] / "evidence"
+    candidates = build_candidates(config)
+    candidate_by_plan = {candidate.plan_id: candidate for candidate in candidates}
+    active_ids = config.get("evaluation_plan_ids")
+    if active_ids is None:
+        active = [candidate for candidate in candidates if candidate.runnable]
+    else:
+        unknown = sorted(set(active_ids) - set(candidate_by_plan))
+        if unknown:
+            raise ValueError(f"Unknown evaluation_plan_ids: {unknown}")
+        active = [candidate_by_plan[plan_id] for plan_id in active_ids]
+        non_runnable = [candidate.plan_id for candidate in active if not candidate.runnable]
+        if non_runnable:
+            raise ValueError(f"Non-runnable evaluation plans: {non_runnable}")
     return {
         candidate.plan_id: sorted(
             suite for suite in REQUIRED_SUITES
             if not (output / candidate.plan_id / f"{suite}.json").is_file()
             or not (output / candidate.plan_id / f"{suite}.receipt.json").is_file()
         )
-        for candidate in build_candidates(config) if candidate.runnable
+        for candidate in active
     }
 
 
@@ -557,7 +589,10 @@ def finalize_search(project_root: str | Path, config: dict[str, Any]) -> dict[st
     if prepared.get("candidate_contract_sha256") != current_contract:
         raise ValueError("Candidate matrix changed after prepare; prepare a new 7.4 contract")
     evidence_root = output / "evidence"
+    active_ids = set(pending)
     baseline_id = config["performance_gates"]["baseline_plan_id"]
+    if baseline_id not in active_ids:
+        raise ValueError(f"Performance baseline is not active: {baseline_id}")
     baseline_benchmark = _benchmark_summary(_load_frozen_evidence(evidence_root, baseline_id, "benchmark"))
     baseline_quality = {
         suite: _quality_summary(_load_frozen_evidence(evidence_root, baseline_id, suite))
@@ -567,6 +602,9 @@ def finalize_search(project_root: str | Path, config: dict[str, Any]) -> dict[st
     for candidate in build_candidates(config):
         if not candidate.runnable:
             rows.append({"plan_id": candidate.plan_id, "status": "unsupported", "reason": candidate.unsupported_reason, "selected": False})
+            continue
+        if candidate.plan_id not in active_ids:
+            rows.append({"plan_id": candidate.plan_id, "status": "not_evaluated", "reason": "outside evaluation_plan_ids", "selected": False})
             continue
         quality = {suite: _quality_summary(_load_frozen_evidence(evidence_root, candidate.plan_id, suite)) for suite in ("full_dev", "high_risk", "long_context")}
         for suite, summary in quality.items():
@@ -596,8 +634,8 @@ def finalize_search(project_root: str | Path, config: dict[str, Any]) -> dict[st
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for row in rows:
-        if row["status"] == "unsupported":
-            report_lines.append(f"| `{row['plan_id']}` | — | — | — | — | — | — | no (`unsupported`) |")
+        if row["status"] != "completed":
+            report_lines.append(f"| `{row['plan_id']}` | — | — | — | — | — | — | no (`{row['status']}`) |")
             continue
         report_lines.append(
             f"| `{row['plan_id']}` | {row['quality']['full_dev']['net_correct']} | "

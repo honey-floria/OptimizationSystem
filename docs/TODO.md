@@ -693,6 +693,9 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 
 ### 7.4 混合精度搜索
 
+> 本轮服务器空间预算为约 37 GiB，只闭环三个核心计划：`all_linear_int4`（已导出）、`all_linear_int8` 和
+> `mixed_l10_mlp_lm_head_int8`。其余消融候选保留配置但不纳入本轮 `pending`/`finalize` 必需证据。
+
 - [x] 已生成“全 INT4”候选配置：准确语义为全部可量化 Linear INT4，Embedding、Norm 和 KV Cache 保持 BF16
 - [x] 已生成“全 INT8”候选配置：全部可量化 Linear INT8，作为质量上界和性能对照
 - [x] 已生成“INT4 + 敏感层 INT8”配置：含只保护 Layer 10 MLP、以及 Layer 10 MLP + `lm_head` INT8 的主候选
