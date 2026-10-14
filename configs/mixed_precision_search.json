@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "stage": "7.4",
+  "backend": {
+    "name": "torchao",
+    "weight_only": true,
+    "compute_dtype": "bfloat16",
+    "int4_group_size": 32,
+    "int4_packing_format": "plain",
+    "state_dict_format": "pytorch",
+    "requires": ["torch", "torchao", "transformers"]
+  },
+  "paths": {
+    "output_root": "out/mixed_precision_search",
+    "source_model_manifest": "out/layer_sensitivity/setup/merged_model_manifest.json",
+    "module_policy": "out/module_sensitivity/final_evaluation/protection_policy.json",
+    "combination_ranking": "out/module_sensitivity/combination_evaluation/final_evaluation/ranking.json",
+    "dataset_dir": "datasets_contextual",
+    "frozen_subsets": "out/layer_sensitivity/setup/frozen_subsets.json",
+    "baseline_config": "configs/baseline.json",
+    "quality_config": "configs/quality_repair_4080.json",
+    "benchmark_config": "configs/quantization_benchmark.json"
+  },
+  "module_contract": {
+    "block_path": "model.layers",
+    "block_count": 28,
+    "attention_suffixes": ["self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj"],
+    "mlp_suffixes": ["mlp.gate_proj", "mlp.up_proj", "mlp.down_proj"],
+    "lm_head": "lm_head",
+    "embedding": "model.embed_tokens"
+  },
+  "candidates": [
+    {
+      "plan_id": "all_linear_int4",
+      "description": "全部可量化 Linear 使用 INT4；Embedding、Norm、KV Cache 保持 BF16。",
+      "default_linear_precision": "int4",
+      "overrides": {},
+      "special_modules": {"embedding": "bf16", "norm": "bf16", "kv_cache": "bf16"},
+      "runnable": true,
+      "role": "deployment_baseline"
+    },
+    {
+      "plan_id": "all_linear_int8",
+      "description": "全部可量化 Linear 使用 INT8；用于质量上界和性能对照。",
+      "default_linear_precision": "int8",
+      "overrides": {},
+      "special_modules": {"embedding": "bf16", "norm": "bf16", "kv_cache": "bf16"},
+      "runnable": true,
+      "role": "quality_reference"
+    },
+    {
+      "plan_id": "mixed_l10_mlp_int8",
+      "description": "其余 Linear INT4，只保护 Layer 10 MLP 为 INT8。",
+      "default_linear_precision": "int4",
+      "overrides": {"model.layers.10.mlp": "int8"},
+      "special_modules": {"embedding": "bf16", "norm": "bf16", "kv_cache": "bf16"},
+      "runnable": true,
+      "role": "one_sensitive_group"
+    },
+    {
+      "plan_id": "mixed_l10_mlp_bf16",
+      "description": "其余 Linear INT4，只保护 Layer 10 MLP 为 BF16。",
+      "default_linear_precision": "int4",
+      "overrides": {"model.layers.10.mlp": "bf16"},
+      "special_modules": {"embedding": "bf16", "norm": "bf16", "kv_cache": "bf16"},
+      "runnable": true,
+      "role": "high_precision_protection_reference"
+    },
+    {
+      "plan_id": "mixed_l10_mlp_lm_head_int8",
+      "description": "其余 Linear INT4，Layer 10 MLP 与 lm_head 使用 INT8；当前主部署候选。",
+      "default_linear_precision": "int4",
+      "overrides": {"model.layers.10.mlp": "int8", "lm_head": "int8"},
+      "special_modules": {"embedding": "bf16", "norm": "bf16", "kv_cache": "bf16"},
+      "runnable": true,
+      "role": "primary"
+    },
+    {
+      "plan_id": "mixed_l10_l23_mlp_lm_head_int8",
+      "description": "额外保护 Layer 23 MLP，用于比较保护 1 层和 2 层；没有通过既有质量门禁，不作为默认部署候选。",
+      "default_linear_precision": "int4",
+      "overrides": {"model.layers.10.mlp": "int8", "model.layers.23.mlp": "int8", "lm_head": "int8"},
+      "special_modules": {"embedding": "bf16", "norm": "bf16", "kv_cache": "bf16"},
+      "runnable": true,
+      "role": "protection_count_ablation"
+    },
+    {
+      "plan_id": "mixed_l10_mlp_lm_head_embedding_int8",
+      "description": "7.2 质量最优组合；当前 TorchAO Linear 后端不能证明 Embedding 已低比特驻留，因此仅保留为研究候选。",
+      "default_linear_precision": "int4",
+      "overrides": {"model.layers.10.mlp": "int8", "lm_head": "int8"},
+      "special_modules": {"embedding": "int8", "norm": "bf16", "kv_cache": "bf16"},
+      "runnable": false,
+      "unsupported_reason": "torchao Linear weight-only workflow does not quantize nn.Embedding",
+      "role": "research_only"
+    }
+  ],
+  "evidence_suites": ["full_dev", "high_risk", "long_context", "benchmark"],
+  "quality_gates": {
+    "min_parse_rate": 0.99,
+    "min_full_dev_net_correct": 0,
+    "min_high_risk_net_correct": 0,
+    "min_long_context_net_correct": 0
+  },
+  "performance_gates": {
+    "baseline_plan_id": "all_linear_int4",
+    "max_peak_memory_ratio": 1.15,
+    "max_p95_latency_ratio": 1.15,
+    "min_throughput_ratio": 0.85
+  }
+}

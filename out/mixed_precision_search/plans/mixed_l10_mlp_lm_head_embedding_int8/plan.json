@@ -1,0 +1,17 @@
+{
+  "plan_id": "mixed_l10_mlp_lm_head_embedding_int8",
+  "description": "7.2 质量最优组合；当前 TorchAO Linear 后端不能证明 Embedding 已低比特驻留，因此仅保留为研究候选。",
+  "default_linear_precision": "int4",
+  "overrides": {
+    "model.layers.10.mlp": "int8",
+    "lm_head": "int8"
+  },
+  "special_modules": {
+    "embedding": "int8",
+    "norm": "bf16",
+    "kv_cache": "bf16"
+  },
+  "runnable": false,
+  "role": "research_only",
+  "unsupported_reason": "torchao Linear weight-only workflow does not quantize nn.Embedding"
+}

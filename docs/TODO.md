@@ -677,7 +677,7 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 - [x] 已形成供 7.4 使用的机器可读候选保护策略：Layer 10 MLP 为主候选，`lm_head` INT8，Embedding INT8 为显存备选，Norm/KV Cache FP16，并保留质量门禁、后端约束和禁止组合
 - [x] 已将最终模块级结论、推荐配置及 `lm_head` INT4、Norm INT4、未验证 KV Cache 等负结果写入项目总文档，并保留 fake-quant/真实部署边界
 - [x] 已实现独立的组合验证工作流和两个前瞻性冻结候选：`candidate_l10_mlp_lm_head_int8` 与 `candidate_l10_mlp_lm_head_embedding_int8`；使用独立输出目录，不覆盖原始 11 计划证据
-- [ ] 在服务器运行 `bash scripts/run_module_sensitivity_combinations.sh`，完成两个组合的 pilot、确定性、full-dev、high-risk、长上下文和最终门禁；预计约 55～65 分钟
+- [x] 已在服务器运行 `bash scripts/run_module_sensitivity_combinations.sh`，完成两个组合的 pilot、确定性、full-dev、high-risk、长上下文和最终门禁；Embedding FP16 主候选为 337/883（相对 ALL-I4 +9），Embedding INT8 研究候选为 339/883（+11），二者高风险与长上下文均无净退化
 
 ### 7.3 金融错误定位
 
@@ -693,14 +693,15 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 
 ### 7.4 混合精度搜索
 
-- [ ] 生成“全 INT4”候选配置
-- [ ] 生成“全 INT8”候选配置
-- [ ] 生成“INT4 + 敏感层 INT8”配置
-- [ ] 生成“INT4 + 敏感层 FP16”配置
-- [ ] 保护 Embedding、LayerNorm 或 lm_head 并重新评估
-- [ ] 比较不同敏感层保护数量
-- [ ] 根据质量约束筛选候选配置
-- [ ] 根据显存和延迟筛选候选配置
+- [x] 已生成“全 INT4”候选配置：准确语义为全部可量化 Linear INT4，Embedding、Norm 和 KV Cache 保持 BF16
+- [x] 已生成“全 INT8”候选配置：全部可量化 Linear INT8，作为质量上界和性能对照
+- [x] 已生成“INT4 + 敏感层 INT8”配置：含只保护 Layer 10 MLP、以及 Layer 10 MLP + `lm_head` INT8 的主候选
+- [x] 已生成“INT4 + 敏感层 FP16/BF16”配置：其余 Linear INT4，Layer 10 MLP 保持 BF16
+- [ ] 在真实 TorchAO 制品上完成 Embedding、Norm 或 `lm_head` 保护重评；代码已实现，Embedding INT8 因当前 Linear 后端不支持而明确标记 `unsupported`，Norm/KV 保持 BF16，待服务器运行
+- [ ] 完成不同敏感层保护数量实测；已冻结 0 组、1 组及 Layer 10+23 两组消融候选，待服务器运行
+- [ ] 根据质量约束筛选候选配置；已实现 full-dev、高风险、长上下文及解析率自动门禁，待真实制品证据齐全后收口
+- [ ] 根据显存和延迟筛选候选配置；已实现相对全 Linear INT4 的峰值显存、P95 延迟和吞吐自动门禁，待服务器 Benchmark
+- [x] 已实现 TorchAO 按完整模块名逐 Linear 配置、量化后实际 Tensor 子类审计、可移植 state_dict + SHA256、meta-device 加载、质量/性能执行入口、断点续跑、证据登记和最终排名
 
 ### 7.5 阶段验收
 

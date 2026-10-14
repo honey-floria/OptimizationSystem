@@ -1,0 +1,18 @@
+{
+  "plan_id": "mixed_l10_l23_mlp_lm_head_int8",
+  "description": "额外保护 Layer 23 MLP，用于比较保护 1 层和 2 层；没有通过既有质量门禁，不作为默认部署候选。",
+  "default_linear_precision": "int4",
+  "overrides": {
+    "model.layers.10.mlp": "int8",
+    "model.layers.23.mlp": "int8",
+    "lm_head": "int8"
+  },
+  "special_modules": {
+    "embedding": "bf16",
+    "norm": "bf16",
+    "kv_cache": "bf16"
+  },
+  "runnable": true,
+  "role": "protection_count_ablation",
+  "unsupported_reason": null
+}

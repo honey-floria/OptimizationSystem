@@ -446,6 +446,10 @@ def _parse_args() -> argparse.Namespace:
     run_parser.add_argument("--model-manifest", required=True)
     run_parser.add_argument("--prompt-file", required=True)
     run_parser.add_argument("--output-dir", required=True)
+    run_parser.add_argument(
+        "--mixed-precision-manifest",
+        help="TODO 7.4 TorchAO mixed-precision quantized_model_manifest.json.",
+    )
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--report", required=True)
     validate_parser.add_argument("--output")
@@ -469,14 +473,28 @@ def main() -> int:
     _, benchmark_config = _load_json(args.benchmark_config)
     output_dir = Path(args.output_dir).expanduser()
     output_dir.mkdir(parents=True, exist_ok=True)
-    service = BaselineService.from_local_model(
-        args.baseline_config,
-        args.model_manifest,
-        output_dir / "service.jsonl",
-    )
+    if args.mixed_precision_manifest:
+        from src.quantization.mixed_precision import load_mixed_precision_service
+
+        service = load_mixed_precision_service(
+            args.baseline_config,
+            args.mixed_precision_manifest,
+            args.model_manifest,
+            output_dir / "service.jsonl",
+        )
+    else:
+        service = BaselineService.from_local_model(
+            args.baseline_config,
+            args.model_manifest,
+            output_dir / "service.jsonl",
+        )
     prompt = Path(args.prompt_file).read_text(encoding="utf-8")
     report = run_benchmark(service, prompt, benchmark_config)
-    report_path = output_dir / "baseline_fp16_report.json"
+    report_path = output_dir / (
+        "mixed_precision_report.json"
+        if args.mixed_precision_manifest
+        else "baseline_fp16_report.json"
+    )
     _write_json(report_path, report)
     validation = validate_benchmark_report(report_path)
     _write_json(output_dir / "validation.json", validation.to_dict())

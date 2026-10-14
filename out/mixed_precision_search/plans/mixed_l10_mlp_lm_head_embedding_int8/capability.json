@@ -1,0 +1,5 @@
+{
+  "status": "unsupported",
+  "reason": "torchao Linear weight-only workflow does not quantize nn.Embedding",
+  "deployment_claims_allowed": false
+}

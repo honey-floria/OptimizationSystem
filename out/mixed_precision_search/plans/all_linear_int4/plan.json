@@ -1,0 +1,14 @@
+{
+  "plan_id": "all_linear_int4",
+  "description": "全部可量化 Linear 使用 INT4；Embedding、Norm、KV Cache 保持 BF16。",
+  "default_linear_precision": "int4",
+  "overrides": {},
+  "special_modules": {
+    "embedding": "bf16",
+    "norm": "bf16",
+    "kv_cache": "bf16"
+  },
+  "runnable": true,
+  "role": "deployment_baseline",
+  "unsupported_reason": null
+}

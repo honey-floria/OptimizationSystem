@@ -2944,16 +2944,48 @@ full-dev 加 high-risk 约 23.6 分钟计算，预计需要约 12.7～14 小时�
 #### 7.2.5 完整评测结论（2026-10-15）
 
 11 个预注册候选的 full-dev、high-risk 和三个确定性哨兵已经全部完成，`validation.json` 状态为 `pass`，无
-pending 或 invalid run。三个哨兵的逐行预测与 pilot 完全一致。`ALL-I4` 基线为 `328/883`；恢复榜中只有
-`layer_10_mlp_int8` 达到统计上明确的正收益：`338/883`、净增 10 题、准确率增加 1.133 个百分点，配对
-bootstrap 95% 区间为 `[+0.227, +2.039]` 个百分点，高风险和长上下文均不退化。Layer 23 MLP、Layer 26
-MLP、Layer 23 Attention 虽通过点估计门禁，但置信区间均跨 0，只能列为第二梯队；Layer 6 Attention 因长上下文
-净退化 1 题被排除，Layer 25 MLP 在 full-dev 持平，Layer 17 MLP 净退化 3 题。
+pending 或 invalid run。三个哨兵的逐行预测与 pilot 完全一致。本轮推理累计约 4 小时 30 分钟，其中 11 个
+full-dev 约 3 小时 46 分钟、11 个 high-risk 约 35 分钟、三个确定性复跑约 9 分钟。`ALL-I4` 基线为
+`328/883 = 37.146%`。
 
-特殊模块中，`lm_head_int8` 和 `embedding_int8` 的 full-dev 均净增 3 题，理论上各节省约 519.5 MiB；
-`lm_head_int8` 的 high-risk 净增 1、长上下文持平，是最稳妥的特殊模块候选。`embedding_int8` 长上下文净退化
-1 题，因此只能作为显存优先备选。`lm_head_int4` 在 full-dev 净退化 16 题，95% 区间完全低于 0，明确淘汰；
-`embedding_int4` 虽 full-dev 持平，但长上下文净退化 1 题，不作为默认位宽。Norm 与 KV Cache 继续保持 FP16。
+恢复候选的完整结果如下。准确率变化和置信区间单位均为百分点；业务列分别是金额、比例/利率、日期/期限子集的
+净正确题变化，三个标签集合可以重叠，不能横向相加。
+
+| 排名 | 计划 | full-dev | 净变化 | 准确率变化 | 配对 bootstrap 95% CI | high-risk | 长上下文 | 金额/比例/日期 | 结论 |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | `layer_10_mlp_int8` | 338/883 | **+10** | **+1.133** | **[+0.227, +2.039]** | 0 | 0 | +6 / +6 / +9 | 唯一统计上明确改善的主候选 |
+| 2 | `layer_23_mlp_int8` | 332/883 | +4 | +0.453 | [-0.793, +1.586] | 0 | 0 | +4 / +6 / +9 | 点估计正向，但区间跨 0 |
+| 3 | `layer_26_mlp_int8` | 332/883 | +4 | +0.453 | [-0.340, +1.359] | 0 | 0 | +1 / +2 / +2 | 点估计正向，但区间跨 0 |
+| 4 | `layer_06_attn_int8` | 332/883 | +4 | +0.453 | [-0.227, +1.246] | 0 | **-1** | +6 / +5 / +3 | 长上下文门禁失败 |
+| 5 | `layer_23_attn_int8` | 329/883 | +1 | +0.113 | [-0.793, +1.019] | 0 | +1 | 0 / -1 / +1 | 收益弱，仅列第二梯队 |
+| 6 | `layer_25_mlp_int8` | 328/883 | 0 | 0 | [-1.133, +1.133] | +1 | +1 | +3 / +2 / +3 | full-dev 无净收益 |
+| 7 | `layer_17_mlp_int8` | 325/883 | **-3** | -0.340 | [-1.359, +0.680] | 0 | **-1** | +3 / -2 / -1 | pilot 正向未能复现，淘汰 |
+
+`layer_10_mlp_int8` 不只是总分最高：它在三个业务子集均为正，高风险和长上下文均不退化，而且置信区间下界仍
+大于 0，因此是唯一足以进入组合验证的 Transformer 子模块。Layer 23 MLP、Layer 26 MLP 和 Layer 23
+Attention 虽被点估计门禁写入自动候选策略，但统计证据不足，不应与 Layer 10 同等级解释。Layer 6 Attention
+说明“full-dev 总体正向”仍可能掩盖长上下文回归；Layer 17 MLP 则说明 80 条 pilot 的 `+2` 可能是抽样波动。
+
+特殊模块结果如下。存储节省来自 fake-quant 编码的理论 packed weight 与 scale 大小，不代表当前后端已经获得同等
+显存、延迟或吞吐收益。
+
+| 排名 | 计划 | full-dev | 净变化 | 95% CI（百分点） | high-risk | 长上下文 | 理论节省 | 金额/比例/日期 | 结论 |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | `lm_head_int8` | 331/883 | +3 | [-0.227, +0.906] | +1 | 0 | 519.5 MiB | +4 / +4 / +2 | 最稳妥特殊模块候选 |
+| 2 | `embedding_int8` | 331/883 | +3 | [-0.227, +0.906] | 0 | **-1** | 519.5 MiB | +3 / +4 / +3 | 显存优先备选，需复核长上下文 |
+| 3 | `embedding_int4` | 328/883 | 0 | [-0.680, +0.566] | +1 | **-1** | 747.1 MiB | 0 / 0 / +1 | 节省更多但稳定性不足 |
+| 4 | `lm_head_int4` | 312/883 | **-16** | **[-3.284, -0.453]** | +1 | **-3** | 747.1 MiB | -1 / -15 / -9 | 显著退化，明确禁止 |
+
+`lm_head_int4` 是最重要的负结果：pilot 曾净增 1 题，但 full-dev 净退化 16 题，且置信区间完全低于 0；其中
+比例/利率题净退化 15 题，说明小样本 top-1 一致或 pilot 正向不能替代完整生成评测。`lm_head_int8` 的完整集、
+高风险和长上下文方向最稳，是特殊模块默认选择。Embedding INT8 虽总体未退化，但因为长上下文少 1 题，只在
+显存收益确有必要时进入组合候选。Norm 的 INT8 收益过小、INT4 已出现明显质量风险，KV Cache 尚未验证真实低比特
+驻留，因此两者继续保持 FP16。
+
+自动生成的 `protection_policy.json` 基于预注册点估计门禁，列出了 Layer 10/23/26 MLP、Layer 23 Attention、
+`lm_head` INT8 和 Embedding INT8。该文件是“待验证候选集合”，不是把这些模块同时设置为 INT8 的部署证明：除
+Layer 10 MLP 外，其余恢复候选置信区间均跨 0；并且所有结果来自单组件实验，组合后的误差可能抵消或放大。此前
+Layer 23 与 Layer 10 的 pilot 组合没有表现出单项收益相加，也直接证明了不能用加法预测组合准确率。
 
 这些结果是单组件 fake-quant 敏感性证据，不能假定收益能够相加。为验证交互效应，已前瞻性冻结两个独立的组合
 候选，并使用 `combination` 工作流写入单独目录，绝不覆盖原 11 计划的冻结产物：
@@ -3047,6 +3079,81 @@ out/module_sensitivity/
 
 截至当前，合同、矩阵生成、隔离 fake-quant、单计划业务评测、逐样本转移、`ALL-I8` 一致性审计、断点续跑和
 `unsupported` 门禁均已实现；71 个可运行 pilot 计划和 11 个晋级候选的完整 dev/high-risk/确定性评测均已完成，
-配对 bootstrap、双榜、保护策略和最终验收产物已生成。两个后续组合候选的合同、隔离输出目录和一键续跑脚本已
-准备，尚待服务器推理。仍未完成的是 HQQ KV Cache INT8/INT4 capability/runtime 实测、模块输出 activation
-probe、组合候选完整评测和真实部署后端 Benchmark；因此当前结论是可进入 7.4 的候选配置，而不是已验证的部署配置。
+配对 bootstrap、双榜、保护策略和最终验收产物已生成。两个后续组合候选也已完成：Embedding FP16 主候选
+`candidate_l10_mlp_lm_head_int8` 为 337/883（相对 ALL-I4 +9），Embedding INT8 研究候选为 339/883（+11）；
+二者高风险和长上下文均无净退化。它们仍是 fake-quant 质量证据，不能替代真实部署后端 Benchmark。
+
+## 7.4 混合精度搜索实现
+
+### 为什么选择 TorchAO，而不是直接使用 HQQ `dynamic_config`
+
+7.4 必须准确表达“只把第 10 层 MLP 升到 INT8”。Transformers 的 HQQ 集成会把
+`model.layers.10.mlp.gate_proj` 归一化为 `mlp.gate_proj`，因此动态配置适合按模块类型统一设定位宽，却不能可靠地区分
+第 10 层和其他层。当前实现改用 TorchAO `ModuleFqnToConfig`，直接以完整模块名给每个 `nn.Linear` 指定位宽。
+导出后还会逐模块检查权重是否真的变成 TorchAO 量化 Tensor 子类；未替换成功会立即失败，而不是仅凭配置文件宣称已量化。
+
+Embedding 是 `nn.Embedding`，不属于当前 Linear weight-only 后端的覆盖范围。因此 7.2 中质量点估计更高的
+`Layer 10 MLP INT8 + lm_head INT8 + Embedding INT8` 被保留为研究候选并标记 `unsupported`；默认可部署主候选改为：
+
+```text
+其余 Linear W4A16-g32
+Layer 10 MLP W8A16
+lm_head W8A16
+Embedding / LayerNorm / KV Cache BF16
+```
+
+这会放弃 Embedding INT8 约 519.5 MiB 的理论额外节省，但避免把 fake-quant 后立即反量化的结果冒充真实低比特驻留。
+
+### 冻结候选矩阵
+
+| 计划 | 用途 | 默认 Linear | 保护项 | 后端状态 |
+| --- | --- | --- | --- | --- |
+| `all_linear_int4` | 部署基线 | INT4 | 无 | 可运行 |
+| `all_linear_int8` | 质量上界 | INT8 | 无 | 可运行 |
+| `mixed_l10_mlp_int8` | 单敏感组消融 | INT4 | Layer 10 MLP INT8 | 可运行 |
+| `mixed_l10_mlp_bf16` | 高精度保护对照 | INT4 | Layer 10 MLP BF16 | 可运行 |
+| `mixed_l10_mlp_lm_head_int8` | 主部署候选 | INT4 | Layer 10 MLP、`lm_head` INT8 | 可运行 |
+| `mixed_l10_l23_mlp_lm_head_int8` | 保护数量消融 | INT4 | Layer 10/23 MLP、`lm_head` INT8 | 可运行，但非默认候选 |
+| `mixed_l10_mlp_lm_head_embedding_int8` | 7.2 最优点估计复核 | INT4 | 再加 Embedding INT8 | 当前 `unsupported` |
+
+Layer 23 MLP 在 7.2 完整评测中没有通过统计门禁；保留它只是为了满足“保护 1 组还是 2 组”的前瞻性消融，不能因
+其结果碰巧较好而回写 7.2 的敏感层结论。
+
+### 真实制品与筛选门禁
+
+每个可运行候选会保存模型配置、Tokenizer、TorchAO 量化 state_dict、完整模块—位宽清单、文件大小、SHA256 和后端
+版本。加载时先在 meta device 上创建空模型，再使用 `assign=True` 装入量化 Tensor，避免先构造一份完整高精度权重；
+SHA256 不一致时拒绝加载。
+
+质量门禁要求：full-dev 解析率至少 99%，并且相对真实 `all_linear_int4`，full-dev、高风险集和冻结长上下文集的正确数
+净变化都不得小于 0。性能门禁要求：峰值显存和最差 P95 延迟不超过全 INT4 的 1.15 倍，平均吞吐不低于其 0.85 倍。
+只有四套证据都齐全的候选才进入最终排名；排序优先 full-dev 净增，其次峰值显存和 P95 延迟。
+
+### 文件与服务器执行
+
+```text
+configs/mixed_precision_search.json
+src/quantization/mixed_precision.py
+scripts/run_mixed_precision_search.py
+scripts/run_mixed_precision_search.sh
+scripts/run_mixed_precision_exports.sh
+inputs/mixed_precision_benchmark_prompt.txt
+tests/test_mixed_precision.py
+```
+
+完整流程支持按证据文件断点续跑：
+
+```bash
+# requirements-server.txt 已加入 torchao；先安装与服务器 PyTorch/CUDA 匹配的版本
+MODEL_PATH=/models/data/Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16 \
+  bash scripts/run_mixed_precision_search.sh
+
+# 查看缺失证据或在证据齐全后重新收口
+python3 scripts/run_mixed_precision_search.py pending
+python3 scripts/run_mixed_precision_search.py finalize
+```
+
+若只想先验证导出合同，可运行 `bash scripts/run_mixed_precision_exports.sh`。单项也可使用 `export`、`evaluate`、
+`benchmark`、`record-evidence` 子命令；外部已有报告可登记而无需重跑。输出统一位于
+`out/mixed_precision_search/`，其中 `exports/` 是真实量化制品，`runs/` 是原始执行结果，`evidence/` 是冻结筛选证据，
+最终推荐写入 `ranking.json`。在 `finalize` 成功且 `deployment_claims_allowed=true` 之前，不把任何候选称为已验证部署配置。

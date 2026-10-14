@@ -24,6 +24,7 @@ from src.data.finqa_assets import load_assets
 from src.evaluation.quality_repair import run_quality_repair_experiment
 from src.quantization.awq import load_awq_service
 from src.quantization.gptq import load_gptq_service
+from src.quantization.mixed_precision import load_mixed_precision_service
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -175,9 +176,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--quantization",
-        choices=["none", "awq", "gptq"],
+        choices=["none", "awq", "gptq", "torchao-mixed"],
         default="none",
-        help="模型加载方式，默认 none（Transformers FP16/BF16）。",
+        help="模型加载方式，默认 none；torchao-mixed 用于 7.4 的真实混合精度制品。",
     )
     parser.add_argument("--model-id", default="local-model")
     parser.add_argument(
@@ -231,6 +232,8 @@ def main() -> int:
         raise ValueError("QLoRA adapter 评测暂只支持 --quantization none 的基座模型")
     if args.load_in_4bit and args.quantization != "none":
         raise ValueError("--load-in-4bit 不能与 AWQ/GPTQ 量化模型同时使用")
+    if args.quantization == "torchao-mixed" and args.quantized_manifest is None:
+        raise ValueError("torchao-mixed 必须提供导出阶段生成的 --quantized-manifest")
     if args.quantization != "none" and args.model_path is not None and args.quantized_model_path is not None:
         raise ValueError("量化模式下只传 --quantized-model-path，不要同时传 --model-path")
     quantized_manifest = None
@@ -336,6 +339,13 @@ def main() -> int:
         )
     elif args.quantization == "gptq":
         service = load_gptq_service(
+            effective_baseline_path,
+            quantized_manifest_path,
+            model_manifest_path,
+            output_dir / "quality_service.jsonl",
+        )
+    elif args.quantization == "torchao-mixed":
+        service = load_mixed_precision_service(
             effective_baseline_path,
             quantized_manifest_path,
             model_manifest_path,

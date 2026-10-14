@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MODEL_PATH="${MODEL_PATH:-}"
+DEVICE="${DEVICE:-cuda:0}"
+PROMPT_FILE="${PROMPT_FILE:-inputs/mixed_precision_benchmark_prompt.txt}"
+OUTPUT_ROOT="out/mixed_precision_search"
+
+plans=(
+  all_linear_int4
+  all_linear_int8
+  mixed_l10_mlp_int8
+  mixed_l10_mlp_bf16
+  mixed_l10_mlp_lm_head_int8
+  mixed_l10_l23_mlp_lm_head_int8
+)
+
+python3 scripts/run_mixed_precision_search.py prepare
+
+for plan_id in "${plans[@]}"; do
+  export_manifest="${OUTPUT_ROOT}/exports/${plan_id}/quantized_model_manifest.json"
+  if [[ ! -f "${export_manifest}" ]]; then
+    args=(--plan-id "${plan_id}" --device "${DEVICE}")
+    if [[ -n "${MODEL_PATH}" ]]; then
+      args+=(--model-path "${MODEL_PATH}")
+    fi
+    python3 scripts/run_mixed_precision_search.py export "${args[@]}"
+  fi
+
+  for suite in full_dev high_risk long_context; do
+    evidence="${OUTPUT_ROOT}/evidence/${plan_id}/${suite}.json"
+    if [[ ! -f "${evidence}" ]]; then
+      python3 scripts/run_mixed_precision_search.py evaluate \
+        --plan-id "${plan_id}" --suite "${suite}" --device "${DEVICE}"
+    fi
+  done
+
+  benchmark_evidence="${OUTPUT_ROOT}/evidence/${plan_id}/benchmark.json"
+  if [[ ! -f "${benchmark_evidence}" ]]; then
+    python3 scripts/run_mixed_precision_search.py benchmark \
+      --plan-id "${plan_id}" --prompt-file "${PROMPT_FILE}" --device "${DEVICE}"
+  fi
+done
+
+python3 scripts/run_mixed_precision_search.py pending
+python3 scripts/run_mixed_precision_search.py finalize

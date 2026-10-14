@@ -1,0 +1,14 @@
+{
+  "plan_id": "all_linear_int8",
+  "description": "全部可量化 Linear 使用 INT8；用于质量上界和性能对照。",
+  "default_linear_precision": "int8",
+  "overrides": {},
+  "special_modules": {
+    "embedding": "bf16",
+    "norm": "bf16",
+    "kv_cache": "bf16"
+  },
+  "runnable": true,
+  "role": "quality_reference",
+  "unsupported_reason": null
+}

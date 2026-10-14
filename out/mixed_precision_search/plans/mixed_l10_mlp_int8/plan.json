@@ -1,0 +1,16 @@
+{
+  "plan_id": "mixed_l10_mlp_int8",
+  "description": "其余 Linear INT4，只保护 Layer 10 MLP 为 INT8。",
+  "default_linear_precision": "int4",
+  "overrides": {
+    "model.layers.10.mlp": "int8"
+  },
+  "special_modules": {
+    "embedding": "bf16",
+    "norm": "bf16",
+    "kv_cache": "bf16"
+  },
+  "runnable": true,
+  "role": "one_sensitive_group",
+  "unsupported_reason": null
+}
