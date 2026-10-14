@@ -6,6 +6,12 @@ DEVICE="${DEVICE:-cuda:0}"
 PROMPT_FILE="${PROMPT_FILE:-inputs/mixed_precision_benchmark_prompt.txt}"
 OUTPUT_ROOT="out/mixed_precision_search"
 
+if [[ -n "${MODEL_PATH}" && ! -f "${MODEL_PATH}/config.json" ]]; then
+  echo "ERROR: MODEL_PATH 不存在或缺少 config.json: ${MODEL_PATH}" >&2
+  echo "请把 MODEL_PATH 改成服务器上合并后模型的真实目录。" >&2
+  exit 2
+fi
+
 plans=(
   all_linear_int4
   all_linear_int8

@@ -4,6 +4,12 @@ set -euo pipefail
 MODEL_PATH="${MODEL_PATH:-}"
 DEVICE="${DEVICE:-cuda:0}"
 
+if [[ -n "${MODEL_PATH}" && ! -f "${MODEL_PATH}/config.json" ]]; then
+  echo "ERROR: MODEL_PATH 不存在或缺少 config.json: ${MODEL_PATH}" >&2
+  echo "请把 MODEL_PATH 改成服务器上合并后模型的真实目录。" >&2
+  exit 2
+fi
+
 python3 scripts/run_mixed_precision_search.py prepare
 
 for plan_id in \

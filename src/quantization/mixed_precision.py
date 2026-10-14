@@ -223,6 +223,8 @@ def export_candidate(
     candidate = candidate_by_id(config, plan_id)
     if not candidate.runnable:
         raise ValueError(f"Candidate is not deployable: {plan_id}: {candidate.unsupported_reason}")
+    root = Path(project_root).resolve()
+    source = _resolve_source_model(root, config, model_path)
     try:
         import torch
         from torchao.quantization import Int4WeightOnlyConfig, Int8WeightOnlyConfig, ModuleFqnToConfig, quantize_
@@ -230,8 +232,6 @@ def export_candidate(
     except ImportError as exc:
         raise RuntimeError("Export requires torch, torchao, and transformers") from exc
 
-    root = Path(project_root).resolve()
-    source = _resolve_source_model(root, config, model_path)
     output = root / config["paths"]["output_root"] / "exports" / plan_id
     output.mkdir(parents=True, exist_ok=True)
     dtype = torch.bfloat16 if config["backend"]["compute_dtype"] == "bfloat16" else torch.float16
