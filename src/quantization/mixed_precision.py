@@ -246,7 +246,10 @@ def export_candidate(
     )
     int8 = Int8WeightOnlyConfig()
     fqn_config = {name: int4 if precision == "int4" else int8 for name, precision in assignment.items() if precision != "bf16"}
-    quantize_(model, ModuleFqnToConfig(fqn_config))
+    # TorchAO's quantize_ has a default Linear filter in some releases.
+    # FQN-based policies are mutually exclusive with any filter, including that
+    # default, so pass None explicitly for cross-version compatibility.
+    quantize_(model, ModuleFqnToConfig(fqn_config), filter_fn=None)
 
     audit = []
     failures = []
