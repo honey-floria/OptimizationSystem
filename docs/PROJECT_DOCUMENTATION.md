@@ -2889,21 +2889,34 @@ INT8/INT4 当前结果不能解释为“HQQ 后端确定不支持”。`kv_cache
 
 #### full-dev 候选规模与建议
 
-按当前配置的自动规则，26 个独立 Attention/MLP 计划满足 `net_correct_gain >= 1`；Embedding INT8/INT4、
-`lm_head` INT8/INT4、block Norm INT8、final Norm INT8 六个特殊计划也满足现有门禁，共会晋级 32 个计划。
-按照 7.1 实测每个候选 full-dev 加 high-risk 约 23.6 分钟计算，直接运行预计需要约 12.7～14 小时，而且大量
-候选只有 `+1`，会把明显的 pilot 噪声带入昂贵评测。
+原始宽松规则会让 26 个独立 Attention/MLP 计划和 6 个特殊模块计划晋级，共 32 个计划；按照 7.1 实测每个候选
+full-dev 加 high-risk 约 23.6 分钟计算，预计需要约 12.7～14 小时。由于其中大量候选只有 `+1`，为控制昂贵
+评测的规模，并避免把 pilot 小样本波动全部带入第二阶段，已在任何 7.2 full-dev 结果产生前将晋级集合显式冻结为
+以下 11 个计划：
 
-更有工程效率的完整评测集合约为 11 个：layer 6 Attention、layer 26/10/17/25 MLP、已有 7.1 full-dev 证据
-支撑的 layer 23 Attention/MLP，以及 Embedding INT8/INT4、`lm_head` INT8/INT4。预计耗时约 4.5 小时。
-Norm 默认保留 FP16，KV Cache 等真实 probe 后再决定。若采用这一缩减集合，必须在任何新 full-dev 结果产生前
-修改并冻结晋级规则，记录这是基于 pilot 成本控制和机制证据作出的预注册修订，而不是看完 full-dev 后挑结果。
+| 类别 | 计划 | pilot 净变化 | 纳入理由 |
+|---|---|---:|---|
+| Attention 恢复 | `layer_06_attn_int8` | +3 | Attention 单层恢复计划中最强 |
+| MLP 恢复 | `layer_26_mlp_int8` | +3 | MLP 单层恢复计划中最强 |
+| MLP 恢复 | `layer_10_mlp_int8` | +2 | pilot 强候选，且已有跨层组合实验依据 |
+| MLP 恢复 | `layer_17_mlp_int8` | +2 | pilot 强候选 |
+| MLP 恢复 | `layer_25_mlp_int8` | +2 | pilot 强候选 |
+| Attention 恢复 | `layer_23_attn_int8` | +1 | pilot 正向，且已有 7.1 full-dev 层级证据 |
+| MLP 恢复 | `layer_23_mlp_int8` | +1 | pilot 正向，且已有 7.1 full-dev 层级证据 |
+| 特殊模块退化 | `embedding_int8` | 0 | pilot 无质量退化且理论存储节省为正 |
+| 特殊模块退化 | `embedding_int4` | 0 | pilot 无质量退化且理论存储节省为正 |
+| 特殊模块退化 | `lm_head_int8` | 0 | pilot 无质量退化，数值扰动小于 INT4 |
+| 特殊模块退化 | `lm_head_int4` | +1 | pilot 未退化且理论存储节省为正 |
+
+该预注册修订把预计运行时间降至约 4.5 小时。Norm 因收益极小或 INT4 退化而默认保留 FP16；KV Cache INT8/INT4
+尚未通过真实低比特驻留 probe，不进入本轮 full-dev；其余仅 `+1` 且缺少额外机制证据的单层计划也不进入本轮。
+配置使用 `explicit_pilot_shortlist` 和明确的计划 ID 白名单，后续不得根据 full-dev 结果回改候选集合。
 
 ### 7.2.4 两阶段评测与统计实现
 
 完整 pilot 矩阵完成后，`select-advancement` 严格读取预注册规则，而不是根据 full-dev 结果临时挑选计划；任何
-可运行计划仍为 pending 时都会拒绝晋级。恢复候选从全部独立 Attention/MLP 全局及逐层计划中筛选，要求 80 条
-pilot 至少净增 1 题；特殊模块要求质量不下降且理论存储为正；KV Cache 还必须通过真实低比特驻留门禁。
+可运行计划仍为 pending 时都会拒绝晋级。本轮恢复候选只从上述 7 个显式 Attention/MLP 白名单计划中校验，要求
+80 条 pilot 至少净增 1 题；特殊模块只校验上述 4 个显式候选，要求质量不下降且理论存储为正。
 晋级决策、排除原因和规则写入 `advancement.json` 并计算内容哈希。只有这一步完成，才能执行
 `prepare-final`。
 

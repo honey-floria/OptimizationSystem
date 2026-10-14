@@ -612,11 +612,12 @@ per-output-channel 对称量化，即每个输出行共享一个 scale。对称�
 FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的退化实验。两类分数方向不同，必须分榜报告，
 不得直接混成一个排名。
 
-当前进度（2026-10-13）：7.2.1 已完成真实模型验收；untied 模型矩阵的 71 个可运行计划已全部取得终态，
+当前进度（2026-10-14）：7.2.1 已完成真实模型验收；untied 模型矩阵的 71 个可运行计划已全部取得终态，
 `pending=[]`，其中 69 个 `completed`、KV Cache INT8/INT4 因尚未执行 HQQ runtime capability probe 而为
 `unsupported`。28 层 Attention/MLP、Embedding、`lm_head`、block/final Norm 和 FP16 KV Cache pilot 已完成；
-7.2.4 晋级/冻结评测和 7.2.5 双榜/保护策略代码已实现，但完整 dev/high-risk 尚未运行，因此当前结论仍是
-pilot 筛选结论，不是最终部署方案。
+7.2.4 已在 full-dev 前预注册 11 个晋级计划（7 个 Attention/MLP 恢复计划和 4 个 Embedding/`lm_head` 计划），
+晋级/冻结评测和 7.2.5 双榜/保护策略代码已实现，但完整 dev/high-risk 尚未运行，因此当前结论仍是 pilot
+筛选结论，不是最终部署方案。
 
 #### 7.2.1 前置条件与实验契约
 
@@ -657,9 +658,9 @@ pilot 筛选结论，不是最终部署方案。
 
 #### 7.2.4 两阶段业务评测与统计
 
-- [x] 实现预注册晋级与最终评测流水线：`select-advancement` 要求完整 pilot 矩阵无 pending，再从全部独立 Attention/MLP 计划按预注册规则筛选并在 full-dev 前冻结规则/候选和 SHA256；`prepare-final` 冻结 7.1 基线、883/91/89 条样本、业务标签及确定性哨兵，`run-final-plan` 支持断点续跑并逐条校验冻结数据；真实运行完成度由以下实验项单独记录
+- [x] 实现预注册晋级与最终评测流水线：`select-advancement` 要求完整 pilot 矩阵无 pending，再从显式预注册候选中校验并在 full-dev 前冻结规则/候选和 SHA256；`prepare-final` 冻结 7.1 基线、883/91/89 条样本、业务标签及确定性哨兵，`run-final-plan` 支持断点续跑并逐条校验冻结数据；真实运行完成度由以下实验项单独记录
 - [x] 第一阶段已在冻结的 80 条 pilot 上完成全部 Attention/MLP、特殊权重模块和 FP16 KV Cache 计划；71 个可运行计划无 pending，69 个完成、KV INT8/INT4 以明确 `unsupported` 终态退出，未将失败或未验证计划伪装成可排名结果
-- [ ] pilot 后预注册完整 dev 晋级规则：优先选择正向恢复的 Attention/MLP 候选，以及质量损失最小且存在实际存储或计算收益的特殊模块候选；不得看完 full-dev 结果后改规则
+- [x] pilot 后、任何新 full-dev 结果产生前已预注册 11 个完整 dev 候选：`layer_06_attn_int8`、`layer_26_mlp_int8`、`layer_10_mlp_int8`、`layer_17_mlp_int8`、`layer_25_mlp_int8`、`layer_23_attn_int8`、`layer_23_mlp_int8`，以及 Embedding/`lm_head` 的 INT8/INT4；Norm 默认保留 FP16，KV Cache 等真实低比特驻留 probe 后再决定，后续不得根据 full-dev 结果改候选集合
 - [ ] 第二阶段在完整 883 条 FinQA dev 上评测晋级候选，并运行 91 条 contextual 高风险集和 89 条最长上下文子集；KV Cache 候选必须包含长上下文评测
 - [ ] 每个计划同时报告数值准确率、正确数、解析率、structured output rate、format retry、运行时间，以及金额、比例/利率、日期/期限三个冻结多标签子集的“正确数/总数”和比例
 - [ ] 保存逐样本 `recovered/regressed/unchanged` 转移；对特殊模块和 KV Cache 使用相对 FP16 特殊模块对照的 `degraded/recovered/net_correct_change`，不得误写成相对 `ALL-I4` 的模块恢复量

@@ -209,17 +209,19 @@
       "embedding_int4",
       "lm_head_int8",
       "lm_head_int4",
-      "block_norm_int8",
-      "block_norm_int4",
-      "final_norm_int8",
-      "final_norm_int4",
-      "kv_cache_fp16_ref",
-      "kv_cache_int8",
-      "kv_cache_int4"
+      "kv_cache_fp16_ref"
     ],
     "require_complete_pilot_matrix": true,
-    "recovery_candidate_scope": "all_isolated_attention_mlp",
-    "recovery_candidate_plans": [],
+    "recovery_candidate_scope": "explicit_pilot_shortlist",
+    "recovery_candidate_plans": [
+      "layer_06_attn_int8",
+      "layer_26_mlp_int8",
+      "layer_10_mlp_int8",
+      "layer_17_mlp_int8",
+      "layer_25_mlp_int8",
+      "layer_23_attn_int8",
+      "layer_23_mlp_int8"
+    ],
     "determinism_sentinel_plans": [
       "layer_23_attn_int8",
       "layer_23_mlp_int8",

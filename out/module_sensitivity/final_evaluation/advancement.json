@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.4",
+  "status": "frozen",
+  "created_at": "2026-10-14T09:59:31.251695+00:00",
+  "rules": {
+    "recovery_min_net_correct_gain": 1,
+    "special_min_net_correct_change": 0,
+    "require_positive_storage_savings": true,
+    "kv_cache_require_low_bit_residency": true
+  },
+  "selected_recovery_plans": [
+    "layer_06_attn_int8",
+    "layer_26_mlp_int8",
+    "layer_10_mlp_int8",
+    "layer_17_mlp_int8",
+    "layer_25_mlp_int8",
+    "layer_23_attn_int8",
+    "layer_23_mlp_int8"
+  ],
+  "selected_special_plans": [
+    "embedding_int8",
+    "embedding_int4",
+    "lm_head_int8",
+    "lm_head_int4"
+  ],
+  "excluded_plans": [],
+  "decisions": [
+    {
+      "plan_id": "layer_06_attn_int8",
+      "category": "recovery",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 3,
+      "pilot_result_sha256": "e99e7c1453c9015ff98ed9160a407304fd3ce51121081e1c680c43dfe680ff2c"
+    },
+    {
+      "plan_id": "layer_26_mlp_int8",
+      "category": "recovery",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 3,
+      "pilot_result_sha256": "bb2884c794fc45d1641701b2f6026c8da3a5d8a0f08b98ee15f5ce95d4712ef8"
+    },
+    {
+      "plan_id": "layer_10_mlp_int8",
+      "category": "recovery",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 2,
+      "pilot_result_sha256": "86f05dd5186f07476ec73b7ef7e712cfd224ba70e192498a5deb30b3de1a7df1"
+    },
+    {
+      "plan_id": "layer_17_mlp_int8",
+      "category": "recovery",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 2,
+      "pilot_result_sha256": "373b86dc2191d969a55047cd182dd8bc59199eedad80306028ac2bc54ae10a40"
+    },
+    {
+      "plan_id": "layer_25_mlp_int8",
+      "category": "recovery",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 2,
+      "pilot_result_sha256": "2ac2c11aca0d94ee4dbd260272b50776a8c313818283810cb3fb72231f2b69be"
+    },
+    {
+      "plan_id": "layer_23_attn_int8",
+      "category": "recovery",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 1,
+      "pilot_result_sha256": "57418d7ee6203a71985fabc026ee89216d7c708e003f0f71f4cf5395910076ea"
+    },
+    {
+      "plan_id": "layer_23_mlp_int8",
+      "category": "recovery",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 1,
+      "pilot_result_sha256": "bebdb92c24678243168387e803c5d77cff54a8a34c284a2b961e15c0fc83be6d"
+    },
+    {
+      "plan_id": "embedding_int8",
+      "category": "special",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 0,
+      "benefit_bytes": 544693248,
+      "low_bit_residency_verified": null,
+      "reason": null,
+      "pilot_result_sha256": "b4bc64e94ee6131194a80441d33ac7988976d6dc858e1a4c6707693465e61fe7"
+    },
+    {
+      "plan_id": "embedding_int4",
+      "category": "special",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 0,
+      "benefit_bytes": 783433728,
+      "low_bit_residency_verified": null,
+      "reason": null,
+      "pilot_result_sha256": "1bd2a49c72850b9cdcaab75fe4c08b9409eae08b8ae7a804fe9ce6145df27cca"
+    },
+    {
+      "plan_id": "lm_head_int8",
+      "category": "special",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 0,
+      "benefit_bytes": 544693248,
+      "low_bit_residency_verified": null,
+      "reason": null,
+      "pilot_result_sha256": "3b07c5105cac7c69dbc1ecbd5de3bbe50a1f5b99c09cf7a2c8dd9698c85c6340"
+    },
+    {
+      "plan_id": "lm_head_int4",
+      "category": "special",
+      "eligible": true,
+      "status": "completed",
+      "pilot_net_correct_change": 1,
+      "benefit_bytes": 783433728,
+      "low_bit_residency_verified": null,
+      "reason": null,
+      "pilot_result_sha256": "c70ae9e60a5352ed55ec33f64c0f6784e934a1e0fcd9c9ac38e8dfacfb93d0ab"
+    }
+  ],
+  "selection_sha256": "bb4155cab47ea8436e4e82d11b2dedd31a09609b3adece85a4f08b4ee6808761"
+}
