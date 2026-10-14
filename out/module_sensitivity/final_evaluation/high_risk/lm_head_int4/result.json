@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.4",
+  "status": "completed",
+  "completed_at": "2026-10-14T15:42:38.131454+00:00",
+  "suite": "high_risk",
+  "plan": {
+    "plan_id": "lm_head_int4",
+    "kind": "lm_head_quantized",
+    "runnable": true,
+    "comparison": "degradation",
+    "target_precision": "int4"
+  },
+  "metrics": {
+    "total": 91,
+    "parsed": 90,
+    "correct": 19,
+    "parse_rate": 0.989010989010989,
+    "numeric_accuracy": 0.2087912087912088
+  },
+  "structured_output_rate": 0.989010989010989,
+  "format_retry_count": 1,
+  "predictions_sha256": "7c71b525a944796b012d7f220141300cd007b22d43fa171bec56c78c0d10e9f3",
+  "comparison_report_sha256": "62f2ec42d886754a88c0d0571499c9be9d78742fd1461f2a72b3ceced57177f2",
+  "quantization_error_sha256": "ab4aedbd18d0f48d0fa4a6f4f84ce5acc1b24fd85a994c27f76c3958a203af0d",
+  "duration_seconds": 199.29828788200393
+}

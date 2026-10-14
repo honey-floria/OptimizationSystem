@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.5",
+  "status": "candidate_policy",
+  "protected_recovery_plans": [
+    "layer_10_mlp_int8",
+    "layer_23_mlp_int8",
+    "layer_26_mlp_int8",
+    "layer_23_attn_int8"
+  ],
+  "special_module_precisions": {
+    "lm_head_quantized": "int8",
+    "embedding_quantized": "int8"
+  },
+  "kv_cache_precision": "fp16",
+  "quality_gates": {
+    "recovery_require_positive_full_dev_gain": true,
+    "require_nonnegative_high_risk_gain": true,
+    "require_nonnegative_long_context_gain": true,
+    "special_max_full_dev_loss": 0,
+    "special_max_high_risk_loss": 0
+  },
+  "backend_constraints": {
+    "weight_results_are_fake_quant": true,
+    "weight_deployment_benchmark_required": true,
+    "kv_cache_requires_verified_low_bit_residency": true
+  },
+  "prohibited_combinations": [
+    {
+      "plans": [
+        "candidate_l23_all_l10_mlp_int8"
+      ],
+      "reason": "Pilot added storage without incremental correct answers over layer 23 alone."
+    }
+  ]
+}

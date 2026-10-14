@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
   "stage": "7.2.4-7.2.5",
-  "status": "prepared",
-  "created_at": "2026-10-14T09:59:48.870246+00:00",
-  "advancement": "/Users/ys/PycharmProjects/OptimizationSystem/out/module_sensitivity/final_evaluation/advancement.json",
-  "advancement_sha256": "0f8bf81274e5f900e1a5bb4b83623aa71111fa4dd006f66f3c9d4ed574860031",
-  "matrix_manifest": "/Users/ys/PycharmProjects/OptimizationSystem/out/module_sensitivity/pilot/experiment_manifest.json",
+  "status": "completed",
+  "created_at": "2026-10-14T13:38:25.082532+00:00",
+  "advancement": "/userhome/cs5/u3680889/OptimizationSystem/out/module_sensitivity/final_evaluation/advancement.json",
+  "advancement_sha256": "48270cdbde87ba327c4ef027192ef8ec83fbb01357575ae6c57e315023a9c18a",
+  "matrix_manifest": "/userhome/cs5/u3680889/OptimizationSystem/out/module_sensitivity/pilot/experiment_manifest.json",
   "matrix_manifest_sha256": "50253a98a13dc76a1249a57a629d6dbf77b324212891145fdc72c68bd89c37e6",
-  "input_freeze": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
+  "input_freeze": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
   "input_freeze_sha256": "f08a9e0a79ffcfa135357b98fd145ddbbda5f288146872fddb78fd43e6bc1385",
-  "frozen_subsets": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/frozen_subsets.json",
+  "frozen_subsets": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/frozen_subsets.json",
   "frozen_subsets_sha256": "d6f5de4d6c812ac0e0b291c1758d9623350b1fc1c019ce979d75f894afb6b30b",
-  "business_labels": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/business_labels.jsonl",
+  "business_labels": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/business_labels.jsonl",
   "business_labels_sha256": "fcc2b8e02fb2add515eecef26d2c920af9dc35651243c7ddb64b158bf9cdee34",
   "subset_hashes": {
     "calibration": "dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092",
@@ -86,12 +86,12 @@
   },
   "references": {
     "full_dev": {
-      "directory": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/final_evaluation/full_dev/all_int4",
+      "directory": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/final_evaluation/full_dev/all_int4",
       "result_sha256": "7abc65fbb5085dc85319057d6402b4be35ff48e4afb9df2bf7d5d3a6f996dff7",
       "report_sha256": "d93978eea336b2a7632c1ea6a60567265fe52c7cd918ac906159fc042f0f86a5"
     },
     "high_risk": {
-      "directory": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/final_evaluation/high_risk/all_int4",
+      "directory": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/final_evaluation/high_risk/all_int4",
       "result_sha256": "bcb216723251573934cb45d5b9a8658399521f1b13bbcb26a3d3fd9c1c9deae0",
       "report_sha256": "b8b64c0e0c50eac761b18e7b9c14615ac2e28e5c8f3fbd1ab9179e4ea96f4a6b"
     }
@@ -108,5 +108,15 @@
     "special_max_full_dev_loss": 0,
     "special_max_high_risk_loss": 0
   },
-  "contract_sha256": "c1c9d1750fd0da79bac043b94a337dee426027e0f3baada760b8689c6e6968e3"
+  "contract_sha256": "4eb44af7dee7e7c67f0182f16a7290959354d770077b1a17cea76eccb1e94d8b",
+  "completed_at": "2026-10-14T15:42:45.097125+00:00",
+  "artifact_sha256": {
+    "module_metrics.jsonl": "e2def657c6b28ac8060da4bbb92d71cec71f6c3723b84747174bdfcef11e4938",
+    "sample_transitions.jsonl": "1c952fdfd34e40028fd9b4066737fcef31881ad42ea742e50c7c73c2f9be56ff",
+    "ranking.json": "98470fbe1382d542642b020b02e05e4a241900b9066a9ffe3253b3392e71c336",
+    "ranking.csv": "cab3b229593b5309d4789d5e271f5a92af4c3401391393184430a5aed1990a16",
+    "protection_policy.json": "f4ce61acd84d394846d3bab1ef38d4ea205e3b47560828410a4f47dfcca1ce78",
+    "report.md": "c122c1c0be82ccc5434a034e57cb4690f9231abdfa217211de9ea4dba1d59570",
+    "validation.json": "243d3ce4e37f346f0b9ddaac562343800125e999539d925feeec9ffb57309f5b"
+  }
 }

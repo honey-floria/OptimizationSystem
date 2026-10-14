@@ -1,0 +1,12 @@
+category,rank,plan_id,kind,target_precision,full_dev_correct,full_dev_total,net_correct_change,recovered,regressed,high_risk_net,long_context_net,bootstrap_lower,bootstrap_upper,benefit_bytes
+recovery,1,layer_10_mlp_int8,layer_mlp_int8,,338,883,10,14,4,0,0,0.0022650056625141564,0.020385050962627407,0
+recovery,2,layer_23_mlp_int8,layer_mlp_int8,,332,883,4,16,12,0,0,-0.007927519818799546,0.015855039637599093,0
+recovery,3,layer_26_mlp_int8,layer_mlp_int8,,332,883,4,9,5,0,0,-0.0033975084937712344,0.013590033975084938,0
+recovery,4,layer_06_attn_int8,layer_attention_int8,,332,883,4,8,4,0,-1,-0.0022650056625141564,0.01245753114382786,0
+recovery,5,layer_23_attn_int8,layer_attention_int8,,329,883,1,9,8,0,1,-0.007927519818799546,0.010192525481313703,0
+recovery,6,layer_25_mlp_int8,layer_mlp_int8,,328,883,0,12,12,1,1,-0.011325028312570781,0.011325028312570781,0
+recovery,7,layer_17_mlp_int8,layer_mlp_int8,,325,883,-3,8,11,0,-1,-0.013590033975084938,0.006795016987542469,0
+special,1,lm_head_int8,lm_head_quantized,int8,331,883,3,5,2,1,0,-0.0022650056625141564,0.009060022650056626,544693248
+special,2,embedding_int8,embedding_quantized,int8,331,883,3,5,2,0,-1,-0.0022650056625141564,0.009060022650056626,544693248
+special,3,embedding_int4,embedding_quantized,int4,328,883,0,4,4,1,-1,-0.006795016987542469,0.0056625141562853904,783433728
+special,4,lm_head_int4,lm_head_quantized,int4,312,883,-16,12,28,1,-3,-0.03284258210645526,-0.004530011325028313,783433728

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.4",
+  "status": "completed",
+  "completed_at": "2026-10-14T14:20:30.500121+00:00",
+  "suite": "full_dev",
+  "plan": {
+    "plan_id": "embedding_int4",
+    "kind": "embedding_quantized",
+    "runnable": true,
+    "comparison": "degradation",
+    "target_precision": "int4"
+  },
+  "metrics": {
+    "total": 883,
+    "parsed": 877,
+    "correct": 328,
+    "parse_rate": 0.9932049830124575,
+    "numeric_accuracy": 0.3714609286523216
+  },
+  "structured_output_rate": 0.9932049830124575,
+  "format_retry_count": 11,
+  "predictions_sha256": "b421aa46c3a75e1db59fef2bdb156c4aac5bc70f996687e1ba3fd5174b7c6ed6",
+  "comparison_report_sha256": "d5bdba97302fd15c7ab1088c500123e91138f167e49aaca08061f27b6b21fd44",
+  "quantization_error_sha256": "0ef6a2f70d5bc2af0f1980ca7c5646de803543f72c2c36ad25a0e5e91b5d0c62",
+  "duration_seconds": 1226.078419284895
+}

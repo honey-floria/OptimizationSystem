@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.5",
+  "status": "pass",
+  "pending": {
+    "full_dev": [],
+    "high_risk": [],
+    "determinism": []
+  },
+  "invalid_runs": [],
+  "determinism": {
+    "layer_23_attn_int8": {
+      "status": "pass",
+      "original_sha256": "5d16286876c55e6d8defbf4630df067aa9f241392058909b1da9bab4f739583e",
+      "repeat_sha256": "5d16286876c55e6d8defbf4630df067aa9f241392058909b1da9bab4f739583e",
+      "exact_row_match": true
+    },
+    "layer_23_mlp_int8": {
+      "status": "pass",
+      "original_sha256": "0341d73d18596c90029b9e9b629b2c2c03a8ddfe3ea99634b88aac8a81b4b985",
+      "repeat_sha256": "0341d73d18596c90029b9e9b629b2c2c03a8ddfe3ea99634b88aac8a81b4b985",
+      "exact_row_match": true
+    },
+    "embedding_int8": {
+      "status": "pass",
+      "original_sha256": "c4376cbaf3bc2bc8b60e4478a0d3d85d9f82ca616a4c8c9c12d1239d99504c24",
+      "repeat_sha256": "c4376cbaf3bc2bc8b60e4478a0d3d85d9f82ca616a4c8c9c12d1239d99504c24",
+      "exact_row_match": true
+    }
+  },
+  "selected_recovery_count": 7,
+  "selected_special_count": 4,
+  "full_dev_size": 883,
+  "high_risk_size": 91,
+  "long_context_size": 89,
+  "required_artifacts": [
+    "experiment_manifest.json",
+    "module_metrics.jsonl",
+    "sample_transitions.jsonl",
+    "ranking.json",
+    "ranking.csv",
+    "protection_policy.json",
+    "report.md",
+    "validation.json"
+  ]
+}

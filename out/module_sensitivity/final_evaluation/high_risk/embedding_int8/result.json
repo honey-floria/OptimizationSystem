@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.4",
+  "status": "completed",
+  "completed_at": "2026-10-14T15:31:16.822025+00:00",
+  "suite": "high_risk",
+  "plan": {
+    "plan_id": "embedding_int8",
+    "kind": "embedding_quantized",
+    "runnable": true,
+    "comparison": "degradation",
+    "target_precision": "int8"
+  },
+  "metrics": {
+    "total": 91,
+    "parsed": 90,
+    "correct": 18,
+    "parse_rate": 0.989010989010989,
+    "numeric_accuracy": 0.1978021978021978
+  },
+  "structured_output_rate": 0.989010989010989,
+  "format_retry_count": 1,
+  "predictions_sha256": "48af7b2fa7e55f27f6b794651831850512b7fc86b1fffdec5cf003b6d17563ce",
+  "comparison_report_sha256": "a51ccde57a817c64a0d4579a9c65129393202fa60c16c98e46e4c11a4d2566ef",
+  "quantization_error_sha256": "47c9065619fcb7a462484df5b052e0a021393e63d4b0754421e8cc0f585b9204",
+  "duration_seconds": 197.74945730506442
+}
