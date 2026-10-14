@@ -661,21 +661,23 @@ FP16 的特殊模块使用“单独降为 INT8/INT4 后损失多少质量”的�
 - [x] 实现预注册晋级与最终评测流水线：`select-advancement` 要求完整 pilot 矩阵无 pending，再从显式预注册候选中校验并在 full-dev 前冻结规则/候选和 SHA256；`prepare-final` 冻结 7.1 基线、883/91/89 条样本、业务标签及确定性哨兵，`run-final-plan` 支持断点续跑并逐条校验冻结数据；真实运行完成度由以下实验项单独记录
 - [x] 第一阶段已在冻结的 80 条 pilot 上完成全部 Attention/MLP、特殊权重模块和 FP16 KV Cache 计划；71 个可运行计划无 pending，69 个完成、KV INT8/INT4 以明确 `unsupported` 终态退出，未将失败或未验证计划伪装成可排名结果
 - [x] pilot 后、任何新 full-dev 结果产生前已预注册 11 个完整 dev 候选：`layer_06_attn_int8`、`layer_26_mlp_int8`、`layer_10_mlp_int8`、`layer_17_mlp_int8`、`layer_25_mlp_int8`、`layer_23_attn_int8`、`layer_23_mlp_int8`，以及 Embedding/`lm_head` 的 INT8/INT4；Norm 默认保留 FP16，KV Cache 等真实低比特驻留 probe 后再决定，后续不得根据 full-dev 结果改候选集合
-- [ ] 第二阶段在完整 883 条 FinQA dev 上评测晋级候选，并运行 91 条 contextual 高风险集和 89 条最长上下文子集；KV Cache 候选必须包含长上下文评测
-- [ ] 每个计划同时报告数值准确率、正确数、解析率、structured output rate、format retry、运行时间，以及金额、比例/利率、日期/期限三个冻结多标签子集的“正确数/总数”和比例
-- [ ] 保存逐样本 `recovered/regressed/unchanged` 转移；对特殊模块和 KV Cache 使用相对 FP16 特殊模块对照的 `degraded/recovered/net_correct_change`，不得误写成相对 `ALL-I4` 的模块恢复量
-- [ ] 至少复跑一个 Attention 哨兵、一个 MLP 哨兵和一个特殊模块或 KV Cache 哨兵，校验逐行预测与文件 SHA256；不能逐条复现时记录波动并增加重复次数
-- [ ] 使用固定种子的配对 bootstrap 生成 95% 置信区间；大量并列、区间跨 0 或高度重叠时，将结论降级为同一梯队而非给出虚假精确次序
+- [x] 第二阶段已在完整 883 条 FinQA dev、91 条 contextual 高风险集和 89 条最长上下文子集上完成 11 个晋级候选；本轮 KV Cache 没有通过真实 probe，未进入排名
+- [x] 每个计划已报告数值准确率、正确数、解析率、structured output rate、format retry、运行时间，以及金额、比例/利率、日期/期限三个冻结多标签子集的“正确数/总数”和比例
+- [x] 已保存逐样本 `recovered/regressed/unchanged` 转移；特殊模块使用相对 FP16 特殊组件基线的净变化语义，没有把存储收益当作质量恢复
+- [x] 已复跑 Layer 23 Attention、Layer 23 MLP 和 Embedding INT8 三个哨兵，三者逐行预测及 SHA256 均与 pilot 完全一致
+- [x] 已使用固定种子 10,000 次配对 bootstrap 生成 95% 置信区间；只有 Layer 10 MLP 区间明确高于 0，其余正向点估计均降级为第二梯队
 
 #### 7.2.5 排名、产物与验收
 
 - [x] 实现最终汇总与验收代码：分离恢复榜和损失—收益榜，生成固定种子配对 bootstrap、逐样本转移、双格式排名、机器可读保护策略、确定性复跑审计和全产物 SHA256；未完成服务器运行时 `finalize` 会拒绝生成最终结论
-- [ ] 分别生成 Attention/MLP“质量恢复榜”和特殊模块/KV Cache“质量损失—收益榜”；前者优先 `net_correct_gain` 和高风险非退化，后者先满足质量门禁，再比较真实显存、延迟和吞吐收益
-- [ ] 输出 `experiment_manifest.json`、`module_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`，所有汇总项均能回溯到计划、模型身份、样本哈希和逐样本预测
-- [ ] 报告 Attention 与 MLP 的全局模块族对比、逐层子模块排名、特殊模块保护建议、KV Cache 支持结论、置信区间和已知限制；明确哪些结论来自 fake-quant、哪些来自真实部署后端
-- [ ] 验收时确认 28 个 Attention 与 28 个 MLP 单层恢复计划无缺失、无重复、无越界，特殊模块计划覆盖适用精度，失败计划未进入排名
-- [ ] 形成供 7.4 使用的机器可读保护策略：推荐的层内模块集合、Embedding/Norm/`lm_head` 保留精度、KV Cache 位宽、质量门禁、后端约束和禁止组合
-- [ ] 将最终模块级结论、推荐配置及“不支持/无收益”的负结果写入项目总文档；未完成 full-dev 与真实后端验证前，不得将 pilot 排名表述为最终可部署方案
+- [x] 已分别生成 Attention/MLP“质量恢复榜”和特殊模块/KV Cache“质量损失—收益榜”；KV Cache 无真实低比特结果，策略明确保持 FP16
+- [x] 已输出 `experiment_manifest.json`、`module_metrics.jsonl`、`sample_transitions.jsonl`、`ranking.json`、`ranking.csv`、`report.md` 和 `validation.json`，汇总项可回溯到冻结合同与逐样本预测
+- [x] 已报告 Attention/MLP 模块族与逐层结果、特殊模块建议、KV Cache 支持结论、置信区间和已知限制，并明确当前权重实验为 fake-quant
+- [x] 已确认 28 个 Attention 与 28 个 MLP 单层恢复计划无缺失、无重复、无越界，特殊模块覆盖适用精度，失败或 unsupported 计划未进入排名
+- [x] 已形成供 7.4 使用的机器可读候选保护策略：Layer 10 MLP 为主候选，`lm_head` INT8，Embedding INT8 为显存备选，Norm/KV Cache FP16，并保留质量门禁、后端约束和禁止组合
+- [x] 已将最终模块级结论、推荐配置及 `lm_head` INT4、Norm INT4、未验证 KV Cache 等负结果写入项目总文档，并保留 fake-quant/真实部署边界
+- [x] 已实现独立的组合验证工作流和两个前瞻性冻结候选：`candidate_l10_mlp_lm_head_int8` 与 `candidate_l10_mlp_lm_head_embedding_int8`；使用独立输出目录，不覆盖原始 11 计划证据
+- [ ] 在服务器运行 `bash scripts/run_module_sensitivity_combinations.sh`，完成两个组合的 pilot、确定性、full-dev、high-risk、长上下文和最终门禁；预计约 55～65 分钟
 
 ### 7.3 金融错误定位
 

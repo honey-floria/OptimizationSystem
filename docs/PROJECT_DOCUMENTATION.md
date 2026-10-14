@@ -2941,6 +2941,32 @@ full-dev 加 high-risk 约 23.6 分钟计算，预计需要约 12.7～14 小时�
 预测文件哈希和确定性复跑，失败或缺失运行不能进入排名。报告状态使用 `candidate_subset_final`，明确它只覆盖
 预注册晋级子集，不冒充 28 层完整模块排名；权重结果仍标注为 fake-quant，部署性能需要真实 kernel 验证。
 
+#### 7.2.5 完整评测结论（2026-10-15）
+
+11 个预注册候选的 full-dev、high-risk 和三个确定性哨兵已经全部完成，`validation.json` 状态为 `pass`，无
+pending 或 invalid run。三个哨兵的逐行预测与 pilot 完全一致。`ALL-I4` 基线为 `328/883`；恢复榜中只有
+`layer_10_mlp_int8` 达到统计上明确的正收益：`338/883`、净增 10 题、准确率增加 1.133 个百分点，配对
+bootstrap 95% 区间为 `[+0.227, +2.039]` 个百分点，高风险和长上下文均不退化。Layer 23 MLP、Layer 26
+MLP、Layer 23 Attention 虽通过点估计门禁，但置信区间均跨 0，只能列为第二梯队；Layer 6 Attention 因长上下文
+净退化 1 题被排除，Layer 25 MLP 在 full-dev 持平，Layer 17 MLP 净退化 3 题。
+
+特殊模块中，`lm_head_int8` 和 `embedding_int8` 的 full-dev 均净增 3 题，理论上各节省约 519.5 MiB；
+`lm_head_int8` 的 high-risk 净增 1、长上下文持平，是最稳妥的特殊模块候选。`embedding_int8` 长上下文净退化
+1 题，因此只能作为显存优先备选。`lm_head_int4` 在 full-dev 净退化 16 题，95% 区间完全低于 0，明确淘汰；
+`embedding_int4` 虽 full-dev 持平，但长上下文净退化 1 题，不作为默认位宽。Norm 与 KV Cache 继续保持 FP16。
+
+这些结果是单组件 fake-quant 敏感性证据，不能假定收益能够相加。为验证交互效应，已前瞻性冻结两个独立的组合
+候选，并使用 `combination` 工作流写入单独目录，绝不覆盖原 11 计划的冻结产物：
+
+| 组合候选 | Layer 10 MLP | `lm_head` | Embedding | 用途 |
+|---|---|---|---|---|
+| `candidate_l10_mlp_lm_head_int8` | INT8 | INT8 | FP16 | 质量优先主候选 |
+| `candidate_l10_mlp_lm_head_embedding_int8` | INT8 | INT8 | INT8 | 显存优先备选 |
+
+两个组合都必须运行固定 80 条确定性/pilot、883 条 full-dev 和 91 条 high-risk，并从 full-dev 中检查 89 条
+长上下文。组合晋级不再利用同一 pilot 做优胜者筛选；`pilot_min_net_correct_gain=-80` 表示两项只要运行成功就都
+进入完整评测，从而避免组合验证中的二次挑选偏差。最终仍要求 full-dev 正增、高风险和长上下文不退化。
+
 ### 当前实现文件、执行顺序与产物
 
 实现文件如下：
@@ -2953,6 +2979,7 @@ src/quantization/module_sensitivity_final.py
 scripts/run_module_sensitivity.py
 scripts/run_module_sensitivity_pilot.sh
 scripts/run_module_sensitivity_final.sh
+scripts/run_module_sensitivity_combinations.sh
 tests/test_module_sensitivity.py
 ```
 
@@ -2977,6 +3004,9 @@ python3 scripts/run_module_sensitivity.py prepare-final
 
 # 7.2.4/7.2.5：运行确定性、full-dev、高风险评测并生成排名
 bash scripts/run_module_sensitivity_final.sh
+
+# 7.2.5 后续：在独立目录验证两个最终组合候选，支持断点续跑
+bash scripts/run_module_sensitivity_combinations.sh
 
 # 单独检查或收口
 python3 scripts/run_module_sensitivity.py pending-final
@@ -3016,7 +3046,7 @@ out/module_sensitivity/
 ```
 
 截至当前，合同、矩阵生成、隔离 fake-quant、单计划业务评测、逐样本转移、`ALL-I8` 一致性审计、断点续跑和
-`unsupported` 门禁均已实现；71 个可运行 pilot 计划已经全部终止，Attention/MLP、特殊权重模块和 FP16 KV
-Cache 结果已完成。预注册晋级、冻结 full-dev/high-risk、配对 bootstrap、双榜排名和保护策略代码也已通过测试。
-尚未完成的是 HQQ KV Cache INT8/INT4 capability/runtime 实测、晋级后的完整 dev/high-risk、确定性复跑和模块
-输出 activation probe。这些实验结果项继续保持 TODO 未勾选，不能把 pilot 排名表述为最终可部署方案。
+`unsupported` 门禁均已实现；71 个可运行 pilot 计划和 11 个晋级候选的完整 dev/high-risk/确定性评测均已完成，
+配对 bootstrap、双榜、保护策略和最终验收产物已生成。两个后续组合候选的合同、隔离输出目录和一键续跑脚本已
+准备，尚待服务器推理。仍未完成的是 HQQ KV Cache INT8/INT4 capability/runtime 实测、模块输出 activation
+probe、组合候选完整评测和真实部署后端 Benchmark；因此当前结论是可进入 7.4 的候选配置，而不是已验证的部署配置。
