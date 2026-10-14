@@ -1,0 +1,39 @@
+{
+  "status": "completed",
+  "sample_count": 4,
+  "numeric_token_count": 10,
+  "mean_logits_mse": 0.007345409016124904,
+  "top1_consistency": 1.0,
+  "mean_topk_overlap": 0.95,
+  "mean_abs_numeric_rank_change": 46.0,
+  "records": [
+    {
+      "sample_index": 0,
+      "logits_mse": 0.00665146391838789,
+      "top1_consistent": true,
+      "topk_overlap": 1.0,
+      "reference_top_numeric_rank_change": 0
+    },
+    {
+      "sample_index": 1,
+      "logits_mse": 0.005991056095808744,
+      "top1_consistent": true,
+      "topk_overlap": 1.0,
+      "reference_top_numeric_rank_change": 59
+    },
+    {
+      "sample_index": 2,
+      "logits_mse": 0.006460853852331638,
+      "top1_consistent": true,
+      "topk_overlap": 1.0,
+      "reference_top_numeric_rank_change": 122
+    },
+    {
+      "sample_index": 3,
+      "logits_mse": 0.010278262197971344,
+      "top1_consistent": true,
+      "topk_overlap": 0.8,
+      "reference_top_numeric_rank_change": 3
+    }
+  ]
+}

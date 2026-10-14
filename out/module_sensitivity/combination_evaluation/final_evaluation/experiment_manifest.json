@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.4-7.2.5",
+  "status": "completed",
+  "created_at": "2026-10-14T16:36:07.948174+00:00",
+  "advancement": "/userhome/cs5/u3680889/OptimizationSystem/out/module_sensitivity/combination_evaluation/final_evaluation/advancement.json",
+  "advancement_sha256": "7ce382a0e8fbd3b0662a8d7b21fe3175ae6a59a1e664dc1293487e4b60285f3e",
+  "matrix_manifest": "/userhome/cs5/u3680889/OptimizationSystem/out/module_sensitivity/combination_evaluation/pilot/experiment_manifest.json",
+  "matrix_manifest_sha256": "7a854af3b6f628125106ecf6a1873619681bd8623b9e8efbb6b4b3f1d6f16d5e",
+  "input_freeze": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/input_freeze.json",
+  "input_freeze_sha256": "f08a9e0a79ffcfa135357b98fd145ddbbda5f288146872fddb78fd43e6bc1385",
+  "frozen_subsets": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/frozen_subsets.json",
+  "frozen_subsets_sha256": "d6f5de4d6c812ac0e0b291c1758d9623350b1fc1c019ce979d75f894afb6b30b",
+  "business_labels": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/business_labels.jsonl",
+  "business_labels_sha256": "fcc2b8e02fb2add515eecef26d2c920af9dc35651243c7ddb64b158bf9cdee34",
+  "subset_hashes": {
+    "calibration": "dbb4876e0da98ad1aff3a3de0742e2a42db5f120fd20b00e140783347c772092",
+    "pilot": "225c221200a11b7281fc7505ca34f77f7d77c362636bba1b4b993abb47a1d7d7",
+    "evaluation_dev": "d9a4a3818e0ac2612a16c388574e5d9c888a2f1563da115457bcb48097f700eb",
+    "contextual_high_risk": "441fdc055de9b7b9a1c24872153da9278c102630ce3d235f97d0c70523994c44",
+    "long_context": "4b8c2d16ae3b053aed47a0fb502a0f6e44d0e233ad506040813a188377a6b936"
+  },
+  "selected_recovery_plans": [
+    "candidate_l10_mlp_lm_head_int8",
+    "candidate_l10_mlp_lm_head_embedding_int8"
+  ],
+  "selected_special_plans": [],
+  "suites": {
+    "full_dev": {
+      "dataset_role": "evaluation_dev",
+      "expected_size": 883,
+      "frozen_subset": "evaluation_dev",
+      "plan_ids": [
+        "candidate_l10_mlp_lm_head_int8",
+        "candidate_l10_mlp_lm_head_embedding_int8"
+      ]
+    },
+    "high_risk": {
+      "dataset_role": "high_risk_regression",
+      "expected_size": 91,
+      "frozen_subset": "contextual_high_risk",
+      "plan_ids": [
+        "candidate_l10_mlp_lm_head_int8",
+        "candidate_l10_mlp_lm_head_embedding_int8"
+      ]
+    },
+    "determinism": {
+      "dataset_role": "evaluation_dev",
+      "pilot_size": 80,
+      "pilot_seed": 20261004,
+      "expected_indices_sha256": "cd2cf6c4ce8c50cbf23c7c007254b060f741a5ec363ee840efd3ea72662b9e61",
+      "plan_ids": [
+        "candidate_l10_mlp_lm_head_int8",
+        "candidate_l10_mlp_lm_head_embedding_int8"
+      ]
+    }
+  },
+  "references": {
+    "full_dev": {
+      "directory": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/final_evaluation/full_dev/all_int4",
+      "result_sha256": "7abc65fbb5085dc85319057d6402b4be35ff48e4afb9df2bf7d5d3a6f996dff7",
+      "report_sha256": "d93978eea336b2a7632c1ea6a60567265fe52c7cd918ac906159fc042f0f86a5"
+    },
+    "high_risk": {
+      "directory": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/final_evaluation/high_risk/all_int4",
+      "result_sha256": "bcb216723251573934cb45d5b9a8658399521f1b13bbcb26a3d3fd9c1c9deae0",
+      "report_sha256": "b8b64c0e0c50eac761b18e7b9c14615ac2e28e5c8f3fbd1ab9179e4ea96f4a6b"
+    }
+  },
+  "bootstrap": {
+    "iterations": 10000,
+    "confidence": 0.95,
+    "seed": 20261013
+  },
+  "quality_gates": {
+    "recovery_require_positive_full_dev_gain": true,
+    "require_nonnegative_high_risk_gain": true,
+    "require_nonnegative_long_context_gain": true,
+    "special_max_full_dev_loss": 0,
+    "special_max_high_risk_loss": 0
+  },
+  "contract_sha256": "477a7182f2b7583683827760133cf0f637774b8dae2b1d09853e19c15e5420a0",
+  "completed_at": "2026-10-14T17:31:56.221373+00:00",
+  "artifact_sha256": {
+    "module_metrics.jsonl": "79f3f8ebe21099a9c0c206de392b7d8c9a06d03f5dadd1551b3016d6e815cc0e",
+    "sample_transitions.jsonl": "20542a61aa26eba0a62acae29939c889628ce171fa942c2df612ec6421cb68af",
+    "ranking.json": "7863516c28c877ac9de317b13b6cafc48bc87159a7613deb1836e8d7e2c1ccda",
+    "ranking.csv": "8905561096c7cdb06aca5f14c7da418ebfaf9aaa378400b69be7b60f0db45827",
+    "protection_policy.json": "e356cacedea41865817e72a27254ed83ad31c4d5976b90b93e552bf631061bee",
+    "report.md": "9ace0235bec921a6d12bbd162b8b08db92889c336ff56b57e5d5136782f985ff",
+    "validation.json": "676a783b1ae3964693b33e92ce9b80e9fded90196ad8d8e35d7e5461a714bb9e"
+  }
+}

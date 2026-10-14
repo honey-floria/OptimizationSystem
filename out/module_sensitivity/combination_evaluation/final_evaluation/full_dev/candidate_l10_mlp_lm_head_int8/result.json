@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.4",
+  "status": "completed",
+  "completed_at": "2026-10-14T17:03:24.961497+00:00",
+  "suite": "full_dev",
+  "plan": {
+    "plan_id": "candidate_l10_mlp_lm_head_int8",
+    "kind": "candidate_mixed_int8",
+    "runnable": true,
+    "comparison": "recovery",
+    "int8_attention_layers": [],
+    "int8_mlp_layers": [
+      10
+    ],
+    "embedding_precision": "fp16",
+    "lm_head_precision": "int8",
+    "selection_basis": "Prospective post-7.2.5 validation of the only statistically positive recovery layer plus the safest lm_head compression."
+  },
+  "metrics": {
+    "total": 883,
+    "parsed": 879,
+    "correct": 337,
+    "parse_rate": 0.9954699886749717,
+    "numeric_accuracy": 0.38165345413363533
+  },
+  "structured_output_rate": 0.9954699886749717,
+  "format_retry_count": 10,
+  "predictions_sha256": "641d3c5ff5cf3526467f2a7cba8eac9b505a4e037fef97513b85e41f8549e3b1",
+  "comparison_report_sha256": "26f5f2ef01db2043369ae440fa6e0cbcc1a61763696aa1f6f5f4901844383250",
+  "quantization_error_sha256": "5e6bef95faa5077713b62979139d77df8561c22e6844d7a19b6ab112486cac30",
+  "duration_seconds": 1212.5908902839292
+}

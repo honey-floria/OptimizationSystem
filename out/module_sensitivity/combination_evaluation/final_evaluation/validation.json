@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.5",
+  "status": "pass",
+  "pending": {
+    "full_dev": [],
+    "high_risk": [],
+    "determinism": []
+  },
+  "invalid_runs": [],
+  "determinism": {
+    "candidate_l10_mlp_lm_head_int8": {
+      "status": "pass",
+      "original_sha256": "bb0a71ab76c9e70b73ac529213e64a8a2aafbd61da7cf69b8afa358d41aaa6b1",
+      "repeat_sha256": "bb0a71ab76c9e70b73ac529213e64a8a2aafbd61da7cf69b8afa358d41aaa6b1",
+      "exact_row_match": true
+    },
+    "candidate_l10_mlp_lm_head_embedding_int8": {
+      "status": "pass",
+      "original_sha256": "e86814e398b5db633ecf10ee7a10bcb4a704d7a51107b84e09ac468799fe319b",
+      "repeat_sha256": "e86814e398b5db633ecf10ee7a10bcb4a704d7a51107b84e09ac468799fe319b",
+      "exact_row_match": true
+    }
+  },
+  "selected_recovery_count": 2,
+  "selected_special_count": 0,
+  "full_dev_size": 883,
+  "high_risk_size": 91,
+  "long_context_size": 89,
+  "required_artifacts": [
+    "experiment_manifest.json",
+    "module_metrics.jsonl",
+    "sample_transitions.jsonl",
+    "ranking.json",
+    "ranking.csv",
+    "protection_policy.json",
+    "report.md",
+    "validation.json"
+  ]
+}

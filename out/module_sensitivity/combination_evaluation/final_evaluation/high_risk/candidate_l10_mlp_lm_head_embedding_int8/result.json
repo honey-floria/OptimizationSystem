@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.4",
+  "status": "completed",
+  "completed_at": "2026-10-14T17:31:52.924837+00:00",
+  "suite": "high_risk",
+  "plan": {
+    "plan_id": "candidate_l10_mlp_lm_head_embedding_int8",
+    "kind": "candidate_mixed_int8",
+    "runnable": true,
+    "comparison": "recovery",
+    "int8_attention_layers": [],
+    "int8_mlp_layers": [
+      10
+    ],
+    "embedding_precision": "int8",
+    "lm_head_precision": "int8",
+    "selection_basis": "Prospective memory-oriented post-7.2.5 validation; tests interaction instead of adding isolated gains."
+  },
+  "metrics": {
+    "total": 91,
+    "parsed": 90,
+    "correct": 18,
+    "parse_rate": 0.989010989010989,
+    "numeric_accuracy": 0.1978021978021978
+  },
+  "structured_output_rate": 0.989010989010989,
+  "format_retry_count": 1,
+  "predictions_sha256": "fe1beaa5e3cddd2bdcc642291d9f2626be06329e1a4d355a79b3cd7b916189e0",
+  "comparison_report_sha256": "8e0960d6efca829832d16c89371f8036449fccbd79242d1262e0908737d7b933",
+  "quantization_error_sha256": "836399a7264ee8940fd05f4a29d7ec9e786b5239a8c173a928fb8fb8b60302bb",
+  "duration_seconds": 212.3015370219946
+}

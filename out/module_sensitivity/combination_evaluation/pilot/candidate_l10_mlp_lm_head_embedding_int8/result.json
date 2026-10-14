@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "stage": "7.2.2",
+  "status": "completed",
+  "completed_at": "2026-10-14T16:36:06.417195+00:00",
+  "plan": {
+    "plan_id": "candidate_l10_mlp_lm_head_embedding_int8",
+    "kind": "candidate_mixed_int8",
+    "runnable": true,
+    "comparison": "recovery",
+    "int8_attention_layers": [],
+    "int8_mlp_layers": [
+      10
+    ],
+    "embedding_precision": "int8",
+    "lm_head_precision": "int8",
+    "selection_basis": "Prospective memory-oriented post-7.2.5 validation; tests interaction instead of adding isolated gains."
+  },
+  "metrics": {
+    "total": 80,
+    "parsed": 80,
+    "correct": 37,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.4625
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 0,
+  "predictions_sha256": "e86814e398b5db633ecf10ee7a10bcb4a704d7a51107b84e09ac468799fe319b",
+  "quantization_error_sha256": "836399a7264ee8940fd05f4a29d7ec9e786b5239a8c173a928fb8fb8b60302bb",
+  "transition_semantics": "recovery",
+  "transitions_vs_all_int4": {
+    "recovered": 1,
+    "regressed": 0,
+    "net_correct_gain": 1,
+    "stable_correct": 36,
+    "stable_wrong": 43,
+    "changed_raw_predictions": 11
+  },
+  "duration_seconds": 185.85473265009932,
+  "kv_cache_runtime_arguments": null,
+  "kv_cache_benchmark": null,
+  "lm_head_probe": {
+    "status": "completed",
+    "sample_count": 4,
+    "numeric_token_count": 10,
+    "mean_logits_mse": 0.0073507464258000255,
+    "top1_consistency": 1.0,
+    "mean_topk_overlap": 0.95,
+    "mean_abs_numeric_rank_change": 49.25,
+    "records": [
+      {
+        "sample_index": 0,
+        "logits_mse": 0.006642232649028301,
+        "top1_consistent": true,
+        "topk_overlap": 1.0,
+        "reference_top_numeric_rank_change": 0
+      },
+      {
+        "sample_index": 1,
+        "logits_mse": 0.005987115204334259,
+        "top1_consistent": true,
+        "topk_overlap": 1.0,
+        "reference_top_numeric_rank_change": 72
+      },
+      {
+        "sample_index": 2,
+        "logits_mse": 0.006467492785304785,
+        "top1_consistent": true,
+        "topk_overlap": 1.0,
+        "reference_top_numeric_rank_change": 124
+      },
+      {
+        "sample_index": 3,
+        "logits_mse": 0.010306145064532757,
+        "top1_consistent": true,
+        "topk_overlap": 0.8,
+        "reference_top_numeric_rank_change": -1
+      }
+    ]
+  },
+  "special_storage": {
+    "fp16_reference_bytes": 2179989504,
+    "quantized_total_bytes": 1090603008,
+    "savings_bytes": 1089386496
+  },
+  "all_int8_equivalence": null,
+  "deployment_performance_claims_allowed": false
+}
