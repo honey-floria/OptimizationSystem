@@ -370,14 +370,22 @@ def load_mixed_precision_service(
         raise ValueError("Mixed-precision state_dict SHA256 mismatch")
     dtype = torch.bfloat16 if baseline["dtype"] == "bfloat16" else torch.float16
     architecture = AutoConfig.from_pretrained(str(artifact), local_files_only=True)
-    with torch.device("meta"):
-        model = AutoModelForCausalLM.from_config(architecture, torch_dtype=dtype)
+    # A meta skeleton leaves non-persistent buffers such as RoPE frequencies on
+    # meta because they are intentionally absent from state_dict.  Build the
+    # skeleton in CPU BF16 so those buffers contain real initialized data, while
+    # still keeping the full unquantized model off the 16 GiB accelerator.
+    model = AutoModelForCausalLM.from_config(architecture, torch_dtype=dtype)
     state = torch.load(
         state_path,
         map_location=baseline["device"],
         weights_only=False,
     )
-    model.load_state_dict(state, assign=True)
+    incompatible = model.load_state_dict(state, assign=True)
+    if incompatible.missing_keys or incompatible.unexpected_keys:
+        raise ValueError(
+            "Mixed-precision state_dict does not match the exported architecture: "
+            f"missing={incompatible.missing_keys}, unexpected={incompatible.unexpected_keys}"
+        )
     model.to(baseline["device"]).eval()
     tokenizer = AutoTokenizer.from_pretrained(str(artifact), local_files_only=True)
     metadata = {

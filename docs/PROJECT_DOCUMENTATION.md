@@ -3146,6 +3146,7 @@ Traceback 最后一行之外的 warning 判断原因。
 | `ImportError: Requires mslk >= 1.0.0` | TorchAO `plain` INT4 packing 依赖可选 MSLK 包 | 将 `int4_packing_format` 改为 PyTorch 内置的 `tile_packed_to_4d`，不再要求额外安装 MSLK | `grep int4_packing_format configs/mixed_precision_search.json` |
 | `CUDA out of memory ... allocate 1.16 GiB` | 先把完整 7B BF16 权重放进 16 GiB GPU，再为大矩阵建立 padding/packing 临时张量；当时 GPU 仅余约 463 MiB | 高精度母版留在 CPU，每次只移动一个 Linear 到 GPU 完成 packing；量化结束后再移动 BF16 特殊模块 | 导出时用 `nvidia-smi` 观察，不应先出现约 14～15 GiB 的完整 BF16 常驻 |
 | `basic_ios::clear: iostream error` 出现在 `torch.save` | 量化已经完成，但输出文件系统空间不足、用户 quota 超限，或网络文件系统无法完成约 4～8 GiB 的大文件 | 改为 `.partial` 临时文件原子写入，失败时自动清理；必要时用 `MIXED_PRECISION_OUTPUT_ROOT` 改到大容量 scratch | 同时检查 `df -h`、`df -i`、`quota -s` 和输出目录已有占用 |
+| `Cannot copy out of meta tensor; no data` | meta 骨架中的 RoPE 等非持久 buffer 不在 state_dict 内，`assign=True` 不会恢复它们，整模型 `.to(cuda)` 时仍会遇到残留 meta tensor | 在 CPU 构造 BF16 模型骨架以初始化非持久 buffer，再将量化 state_dict 映射到目标 GPU并用 `assign=True` 替换权重 | 加载期间系统内存临时增加约 14～16 GiB，但 GPU 不会出现完整 BF16 权重 |
 
 日志中的以下内容只是 TorchAO/PyTorch 弃用警告，不是上述失败的直接原因：
 
@@ -3166,8 +3167,9 @@ KernelPreference is an Enum subclass ... register_constant() ... is deprecated
   → 直接保存量化 state_dict 和 SHA256
 ```
 
-该方案用 CPU 内存换取较低 GPU 峰值：导出时需要约 15～20 GiB 系统内存，但不再要求 GPU 同时容纳完整 BF16
-模型和 INT4 packing 临时缓冲。失败进程退出后通常会自动释放 CUDA 显存；重跑前仍应使用 `nvidia-smi` 检查是否有
+该方案用 CPU 内存换取较低 GPU 峰值：导出时需要约 15～20 GiB 系统内存；加载评测时也会临时建立约 14～16 GiB
+的 CPU BF16 骨架，以初始化未写入 state_dict 的非持久 buffer，但不要求 GPU 同时容纳完整 BF16 模型和量化权重。
+失败进程退出后通常会自动释放 CUDA 显存；重跑前仍应使用 `nvidia-smi` 检查是否有
 其他进程占用显存。导出目录只有在写出 `quantized_model_manifest.json` 后才视为完成，因此上述中途失败不会被断点脚本
 误判为成功。
 
