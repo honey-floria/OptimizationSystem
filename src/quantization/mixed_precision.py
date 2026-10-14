@@ -227,7 +227,7 @@ def export_candidate(
     source = _resolve_source_model(root, config, model_path)
     try:
         import torch
-        from torchao.quantization import Int4WeightOnlyConfig, Int8WeightOnlyConfig, ModuleFqnToConfig, quantize_
+        from torchao.quantization import Int4WeightOnlyConfig, Int8WeightOnlyConfig, quantize_
         from transformers import AutoModelForCausalLM, AutoTokenizer
     except ImportError as exc:
         raise RuntimeError("Export requires torch, torchao, and transformers") from exc
@@ -235,8 +235,15 @@ def export_candidate(
     output = root / config["paths"]["output_root"] / "exports" / plan_id
     output.mkdir(parents=True, exist_ok=True)
     dtype = torch.bfloat16 if config["backend"]["compute_dtype"] == "bfloat16" else torch.float16
+    # Keep the source model on CPU. Loading a 7B BF16 model on a 16 GiB GPU and
+    # then packing a large projection needs both the original weight and a
+    # temporary padded tensor, which exceeds the card. TorchAO's `device=` path
+    # streams modules through the accelerator and keeps only quantized outputs.
     model = AutoModelForCausalLM.from_pretrained(
-        str(source), local_files_only=True, torch_dtype=dtype, device_map={"": device},
+        str(source),
+        local_files_only=True,
+        torch_dtype=dtype,
+        low_cpu_mem_usage=True,
     ).eval()
     tokenizer = AutoTokenizer.from_pretrained(str(source), local_files_only=True)
     assignment = build_module_assignment(model, candidate, torch)
@@ -245,11 +252,27 @@ def export_candidate(
         int4_packing_format=str(config["backend"].get("int4_packing_format", "plain")),
     )
     int8 = Int8WeightOnlyConfig()
-    fqn_config = {name: int4 if precision == "int4" else int8 for name, precision in assignment.items() if precision != "bf16"}
-    # TorchAO's quantize_ has a default Linear filter in some releases.
-    # FQN-based policies are mutually exclusive with any filter, including that
-    # default, so pass None explicitly for cross-version compatibility.
-    quantize_(model, ModuleFqnToConfig(fqn_config), filter_fn=None)
+    named = dict(model.named_modules())
+    if str(device).startswith("cuda"):
+        torch.cuda.empty_cache()
+    quantized_count = 0
+    for name, precision in sorted(assignment.items()):
+        if precision == "bf16":
+            continue
+        # Calling quantize_ on the individual Linear (instead of the full model)
+        # makes `device=` move only this layer before packing. This is genuinely
+        # streaming and avoids materializing the full BF16 model on a 16 GiB GPU.
+        quantize_(
+            named[name],
+            int4 if precision == "int4" else int8,
+            device=torch.device(device),
+        )
+        quantized_count += 1
+        if str(device).startswith("cuda") and quantized_count % 16 == 0:
+            torch.cuda.empty_cache()
+    # FQN entries marked BF16 and non-Linear modules are intentionally skipped
+    # by quantize_; move those remaining parameters after packed weights exist.
+    model.to(device)
 
     audit = []
     failures = []
@@ -270,7 +293,9 @@ def export_candidate(
     model.config.save_pretrained(str(output))
     tokenizer.save_pretrained(str(output))
     weights_path = output / "mixed_precision_state_dict.pt"
-    model.to("cpu")
+    # Save directly from the accelerator. Moving a tile-packed INT4 tensor back
+    # to CPU is backend-dependent; torch.load(map_location="cpu") handles the
+    # portable relocation when the artifact is loaded.
     torch.save(model.state_dict(), weights_path)
     _write_json(output / "module_assignment.json", {"plan_id": plan_id, "modules": audit})
     manifest = {
@@ -315,7 +340,11 @@ def load_mixed_precision_service(
     architecture = AutoConfig.from_pretrained(str(artifact), local_files_only=True)
     with torch.device("meta"):
         model = AutoModelForCausalLM.from_config(architecture, torch_dtype=dtype)
-    state = torch.load(state_path, map_location="cpu", mmap=True, weights_only=False)
+    state = torch.load(
+        state_path,
+        map_location=baseline["device"],
+        weights_only=False,
+    )
     model.load_state_dict(state, assign=True)
     model.to(baseline["device"]).eval()
     tokenizer = AutoTokenizer.from_pretrained(str(artifact), local_files_only=True)

@@ -5,6 +5,7 @@ MODEL_PATH="${MODEL_PATH:-}"
 DEVICE="${DEVICE:-cuda:0}"
 PROMPT_FILE="${PROMPT_FILE:-inputs/mixed_precision_benchmark_prompt.txt}"
 OUTPUT_ROOT="out/mixed_precision_search"
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 
 if [[ -n "${MODEL_PATH}" && ! -f "${MODEL_PATH}/config.json" ]]; then
   echo "ERROR: MODEL_PATH 不存在或缺少 config.json: ${MODEL_PATH}" >&2

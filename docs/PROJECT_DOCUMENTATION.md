@@ -3089,7 +3089,7 @@ out/module_sensitivity/
 
 7.4 必须准确表达“只把第 10 层 MLP 升到 INT8”。Transformers 的 HQQ 集成会把
 `model.layers.10.mlp.gate_proj` 归一化为 `mlp.gate_proj`，因此动态配置适合按模块类型统一设定位宽，却不能可靠地区分
-第 10 层和其他层。当前实现改用 TorchAO `ModuleFqnToConfig`，直接以完整模块名给每个 `nn.Linear` 指定位宽。
+第 10 层和其他层。当前实现先按完整模块名生成每个 `nn.Linear` 的位宽分配，再逐模块调用 TorchAO `quantize_`。
 导出后还会逐模块检查权重是否真的变成 TorchAO 量化 Tensor 子类；未替换成功会立即失败，而不是仅凭配置文件宣称已量化。
 
 Embedding 是 `nn.Embedding`，不属于当前 Linear weight-only 后端的覆盖范围。因此 7.2 中质量点估计更高的
@@ -3125,6 +3125,10 @@ Layer 23 MLP 在 7.2 完整评测中没有通过统计门禁；保留它只是�
 并保存模型配置、Tokenizer、TorchAO 量化 state_dict、完整模块—位宽清单、文件大小、SHA256 和后端
 版本。加载时先在 meta device 上创建空模型，再使用 `assign=True` 装入量化 Tensor，避免先构造一份完整高精度权重；
 SHA256 不一致时拒绝加载。
+
+导出阶段同样不能先把完整 7B BF16 模型放到 16 GiB GPU 后再量化，否则 INT4 padding/packing 的临时张量会造成
+OOM。实现会把高精度母版留在 CPU，并对单个 Linear 调用 TorchAO `quantize_(..., device=cuda)`，逐模块流式搬运和量化；全部 packed
+权重建立后，才把保持 BF16 的 Embedding、Norm 和敏感层搬入 GPU。脚本同时启用 expandable segments 以降低缓存碎片。
 
 质量门禁要求：full-dev 解析率至少 99%，并且相对真实 `all_linear_int4`，full-dev、高风险集和冻结长上下文集的正确数
 净变化都不得小于 0。性能门禁要求：峰值显存和最差 P95 延迟不超过全 INT4 的 1.15 倍，平均吞吐不低于其 0.85 倍。
