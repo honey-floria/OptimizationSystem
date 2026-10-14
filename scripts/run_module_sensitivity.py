@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
 from pathlib import Path
@@ -35,10 +36,39 @@ from src.quantization.module_sensitivity_final import (
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "module_sensitivity.json"
 
 
+def _workflow_config(config: dict, workflow: str) -> dict:
+    if workflow == "module":
+        return config
+    settings = config.get("combination_evaluation")
+    if not isinstance(settings, dict):
+        raise ValueError("combination_evaluation is missing from module sensitivity config.")
+    result = copy.deepcopy(config)
+    plan_ids = [plan["plan_id"] for plan in settings["plans"]]
+    result["candidate_recovery_plans"] = copy.deepcopy(settings["plans"])
+    result["paths"]["experiment_output_root"] = settings["pilot_output_root"]
+    result["final_evaluation"]["output_root"] = settings["output_root"]
+    result["final_evaluation"]["advancement_output"] = settings["advancement_output"]
+    result["final_evaluation"]["required_special_pilot_plans"] = []
+    result["final_evaluation"]["require_complete_pilot_matrix"] = False
+    result["final_evaluation"]["recovery_candidate_scope"] = "explicit_combination_shortlist"
+    result["final_evaluation"]["recovery_candidate_plans"] = plan_ids
+    result["final_evaluation"]["determinism_sentinel_plans"] = copy.deepcopy(
+        settings["determinism_sentinel_plans"]
+    )
+    result["final_evaluation"]["advancement_rules"][
+        "recovery_min_net_correct_gain"
+    ] = int(settings["pilot_min_net_correct_gain"])
+    return result
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--project-root", type=Path, default=PROJECT_ROOT)
+    parser.add_argument(
+        "--workflow", choices=["module", "combination"], default="module",
+        help="Use the original module workflow or the isolated post-final combination workflow.",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser(
         "prepare",
@@ -114,6 +144,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     root = args.project_root.expanduser().resolve()
     config = load_json(resolve_project_path(root, args.config))
+    config = _workflow_config(config, args.workflow)
     if args.command == "prepare":
         payload = prepare_contract(root, config)
     elif args.command == "inspect-model":

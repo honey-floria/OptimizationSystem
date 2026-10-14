@@ -107,12 +107,26 @@ def build_experiment_plans(
         plan_id = candidate.get("plan_id")
         attention_layers = candidate.get("int8_attention_layers")
         mlp_layers = candidate.get("int8_mlp_layers")
+        embedding_precision = candidate.get("embedding_precision", "fp16")
+        lm_head_precision = candidate.get("lm_head_precision", "fp16")
         if not isinstance(plan_id, str) or not plan_id.startswith("candidate_"):
             raise ValueError("Candidate recovery plan IDs must start with candidate_.")
         if not isinstance(attention_layers, list) or not isinstance(mlp_layers, list):
             raise ValueError("Candidate recovery plans must list INT8 Attention and MLP layers.")
         if not attention_layers and not mlp_layers:
-            raise ValueError("Candidate recovery plans must change at least one module family.")
+            if embedding_precision == "fp16" and lm_head_precision == "fp16":
+                raise ValueError("Candidate recovery plans must change at least one component.")
+        if embedding_precision not in {"fp16", "int8", "int4"}:
+            raise ValueError("Candidate embedding_precision must be fp16, int8, or int4.")
+        if lm_head_precision not in {"fp16", "int8", "int4"}:
+            raise ValueError("Candidate lm_head_precision must be fp16, int8, or int4.")
+        if embedding_lm_head_tied and (
+            embedding_precision != "fp16" or lm_head_precision != "fp16"
+        ):
+            raise ValueError(
+                "Candidate special-module mixing requires untied embedding/lm_head weights; "
+                "use a shared-weight joint plan for tied models."
+            )
         for field, indices in (
             ("int8_attention_layers", attention_layers),
             ("int8_mlp_layers", mlp_layers),
@@ -131,6 +145,8 @@ def build_experiment_plans(
                 "comparison": "recovery",
                 "int8_attention_layers": sorted(attention_layers),
                 "int8_mlp_layers": sorted(mlp_layers),
+                "embedding_precision": embedding_precision,
+                "lm_head_precision": lm_head_precision,
                 "selection_basis": candidate.get("selection_basis"),
             }
         )
@@ -283,6 +299,9 @@ def effective_weight_assignment(
         assignment["final_norm"] = target
     elif kind == "kv_cache_quantized":
         assignment["kv_cache"] = target
+    elif kind == "candidate_mixed_int8":
+        assignment["embedding"] = plan.get("embedding_precision", "fp16")
+        assignment["lm_head"] = plan.get("lm_head_precision", "fp16")
     return assignment
 
 
@@ -304,6 +323,8 @@ def validate_plan_isolation(
             expected_count = (
                 len(plan["int8_attention_layers"]) * len(ATTENTION_MODULES)
                 + len(plan["int8_mlp_layers"]) * len(MLP_MODULES)
+                + int(plan.get("embedding_precision", "fp16") != "fp16")
+                + int(plan.get("lm_head_precision", "fp16") != "fp16")
             )
             if len(changed) != expected_count:
                 raise ValueError(f"{plan['plan_id']} does not match its candidate module set.")
@@ -740,6 +761,23 @@ def quantize_model_for_module_plan(
             inventory_groups["embedding"][0]["path"],
             inventory_groups["lm_head"][0]["path"],
         ]
+    if kind == "candidate_mixed_int8":
+        for family, field, rules_name in (
+            ("embedding", "embedding_precision", "embedding"),
+            ("lm_head", "lm_head_precision", "lm_head"),
+        ):
+            candidate_precision = plan.get(field, "fp16")
+            if candidate_precision == "fp16":
+                continue
+            record = inventory_groups[family][0]
+            special_records.append(
+                _quantize_special_module(
+                    _read_model_path(model, record["path"]),
+                    path=record["path"], family=family,
+                    precision_name=candidate_precision,
+                    rules=config["precision"][rules_name], torch_module=torch_module,
+                )
+            )
     if kind in {"block_norm_quantized", "final_norm_quantized"}:
         role = "block_norm" if kind == "block_norm_quantized" else "final_norm"
         for record in inventory_groups["norm"]:
@@ -1023,7 +1061,10 @@ def run_experiment_plan(
         dtype=dtype, low_cpu_mem_usage=True,
     )
     original_lm_head_weight = None
-    if plan["kind"] == "lm_head_quantized":
+    if plan["kind"] == "lm_head_quantized" or (
+        plan["kind"] == "candidate_mixed_int8"
+        and plan.get("lm_head_precision", "fp16") != "fp16"
+    ):
         original_lm_head_weight = model.lm_head.weight.detach().to(device="cpu").clone()
     error_report = quantize_model_for_module_plan(model, plan, config, inventory, torch)
     all_int8_equivalence = None

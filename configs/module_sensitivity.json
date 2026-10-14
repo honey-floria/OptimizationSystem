@@ -263,5 +263,33 @@
       "special_max_full_dev_loss": 0,
       "special_max_high_risk_loss": 0
     }
+  },
+  "combination_evaluation": {
+    "pilot_output_root": "out/module_sensitivity/combination_evaluation/pilot",
+    "output_root": "out/module_sensitivity/combination_evaluation/final_evaluation",
+    "advancement_output": "out/module_sensitivity/combination_evaluation/final_evaluation/advancement.json",
+    "pilot_min_net_correct_gain": -80,
+    "determinism_sentinel_plans": [
+      "candidate_l10_mlp_lm_head_int8",
+      "candidate_l10_mlp_lm_head_embedding_int8"
+    ],
+    "plans": [
+      {
+        "plan_id": "candidate_l10_mlp_lm_head_int8",
+        "int8_attention_layers": [],
+        "int8_mlp_layers": [10],
+        "embedding_precision": "fp16",
+        "lm_head_precision": "int8",
+        "selection_basis": "Prospective post-7.2.5 validation of the only statistically positive recovery layer plus the safest lm_head compression."
+      },
+      {
+        "plan_id": "candidate_l10_mlp_lm_head_embedding_int8",
+        "int8_attention_layers": [],
+        "int8_mlp_layers": [10],
+        "embedding_precision": "int8",
+        "lm_head_precision": "int8",
+        "selection_basis": "Prospective memory-oriented post-7.2.5 validation; tests interaction instead of adding isolated gains."
+      }
+    ]
   }
 }

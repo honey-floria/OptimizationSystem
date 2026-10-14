@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from scripts.run_module_sensitivity import _parse_args
+from scripts.run_module_sensitivity import _parse_args, _workflow_config
 from src.quantization.layer_sensitivity_setup import (
     canonical_json_sha256,
     sha256_file,
@@ -474,6 +474,57 @@ class ModuleSensitivityContractTest(unittest.TestCase):
             )
         )
 
+    def test_candidate_combines_layer_and_special_module_precisions(self):
+        candidates = [{
+            "plan_id": "candidate_l01_mlp_lm_head_embedding_int8",
+            "int8_attention_layers": [],
+            "int8_mlp_layers": [1],
+            "embedding_precision": "int8",
+            "lm_head_precision": "int8",
+        }]
+        plans = build_experiment_plans(2, False, candidates)
+        validate_experiment_plans(plans, 2, False)
+        validate_plan_isolation(plans, 2, False)
+        candidate = next(plan for plan in plans if plan["plan_id"] == candidates[0]["plan_id"])
+        assignment = effective_weight_assignment(candidate, 2, False)
+        self.assertEqual(assignment["embedding"], "int8")
+        self.assertEqual(assignment["lm_head"], "int8")
+        self.assertTrue(
+            all(assignment[f"model.layers.1.{name}"] == "int8" for name in MLP_MODULES)
+        )
+
+    def test_combination_workflow_uses_isolated_outputs_and_two_candidates(self):
+        config = {
+            "paths": {"experiment_output_root": "pilot"},
+            "candidate_recovery_plans": [],
+            "final_evaluation": {
+                "output_root": "final",
+                "advancement_output": "final/advancement.json",
+                "required_special_pilot_plans": ["embedding_int8"],
+                "require_complete_pilot_matrix": True,
+                "recovery_candidate_scope": "explicit_pilot_shortlist",
+                "recovery_candidate_plans": ["layer_10_mlp_int8"],
+                "determinism_sentinel_plans": ["embedding_int8"],
+                "advancement_rules": {"recovery_min_net_correct_gain": 1},
+            },
+            "combination_evaluation": {
+                "pilot_output_root": "combo/pilot",
+                "output_root": "combo/final",
+                "advancement_output": "combo/final/advancement.json",
+                "pilot_min_net_correct_gain": -80,
+                "determinism_sentinel_plans": ["candidate_a", "candidate_b"],
+                "plans": [{"plan_id": "candidate_a"}, {"plan_id": "candidate_b"}],
+            },
+        }
+        combined = _workflow_config(config, "combination")
+        self.assertEqual(combined["paths"]["experiment_output_root"], "combo/pilot")
+        self.assertEqual(combined["final_evaluation"]["output_root"], "combo/final")
+        self.assertEqual(
+            combined["final_evaluation"]["recovery_candidate_plans"],
+            ["candidate_a", "candidate_b"],
+        )
+        self.assertEqual(config["paths"]["experiment_output_root"], "pilot")
+
     def test_prepares_experiment_matrix_only_after_real_inspection_validation(self):
         with tempfile.TemporaryDirectory() as temporary_dir:
             root = Path(temporary_dir)
@@ -530,6 +581,8 @@ class ModuleSensitivityContractTest(unittest.TestCase):
         )
         self.assertEqual(run.plan_id, "embedding_int8")
         self.assertEqual(_parse_args(["finalize"]).command, "finalize")
+        combination = _parse_args(["--workflow", "combination", "prepare-experiments"])
+        self.assertEqual(combination.workflow, "combination")
 
     def test_advancement_is_frozen_from_pilot_results(self):
         with tempfile.TemporaryDirectory() as temporary_dir:
