@@ -3121,7 +3121,8 @@ Layer 23 MLP 在 7.2 完整评测中没有通过统计门禁；保留它只是�
 
 ### 真实制品与筛选门禁
 
-每个可运行候选会保存模型配置、Tokenizer、TorchAO 量化 state_dict、完整模块—位宽清单、文件大小、SHA256 和后端
+每个可运行候选使用 TorchAO 内置的 `tile_packed_to_4d` INT4 格式，避免 `plain` 格式对可选 MSLK 包的强制依赖，
+并保存模型配置、Tokenizer、TorchAO 量化 state_dict、完整模块—位宽清单、文件大小、SHA256 和后端
 版本。加载时先在 meta device 上创建空模型，再使用 `assign=True` 装入量化 Tensor，避免先构造一份完整高精度权重；
 SHA256 不一致时拒绝加载。
 

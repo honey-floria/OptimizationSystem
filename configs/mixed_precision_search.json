@@ -6,7 +6,7 @@
     "weight_only": true,
     "compute_dtype": "bfloat16",
     "int4_group_size": 32,
-    "int4_packing_format": "plain",
+    "int4_packing_format": "tile_packed_to_4d",
     "state_dict_format": "pytorch",
     "requires": ["torch", "torchao", "transformers"]
   },
