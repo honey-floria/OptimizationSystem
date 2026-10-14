@@ -3141,7 +3141,7 @@ Traceback 最后一行之外的 warning 判断原因。
 
 | 现象 | 根因 | 修复 | 如何确认 |
 | --- | --- | --- | --- |
-| `Frozen merged model is unavailable` | 示例路径 `/models/data/...` 并不是服务器真实模型目录，或目录缺少 `config.json` | 使用服务器上的合并模型绝对路径；一键脚本在导入 TorchAO 前检查 `MODEL_PATH/config.json` | `test -f "$MODEL_PATH/config.json"` |
+| `Frozen merged model is unavailable` 或 manifest `KeyError: model_path` | 示例路径 `/models/data/...` 并不是服务器真实模型目录，或旧代码只读取顶层 `model_path`，但 7.1 冻结清单实际使用 `merged_model.path` | 优先显式设置服务器合并模型绝对路径；回退逻辑同时兼容 `model_path` 和 `merged_model.path`，一键脚本在显式设置时检查 `MODEL_PATH/config.json` | `test -f "$MODEL_PATH/config.json"` |
 | `Custom filter_fn and FqnToConfig were both specified` | TorchAO 0.17 的 `quantize_` 默认带 Linear filter，而 FQN 配置禁止同时使用 filter | 中间修复曾显式传 `filter_fn=None`；最终实现改为按完整模块名解析策略，再逐个 Linear 调用普通 `quantize_`，不再依赖 `ModuleFqnToConfig` | 源码中应出现 `for name, precision in sorted(assignment.items())` |
 | `ImportError: Requires mslk >= 1.0.0` | TorchAO `plain` INT4 packing 依赖可选 MSLK 包 | 将 `int4_packing_format` 改为 PyTorch 内置的 `tile_packed_to_4d`，不再要求额外安装 MSLK | `grep int4_packing_format configs/mixed_precision_search.json` |
 | `CUDA out of memory ... allocate 1.16 GiB` | 先把完整 7B BF16 权重放进 16 GiB GPU，再为大矩阵建立 padding/packing 临时张量；当时 GPU 仅余约 463 MiB | 高精度母版留在 CPU，每次只移动一个 Linear 到 GPU 完成 packing；量化结束后再移动 BF16 特殊模块 | 导出时用 `nvidia-smi` 观察，不应先出现约 14～15 GiB 的完整 BF16 常驻 |

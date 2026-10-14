@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from src.quantization.mixed_precision import (
+    _resolve_source_model,
     build_candidates,
     candidate_by_id,
     finalize_search,
@@ -95,3 +96,13 @@ def test_finalize_rejects_missing_evidence(tmp_path):
 def test_pending_only_requires_active_evaluation_plans(tmp_path):
     config = _config_for_tmp(tmp_path)
     assert set(pending_evidence(tmp_path, config)) == set(config["evaluation_plan_ids"])
+
+
+def test_source_model_falls_back_to_nested_merged_manifest(tmp_path):
+    model = tmp_path / "merged-model"
+    model.mkdir()
+    (model / "config.json").write_text("{}")
+    manifest = tmp_path / "source.json"
+    manifest.write_text(json.dumps({"merged_model": {"path": str(model)}}))
+    config = _config_for_tmp(tmp_path)
+    assert _resolve_source_model(tmp_path, config, None) == model.resolve()

@@ -204,9 +204,22 @@ def _resolve_source_model(root: Path, config: dict[str, Any], model_path: str | 
     else:
         manifest_path = (root / config["paths"]["source_model_manifest"]).resolve()
         manifest = _read_json(manifest_path)
-        resolved = Path(manifest["model_path"]).expanduser()
+        # The frozen 7.1 manifest stores the merged directory under
+        # merged_model.path.  Also accept model_path for compatibility with
+        # standalone model manifests produced by other stages.
+        manifest_model_path = manifest.get("model_path")
+        if manifest_model_path is None and isinstance(manifest.get("merged_model"), dict):
+            manifest_model_path = manifest["merged_model"].get("path")
+        if not isinstance(manifest_model_path, str) or not manifest_model_path.strip():
+            raise ValueError(
+                f"Source model manifest has neither model_path nor merged_model.path: {manifest_path}. "
+                "Pass --model-path explicitly or set MODEL_PATH when using the shell scripts."
+            )
+        resolved = Path(manifest_model_path).expanduser()
         if not resolved.is_absolute():
             resolved = (manifest_path.parent / resolved).resolve()
+        else:
+            resolved = resolved.resolve()
     if not resolved.is_dir() or not (resolved / "config.json").is_file():
         raise FileNotFoundError(f"Frozen merged model is unavailable: {resolved}")
     return resolved
