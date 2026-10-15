@@ -3149,6 +3149,12 @@ Traceback 最后一行之外的 warning 判断原因。
 | `Cannot copy out of meta tensor; no data` | meta 骨架中的 RoPE 等非持久 buffer 不在 state_dict 内，`assign=True` 不会恢复它们，整模型 `.to(cuda)` 时仍会遇到残留 meta tensor | 在 CPU 构造 BF16 模型骨架以初始化非持久 buffer，再将量化 state_dict 映射到目标 GPU并用 `assign=True` 替换权重 | 加载期间系统内存临时增加约 14～16 GiB，但 GPU 不会出现完整 BF16 权重 |
 | `Benchmark 16/16: bs16-in512-out32` 后 CUDA OOM | 全 INT8 已常驻约 14.47 GiB，16×512 prefill 的 MLP 中间张量还需约 296 MiB，但卡上仅余约 300 MiB，allocator 连续映射空间也不足 | 保留 16 项压力矩阵；runner 将单案例 OOM 记录为容量证据、清理 CUDA cache 并继续流程，不把真实容量上限伪装成成功 | 报告中的该案例为 `status=oom`；候选 `oom_case_count>0` 时性能门禁必定失败 |
 
+OOM 记录功能的首次服务器复跑还暴露了一个处理器自身的问题：原始 CUDA OOM 进入 `except` 时，局部变量 `torch`
+尚未绑定，导致异常处理阶段又抛出 `NameError: name 'torch' is not defined`。修复是在 `run_benchmark()` 入口显式执行
+`torch = service.torch`，并通过模拟 `service.torch.OutOfMemoryError` 的回归测试验证异常能够转换为 `status=oom`，而不是
+再次终止进程。这个二次异常不影响已经完成的质量证据或量化 `.pt`，但由于旧 runner 只在全部案例结束后写报告，
+该次 Benchmark 的前序案例仍需重新执行。
+
 #### 评测加载阶段的 meta tensor 故障
 
 该错误发生在 `run_quality_evaluation()` 调用 `load_mixed_precision_service()` 时，而不是导出或保存阶段。报错前如果

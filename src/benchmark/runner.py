@@ -271,6 +271,7 @@ def run_benchmark(
     prompt: str,
     benchmark_config: dict[str, Any],
 ) -> dict[str, Any]:
+    torch = service.torch
     warmup_runs = int(benchmark_config.get("warmup_runs", 0))
     measured_runs = int(benchmark_config.get("measured_runs", 0))
     if warmup_runs < 0 or measured_runs < 2:

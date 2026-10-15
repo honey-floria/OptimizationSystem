@@ -2,10 +2,13 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from src.benchmark.runner import (
     build_cases,
     percentile,
+    run_benchmark,
     validate_benchmark_report,
 )
 from src.input_validation.model_input import FAIL, PASS
@@ -119,6 +122,49 @@ class BenchmarkRunnerTest(unittest.TestCase):
 
         self.assertTrue(report.complete)
         self.assertIn("OOM cases: 1", report.checks[-1].detail)
+
+    def test_run_benchmark_catches_service_torch_oom(self):
+        class FakeOutOfMemoryError(Exception):
+            pass
+
+        class FakeCuda:
+            @staticmethod
+            def is_available():
+                return False
+
+            @staticmethod
+            def empty_cache():
+                return None
+
+        fake_torch = SimpleNamespace(
+            OutOfMemoryError=FakeOutOfMemoryError,
+            cuda=FakeCuda(),
+        )
+        service = SimpleNamespace(
+            torch=fake_torch,
+            config={"device": "cuda:0"},
+            model_metadata={},
+            environment_metadata=lambda: {},
+        )
+        config = {
+            "warmup_runs": 0,
+            "measured_runs": 2,
+            "matrix": {
+                "batch_sizes": [16],
+                "input_lengths": [512],
+                "output_lengths": [32],
+            },
+        }
+
+        with patch(
+            "src.benchmark.runner._run_sample",
+            side_effect=FakeOutOfMemoryError("CUDA out of memory"),
+        ):
+            report = run_benchmark(service, "prompt", config)
+
+        self.assertEqual(report["oom_case_count"], 1)
+        self.assertEqual(report["completed_case_count"], 0)
+        self.assertEqual(report["cases"][0]["status"], "oom")
 
 
 if __name__ == "__main__":
