@@ -1,0 +1,9 @@
+{
+  "status": "pass",
+  "stage": "7.3",
+  "plan_count": 3,
+  "sample_count_per_plan": 883,
+  "aligned_source_indices": true,
+  "all_error_types_reported": true,
+  "coverage_gaps_declared": true
+}

@@ -3083,6 +3083,53 @@ out/module_sensitivity/
 `candidate_l10_mlp_lm_head_int8` 为 337/883（相对 ALL-I4 +9），Embedding INT8 研究候选为 339/883（+11）；
 二者高风险和长上下文均无净退化。它们仍是 fake-quant 质量证据，不能替代真实部署后端 Benchmark。
 
+## 7.3 金融错误定位（2026-10-15）
+
+7.3 复用 7.4 已完成的三个真实 TorchAO 计划，不重新运行模型。分析入口为
+`scripts/run_financial_error_localization.py`，配置为 `configs/financial_error_localization.json`；它将三个计划的
+883 条 full-dev 预测与 7.1 冻结的业务多标签按 `source_index` 严格对齐，问题文本或索引集合不一致时直接失败。
+运行方式如下：
+
+```bash
+python3 scripts/run_financial_error_localization.py analyze
+python3 scripts/run_financial_error_localization.py validate
+```
+
+金额、利率/比例和日期/期限使用已冻结且允许重叠的 338、567、709 条标签子集。JSON 格式错误定义为解析失败、
+非结构化输出或存在 schema validation error。引用错误目前只能做结构代理：`evidence` 必须非空，且每项符合冻结的
+引用形态；由于数据没有 evidence gold annotation，这个指标不能证明引用语义正确。条款遗漏、不当金融建议、应拒答误答
+分别要求 `clause_required`、`advice_prohibited`、`should_refuse` 样本标注；当前 FinQA 资产没有这些标注，因此输出
+`not_evaluable`，而不是误记为零错误。
+
+三个真实后端计划的错误数如下。金额、利率/比例、日期/期限集合相互重叠，不能横向相加。
+
+| 计划 | 金额 | 利率/比例 | 日期/期限 | JSON 格式 | 引用结构 | 条款遗漏 | 不当建议 | 应拒答误答 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `all_linear_int4` | 202/338 | 369/567 | 429/709 | 6/883 | 6/883 | N/A | N/A | N/A |
+| `all_linear_int8` | 204/338 | 367/567 | 435/709 | 1/883 | 1/883 | N/A | N/A | N/A |
+| `mixed_l10_mlp_lm_head_int8` | 207/338 | 371/567 | 435/709 | 4/883 | 4/883 | N/A | N/A | N/A |
+
+相对真实全 INT4，全 INT8 在完整 dev 恢复 41 题、退化 37 题，净增 4；但金额子集净退化 2 题、日期/期限
+净退化 6 题，仅利率/比例净增 2 题。因此总体净增不代表各金融类别都安全。主混合精度恢复 6 题、退化 11 题，
+完整 dev 净退化 5；金额、利率/比例、日期/期限分别净退化 5、2、6 题。这把 7.4 的总体质量失败进一步定位到
+三个业务标签均出现回归，其中金额和日期/期限更突出。
+
+按场景汇总时，只有 `financial_report_numeric_qa` 具备 883 条冻结预测并标记为 `evaluated`；
+`internal_financial_faq` 和 `credit_policy_compliance_qa` 尚无数据/预测绑定，标记为 `not_evaluable`。自动产物为：
+
+```text
+out/financial_error_localization/
+├── experiment_manifest.json
+├── error_statistics.json
+├── sample_errors.jsonl
+├── report.md
+└── validation.json
+```
+
+`sample_errors.jsonl` 保留逐计划、逐样本标签、错误标志和相对基线转移；`experiment_manifest.json` 记录所有输入与
+输出 SHA256；`validate` 会重算输出哈希并检查验收状态。当前 validation 为 `pass`，报告状态为
+`completed_with_declared_coverage_gaps`，表示 7.3 对现有资产已完成，但不会掩盖 L1/L3 和三类安全标注缺口。
+
 ## 7.4 混合精度搜索实现
 
 ### 为什么选择 TorchAO，而不是直接使用 HQQ `dynamic_config`
@@ -3252,6 +3299,53 @@ MIXED_PRECISION_OUTPUT_ROOT=/大容量磁盘/mixed_precision_search \
 净变化都不得小于 0。性能门禁要求：峰值显存和最差 P95 延迟不超过全 INT4 的 1.15 倍，平均吞吐不低于其 0.85 倍。
 只有四套证据都齐全的候选才进入最终排名；排序优先 full-dev 净增，其次峰值显存和 P95 延迟。
 
+### 7.4 最终结果与结论
+
+三个核心计划已经完成真实 TorchAO 制品导出、full-dev、高风险、长上下文和性能 Benchmark，证据校验完整。
+自动排名只选中 `all_linear_int4`；这里的 `deployment_claims_allowed=true` 指全 INT4 基线具备部署证据，并不表示找到了
+通过门禁的混合精度方案。
+
+| 计划 | Full-dev | 高风险 | 长上下文 | 制品大小 | Benchmark | 自动结论 |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| `all_linear_int4` | 337/883 | 22/91 | 35/89 | 约 5.59 GiB | 16/16，无 OOM | 唯一入选，推荐部署 |
+| `all_linear_int8` | 341/883（+4） | 24/91（+2） | 39/89（+4） | 约 7.61 GiB | 15/16，最后一项 OOM | 质量通过、性能失败 |
+| `mixed_l10_mlp_lm_head_int8` | 332/883（−5） | 23/91（+1） | 36/89（+1） | 约 5.80 GiB | 16/16，无 OOM | 质量失败、未入选 |
+
+逐样本配对转移比净正确数更能解释结果：
+
+| 数据集 | 候选 | 恢复 | 退化 | 净变化 | 原始预测变化 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Full-dev | 全 INT8 | 41 | 37 | +4 | 453 |
+| Full-dev | 主混合精度 | 6 | 11 | −5 | 224 |
+| 高风险 | 全 INT8 | 3 | 1 | +2 | 39 |
+| 高风险 | 主混合精度 | 1 | 0 | +1 | 23 |
+| 长上下文 | 全 INT8 | 6 | 2 | +4 | 55 |
+| 长上下文 | 主混合精度 | 2 | 1 | +1 | 23 |
+
+全 INT8 的 full-dev 净增只有 4 题，但有 78 题发生正确/错误翻转；配对精确二项检验约为 `p=0.73`，不足以证明稳定
+优于全 INT4。它还在 `bs16-in512-out32` 上 OOM，因此只保留为质量参考。主混合精度在高风险和长上下文上略有收益，
+但完整业务集恢复 6 题的同时破坏 11 题，净退化 5 题（配对检验约 `p=0.33`），不满足冻结的非退化门禁。
+
+该真实结果也否定了把 7.2 fake-quant 点估计直接当作部署结论的做法。7.2 中 Embedding FP16 组合曾相对当时的
+fake-quant ALL-I4 得到 +9，而真实 TorchAO 主候选相对真实全 INT4 为 −5。实际分组、scale、packing、Tensor 子类算子和
+kernel workspace 都会改变误差传播；敏感性实验适合缩小候选范围，最终选择必须以真实后端结果为准。
+
+性能报告还存在一个不会改变本轮推荐、但应在后续修正的统计口径问题。当前自动门禁分别取每个计划跨全部 workload 的
+最大峰值/最大 P95 后再求比值；这可能比较的是两个不同 workload，也会让全 INT8 的汇总忽略 OOM 案例。按相同 case
+对齐后：
+
+- 全 INT8 在 15 个共同成功案例上的平均 P95 比为 1.387、平均吞吐比为 1.055，最差 P95 比为 2.938，并有 1 个 OOM；
+- 主混合精度在 16 个共同案例上的平均 P95 比为 1.084、平均吞吐比为 0.934；最差 P95 比为 1.234、最差吞吐比为
+  0.810、最差同案例显存比为 1.600；
+- 因此若按“每个 workload 都必须满足 1.15/0.85 门限”的更严格语义，主混合精度的性能也应判失败。
+
+解析率门禁目前只约束 full-dev。全 INT4 的长上下文解析率为 35 题正确、86/89 可解析，即 96.63%；如果业务要求每个
+子集解析率都至少 99%，则还需要扩展门禁，当前 `deployment_claims_allowed=true` 不能自动覆盖这一更严格要求。
+
+最终决策是部署 `all_linear_int4`，将 `all_linear_int8` 保留为离线质量参考，不部署
+`mixed_l10_mlp_lm_head_int8`。下一步无需重跑 GPU，即可利用现有 Benchmark 报告把性能门禁改为相同 `case_id`
+逐项配对比较，并把逐样本质量转移固化进最终报告。
+
 ### 文件与服务器执行
 
 ```text
@@ -3281,37 +3375,37 @@ python3 scripts/run_mixed_precision_search.py finalize
 `out/mixed_precision_search/`，其中 `exports/` 是真实量化制品，`runs/` 是原始执行结果，`evidence/` 是冻结筛选证据，
 最终推荐写入 `ranking.json`。在 `finalize` 成功且 `deployment_claims_allowed=true` 之前，不把任何候选称为已验证部署配置。
 
-目前正在做的是 7.4 的“真实量化模型导出”，还没有开始跑质量评测。
-之前 7.2 使用的是 fake-quant：临时把权重量化再反量化，用来判断哪些层敏感。它能帮助选择候选，但不能证明模型真正减少了显存，也不能测真实推理速度。
-这一轮则要生成真正采用低比特存储的 TorchAO 模型。
-具体流程是：
-合并后的 BF16 模型
-  ↓
-按模块分配精度
-  ↓
-逐个 Linear 执行真实 INT4/INT8 packing
-  ↓
-检查每个模块是否真的变成目标位宽
-  ↓
-保存真实量化权重、配置、Tokenizer 和 SHA256
-需要导出的六个候选是：
-1. all_linear_int4
-   - 所有可量化 Linear 都是 INT4。
-   - 是后续质量、显存和速度比较的基准。
-2. all_linear_int8
-   - 所有 Linear 都是 INT8。
-   - 作为质量上界，但占用空间更多。
-3. mixed_l10_mlp_int8
-   - 其他 Linear 为 INT4。
-   - 只有 Layer 10 MLP 为 INT8。
-   - 验证只保护最敏感层是否足够。
-4. mixed_l10_mlp_bf16
-   - 其他 Linear 为 INT4。
-   - Layer 10 MLP 保持 BF16。
-   - 判断更高精度保护是否比 INT8 更有价值。
-5. mixed_l10_mlp_lm_head_int8
-   - Layer 10 MLP 和 lm_head 为 INT8。
-   - 这是目前最重要的主候选。
-6. mixed_l10_l23_mlp_lm_head_int8
-   - 再额外保护 Layer 23 MLP。
-   - 用来比较保护一组和两组敏感层的区别，不是默认推荐。
+## 7.5 第 7 章阶段验收（2026-10-15）
+
+阶段验收实现位于 `src/quantization/stage7_acceptance.py`，运行命令为：
+
+```bash
+python3 -m src.quantization.stage7_acceptance --project-root .
+```
+
+验收器不按“文件存在”直接放行，而是联合检查 7.1～7.4 的状态、排名规模、逐 suite 样本数、预测哈希、真实量化
+制品清单、最终质量/性能门禁和 Benchmark 完整性。当前结果为 `complete=true`：
+
+| 验收项 | 结果 | 证据摘要 |
+|---|---|---|
+| 层级敏感性排名 | pass | 28/28 层完成 pilot 排名，3 个预注册候选完成 full-dev 确认 |
+| 模块级敏感性排名 | pass | 7 个恢复候选、4 个特殊模块候选进入最终榜 |
+| 金融业务退化定位 | pass | 主混合精度在金额、利率/比例、日期/期限分别净退化 5/2/6 题 |
+| 可部署混合精度配置 | pass | `all_linear_int4` 使用 Linear INT4 与 Embedding/Norm/KV Cache BF16，最终部署门禁通过 |
+| 业务回归与性能测试 | pass | 883 条 full-dev、91 条高风险、89 条长上下文及 16 项重复 Benchmark 完整 |
+
+这里的 `all_linear_int4` 名称描述的是所有可量化 Linear 的默认位宽，不代表整模型只有一种精度。其计划明确将
+Embedding、Norm 和 KV Cache 保持 BF16，因此在模型级是一套真实的混合精度配置。导出 manifest 已记录约
+6.00 GB state_dict、权重 SHA256 和 `backend_artifact_valid=true`；最终 ranking 进一步确认质量、性能和部署声明均通过。
+
+验收同时保留四条边界：28 层全覆盖排名是 80 条 pilot 证据；full-dev 层级排名只覆盖 3 个预注册候选；模块级
+full-dev 排名只覆盖 11 个预注册晋级候选；金融错误定位只覆盖当前 L2 FinQA 场景，L1/L3 和需要专项标注的安全类别
+仍为 `not_evaluable`。这些边界不阻塞当前核心阶段验收，但禁止把结论外推为全模块、全业务场景或生产合规认证。
+
+正式产物如下：
+
+```text
+out/stage7/
+├── validation.json
+└── report.md
+```

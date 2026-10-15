@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "stage": "7.5",
+  "scope": "degradation_localization_and_mixed_precision",
+  "complete": true,
+  "checks": [
+    {
+      "name": "layer_sensitivity_ranking_generated",
+      "status": "pass",
+      "detail": "28/28 pilot layers ranked; 3 pre-registered layers completed full-dev confirmation."
+    },
+    {
+      "name": "module_sensitivity_ranking_generated",
+      "status": "pass",
+      "detail": "Final ranking contains 7 recovery and 4 special-module candidates."
+    },
+    {
+      "name": "financial_business_degradation_localized",
+      "status": "pass",
+      "detail": "Localized negative business-category transitions for: mixed_l10_mlp_lm_head_int8."
+    },
+    {
+      "name": "deployable_mixed_precision_configuration_generated",
+      "status": "pass",
+      "detail": "Selected plan all_linear_int4 combines low-bit Linear weights with BF16 special modules and passed final gates."
+    },
+    {
+      "name": "mixed_precision_business_regression_and_benchmark_completed",
+      "status": "pass",
+      "detail": "Selected plan has 883 full-dev, 91 high-risk, 89 long-context results and a complete repeated 16-case benchmark."
+    }
+  ],
+  "deliverables": {
+    "sensitive_layer_ranking": true,
+    "business_error_classification_report": true,
+    "mixed_precision_configuration": true,
+    "degradation_localization_script": true,
+    "degradation_analysis_report": true
+  },
+  "selected_deployment_plan": "all_linear_int4",
+  "claim_boundaries": [
+    "Layer full-dev ranking covers the pre-registered candidate subset; the 28-layer ranking is pilot evidence.",
+    "Module ranking covers pre-registered promoted candidates, not every module on full-dev.",
+    "The selected all_linear_int4 plan is mixed precision at model scope: Linear INT4 with Embedding, Norm, and KV Cache BF16.",
+    "Financial localization is complete for the active L2 FinQA scenario; L1/L3 and annotation-dependent safety categories remain not_evaluable."
+  ],
+  "evidence_sha256": {
+    "layer_matrix": "8b5e0a895b0b194314dbbe8939969cd36ca50a468dc1bb433ffcc057fbe75eff",
+    "layer_final_validation": "1b02b55bdde67caba5c0809190a941fd89b588a77c900af6c58317bd4ee56cf1",
+    "layer_ranking": "cb97df526ed53b7c5b687571163fdcd7ac621a6fcbefa87163ed73b50acc4208",
+    "module_validation": "243d3ce4e37f346f0b9ddaac562343800125e999539d925feeec9ffb57309f5b",
+    "module_ranking": "98470fbe1382d542642b020b02e05e4a241900b9066a9ffe3253b3392e71c336",
+    "financial_validation": "666be4019b750a96e8518611170c81d8b317e7024966fc3cbec26d0ece7aa325",
+    "financial_statistics": "9ae17b913c4a7bf1c5018fe53b532b6a449a9f067f0aa78b4cfb781d4b9b9d4c",
+    "mixed_validation": "c2002d0b02d6a8b23730cf5be94541cde8941963c98bacdd06b29815f216b289",
+    "mixed_ranking": "af498a1b781757455762f3447a9f048e3d3f3d3ebede271770a182d688fb28f9",
+    "selected_plan": "6177bcdc0724adbb1a58f3d25ec6af006e8d22747e525759cbe3ea0dcea7f163",
+    "selected_artifact": "73008f7520c2992e19b1ee4c57719b3bec35cedaf04aa6ff7a628e14c739f8cc",
+    "deliverable:sensitive_layer_ranking": "cb97df526ed53b7c5b687571163fdcd7ac621a6fcbefa87163ed73b50acc4208",
+    "deliverable:business_error_classification_report": "9ae17b913c4a7bf1c5018fe53b532b6a449a9f067f0aa78b4cfb781d4b9b9d4c",
+    "deliverable:mixed_precision_configuration": "6177bcdc0724adbb1a58f3d25ec6af006e8d22747e525759cbe3ea0dcea7f163",
+    "deliverable:degradation_localization_script": "bbfea615519763c6305e3f01542b62ae01e18736125515c15b930e47dec4c586",
+    "deliverable:degradation_analysis_report": "ad652b2721223fb890f92683ee62f6cebf96789b3708ce0d1459095bd49a0078"
+  },
+  "created_at": "2026-10-15T04:20:11.222227+00:00"
+}

@@ -52,6 +52,8 @@ configs/
 ├── layer_sensitivity_setup.json      # 7.1.1 合并、输入冻结和 pilot 对比契约
 ├── layer_sensitivity.json            # 7.1.2 逐层精度替换矩阵与 fake-quant 契约
 ├── module_sensitivity.json           # 7.2.1 模块发现、精度规则和 KV Cache 能力契约
+├── financial_error_localization.json # 7.3 错误类型、输入预测与覆盖状态契约
+├── mixed_precision_search.json       # 7.4 TorchAO 候选、质量和性能门禁
 └── environment/
     ├── nvidia_colab_t4.json          # 已采集的 NVIDIA Colab/T4 环境模板
     └── ascend.pending.json           # 等待真实昇腾机器补齐的环境模板
@@ -70,7 +72,9 @@ scripts/
 ├── run_layer_sensitivity.py           # 准备、续跑和汇总 7.1.2 逐层矩阵
 ├── run_module_sensitivity.py          # 7.2 合同、pilot、晋级、最终评测和汇总入口
 ├── run_module_sensitivity_pilot.sh    # 逐进程续跑 7.2.2/7.2.3 完整 pilot 矩阵
-└── run_module_sensitivity_final.sh    # 冻结晋级并续跑 7.2.4/7.2.5 最终评测
+├── run_module_sensitivity_final.sh    # 冻结晋级并续跑 7.2.4/7.2.5 最终评测
+├── run_financial_error_localization.py# 7.3 离线错误定位与制品校验
+└── run_mixed_precision_search.py      # 7.4 真实量化、评测、Benchmark 与筛选
 
 notebooks/
 └── optimization_system_all_colab.ipynb
@@ -132,6 +136,8 @@ src/
 │   ├── finqa_metrics.py              # 数值解析、容差判定和回归分类
 │   ├── baseline_quality.py           # 运行并验证 FP16 FinQA 质量基线
 │   ├── baseline_quality_diagnosis.py # 对错误类型分类并生成人工复核队列
+│   ├── financial_error_localization.py
+│   │                                  # 7.3 错误分类、逐样本转移、场景覆盖和报告
 │   ├── quality_repair.py             # Prompt、JSON 解析、确定性计算和 LoRA 评测核心逻辑
 │   └── stage5_acceptance.py          # 第 5 章 NVIDIA 基线阶段验收
 │
@@ -146,6 +152,7 @@ src/
     ├── module_sensitivity_experiments.py
     │                                  # 7.2.2/7.2.3 计划矩阵、专项 probe、评测和续跑
     ├── module_sensitivity_final.py    # 7.2.4/7.2.5 晋级冻结、完整评测、排名与保护策略
+    ├── stage7_acceptance.py           # 7.5 汇总 7.1～7.4 证据并执行阶段门禁
     └── stage6_acceptance.py          # 第 6 章定制量化阶段验收
 ```
 
@@ -184,6 +191,10 @@ tests/
 ├── test_layer_sensitivity_setup.py   # 7.1.1 输入冻结、层发现与 pilot 配对测试
 ├── test_layer_sensitivity.py         # 7.1.2 矩阵、精度替换、续跑和排名测试
 ├── test_module_sensitivity.py        # 7.2.1 合同、模块发现、共享权重与 KV Cache 测试
+├── test_financial_error_localization.py
+│                                      # 7.3 对齐、分类、退化和哈希校验测试
+├── test_mixed_precision.py           # 7.4 候选、证据与筛选门禁测试
+├── test_stage7_acceptance.py          # 7.5 阶段门禁、部署声明和交付物测试
 │
 ├── test_quantization_framework.py    # 统一量化契约测试
 ├── test_awq.py                       # AWQ 流程测试
@@ -231,6 +242,8 @@ out/
 ├── baseline_quality/                 # 正式 FP16 质量预测和报告
 ├── baseline_quality_experiment/      # 历史/实验性基线质量结果
 ├── baseline_quality_diagnosis/       # 错误分类报告和 50 条人工复核记录
+├── financial_error_localization/     # 7.3 金融错误统计、逐样本转移、场景覆盖与验收
+├── stage7/                            # 7.5 阶段验收 JSON 与评审报告
 ├── benchmark/                        # FP16 性能报告和验证结果
 ├── stage5/                           # 第 5 章基线阶段验收结果
 │

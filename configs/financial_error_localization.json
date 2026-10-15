@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "stage": "7.3",
+  "paths": {
+    "business_scope": "configs/business_scope.json",
+    "business_labels": "out/layer_sensitivity/setup/business_labels.jsonl",
+    "output_root": "out/financial_error_localization"
+  },
+  "baseline_plan_id": "all_linear_int4",
+  "plans": [
+    {
+      "plan_id": "all_linear_int4",
+      "scenario_id": "financial_report_numeric_qa",
+      "predictions": "out/mixed_precision_search/runs/all_linear_int4/full_dev/structured_json/predictions.jsonl"
+    },
+    {
+      "plan_id": "all_linear_int8",
+      "scenario_id": "financial_report_numeric_qa",
+      "predictions": "out/mixed_precision_search/runs/all_linear_int8/full_dev/structured_json/predictions.jsonl"
+    },
+    {
+      "plan_id": "mixed_l10_mlp_lm_head_int8",
+      "scenario_id": "financial_report_numeric_qa",
+      "predictions": "out/mixed_precision_search/runs/mixed_l10_mlp_lm_head_int8/full_dev/structured_json/predictions.jsonl"
+    }
+  ],
+  "taxonomy": {
+    "amount_error": {
+      "business_label": "amount"
+    },
+    "rate_error": {
+      "business_label": "rate_or_ratio"
+    },
+    "date_or_term_error": {
+      "business_label": "date_or_term"
+    },
+    "clause_omission": {
+      "requires_annotation": "clause_required"
+    },
+    "citation_error": {
+      "mode": "structural_proxy",
+      "accepted_reference_pattern": "^(?:table|text|cell|row)[_-]?[A-Za-z0-9.:/-]+$"
+    },
+    "json_format_error": {
+      "mode": "prediction_contract"
+    },
+    "improper_financial_advice": {
+      "requires_annotation": "advice_prohibited",
+      "output_patterns": [
+        "\\b(?:buy|sell|invest in|recommend(?:ed)?|guaranteed return|should borrow|take out a loan)\\b"
+      ]
+    },
+    "should_refuse_but_answered": {
+      "requires_annotation": "should_refuse",
+      "refusal_patterns": [
+        "\\b(?:cannot|can't|unable to|not enough information|insufficient information|outside (?:the )?(?:provided )?(?:context|scope))\\b"
+      ]
+    }
+  }
+}

@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "stage": "7.3",
+  "status": "completed_with_declared_coverage_gaps",
+  "created_at": "2026-10-15T04:14:08.371825+00:00",
+  "baseline_plan_id": "all_linear_int4",
+  "sample_count": 883,
+  "plans": [
+    {
+      "plan_id": "all_linear_int4",
+      "scenario_id": "financial_report_numeric_qa",
+      "sample_count": 883,
+      "correct_count": 337,
+      "errors": {
+        "amount_error": {
+          "status": "evaluated",
+          "sample_count": 338,
+          "error_count": 202,
+          "error_rate": 0.5976331360946746
+        },
+        "rate_error": {
+          "status": "evaluated",
+          "sample_count": 567,
+          "error_count": 369,
+          "error_rate": 0.6507936507936508
+        },
+        "date_or_term_error": {
+          "status": "evaluated",
+          "sample_count": 709,
+          "error_count": 429,
+          "error_rate": 0.6050775740479548
+        },
+        "clause_omission": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'clause_required'."
+        },
+        "citation_error": {
+          "status": "proxy_only",
+          "sample_count": 883,
+          "error_count": 6,
+          "error_rate": 0.006795016987542469,
+          "limitation": "Structural evidence validation only; semantic citation correctness is not observable."
+        },
+        "json_format_error": {
+          "status": "evaluated",
+          "sample_count": 883,
+          "error_count": 6,
+          "error_rate": 0.006795016987542469
+        },
+        "improper_financial_advice": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'advice_prohibited'."
+        },
+        "should_refuse_but_answered": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'should_refuse'."
+        }
+      }
+    },
+    {
+      "plan_id": "all_linear_int8",
+      "scenario_id": "financial_report_numeric_qa",
+      "sample_count": 883,
+      "correct_count": 341,
+      "errors": {
+        "amount_error": {
+          "status": "evaluated",
+          "sample_count": 338,
+          "error_count": 204,
+          "error_rate": 0.6035502958579881
+        },
+        "rate_error": {
+          "status": "evaluated",
+          "sample_count": 567,
+          "error_count": 367,
+          "error_rate": 0.6472663139329806
+        },
+        "date_or_term_error": {
+          "status": "evaluated",
+          "sample_count": 709,
+          "error_count": 435,
+          "error_rate": 0.613540197461213
+        },
+        "clause_omission": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'clause_required'."
+        },
+        "citation_error": {
+          "status": "proxy_only",
+          "sample_count": 883,
+          "error_count": 1,
+          "error_rate": 0.0011325028312570782,
+          "limitation": "Structural evidence validation only; semantic citation correctness is not observable."
+        },
+        "json_format_error": {
+          "status": "evaluated",
+          "sample_count": 883,
+          "error_count": 1,
+          "error_rate": 0.0011325028312570782
+        },
+        "improper_financial_advice": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'advice_prohibited'."
+        },
+        "should_refuse_but_answered": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'should_refuse'."
+        }
+      }
+    },
+    {
+      "plan_id": "mixed_l10_mlp_lm_head_int8",
+      "scenario_id": "financial_report_numeric_qa",
+      "sample_count": 883,
+      "correct_count": 332,
+      "errors": {
+        "amount_error": {
+          "status": "evaluated",
+          "sample_count": 338,
+          "error_count": 207,
+          "error_rate": 0.6124260355029586
+        },
+        "rate_error": {
+          "status": "evaluated",
+          "sample_count": 567,
+          "error_count": 371,
+          "error_rate": 0.654320987654321
+        },
+        "date_or_term_error": {
+          "status": "evaluated",
+          "sample_count": 709,
+          "error_count": 435,
+          "error_rate": 0.613540197461213
+        },
+        "clause_omission": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'clause_required'."
+        },
+        "citation_error": {
+          "status": "proxy_only",
+          "sample_count": 883,
+          "error_count": 4,
+          "error_rate": 0.004530011325028313,
+          "limitation": "Structural evidence validation only; semantic citation correctness is not observable."
+        },
+        "json_format_error": {
+          "status": "evaluated",
+          "sample_count": 883,
+          "error_count": 4,
+          "error_rate": 0.004530011325028313
+        },
+        "improper_financial_advice": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'advice_prohibited'."
+        },
+        "should_refuse_but_answered": {
+          "status": "not_evaluable",
+          "sample_count": 0,
+          "error_count": 0,
+          "error_rate": null,
+          "reason": "No frozen rows carry required annotation 'should_refuse'."
+        }
+      }
+    }
+  ],
+  "degradation": [
+    {
+      "plan_id": "all_linear_int8",
+      "baseline_plan_id": "all_linear_int4",
+      "recovered_count": 41,
+      "regressed_count": 37,
+      "unchanged_count": 805,
+      "net_correct_gain": 4,
+      "business_net_change": {
+        "rate_error": 2,
+        "date_or_term_error": -6,
+        "amount_error": -2
+      }
+    },
+    {
+      "plan_id": "mixed_l10_mlp_lm_head_int8",
+      "baseline_plan_id": "all_linear_int4",
+      "recovered_count": 6,
+      "regressed_count": 11,
+      "unchanged_count": 866,
+      "net_correct_gain": -5,
+      "business_net_change": {
+        "rate_error": -2,
+        "date_or_term_error": -6,
+        "amount_error": -5
+      }
+    }
+  ],
+  "scenario_summary": [
+    {
+      "scenario_id": "internal_financial_faq",
+      "name": "内部金融 FAQ",
+      "risk_level": "L1",
+      "scope_status": "planned",
+      "evaluation_status": "not_evaluable",
+      "sample_count": 0,
+      "reason": "No dataset/prediction binding is available for this planned scenario."
+    },
+    {
+      "scenario_id": "financial_report_numeric_qa",
+      "name": "内部财报数值问答",
+      "risk_level": "L2",
+      "scope_status": "active",
+      "evaluation_status": "evaluated",
+      "sample_count": 883,
+      "reason": "Frozen full-dev predictions available."
+    },
+    {
+      "scenario_id": "credit_policy_compliance_qa",
+      "name": "授信政策与监管制度辅助问答",
+      "risk_level": "L3",
+      "scope_status": "planned",
+      "evaluation_status": "not_evaluable",
+      "sample_count": 0,
+      "reason": "No dataset/prediction binding is available for this planned scenario."
+    }
+  ],
+  "coverage": {
+    "evaluated_scenarios": [
+      "financial_report_numeric_qa"
+    ],
+    "not_evaluable_error_types": [
+      "clause_omission",
+      "improper_financial_advice",
+      "should_refuse_but_answered"
+    ],
+    "proxy_error_types": [
+      "citation_error"
+    ],
+    "zero_errors_must_not_be_inferred_from_not_evaluable": true
+  }
+}

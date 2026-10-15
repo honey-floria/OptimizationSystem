@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "stage": "7.3",
+  "status": "completed",
+  "created_at": "2026-10-15T04:14:08.371825+00:00",
+  "inputs": {
+    "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/business_labels.jsonl": "fcc2b8e02fb2add515eecef26d2c920af9dc35651243c7ddb64b158bf9cdee34",
+    "/Users/ys/PycharmProjects/OptimizationSystem/configs/business_scope.json": "ee51d49b9eef76303b9a598b091d798a262d7e49fceba8e011ed3850e27f585c",
+    "/Users/ys/PycharmProjects/OptimizationSystem/out/mixed_precision_search/runs/all_linear_int4/full_dev/structured_json/predictions.jsonl": "b41e19b30c92d22d72d516d4fea12d252ad21bbd9a70a58ef8a65edf04487a61",
+    "/Users/ys/PycharmProjects/OptimizationSystem/out/mixed_precision_search/runs/all_linear_int8/full_dev/structured_json/predictions.jsonl": "5a3fec725a479aa47edab23b482901246fa0ee33f005bc5d335153885a546219",
+    "/Users/ys/PycharmProjects/OptimizationSystem/out/mixed_precision_search/runs/mixed_l10_mlp_lm_head_int8/full_dev/structured_json/predictions.jsonl": "b617497430c7ddd2097f79a2f5dbfd4b31f24e57f670d8a2e4116a50762a9512"
+  },
+  "outputs": {
+    "sample_errors.jsonl": "05b0880dc3022b1cf7f88f8bf8023952952417d9525460b6c8f9ee69f1af1c0f",
+    "error_statistics.json": "9ae17b913c4a7bf1c5018fe53b532b6a449a9f067f0aa78b4cfb781d4b9b9d4c",
+    "report.md": "ad652b2721223fb890f92683ee62f6cebf96789b3708ce0d1459095bd49a0078",
+    "validation.json": "666be4019b750a96e8518611170c81d8b317e7024966fc3cbec26d0ece7aa325"
+  }
+}
