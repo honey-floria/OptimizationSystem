@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "stage": "7.4",
+  "status": "completed",
+  "completed_at": "2026-10-15T03:32:31.014758+00:00",
+  "candidates": [
+    {
+      "plan_id": "all_linear_int4",
+      "status": "completed",
+      "role": "deployment_baseline",
+      "quality": {
+        "full_dev": {
+          "parse_rate": 0.9932049830124575,
+          "correct": 337,
+          "total": 883,
+          "net_correct": 0
+        },
+        "high_risk": {
+          "parse_rate": 1.0,
+          "correct": 22,
+          "total": 91,
+          "net_correct": 0
+        },
+        "long_context": {
+          "parse_rate": 0.9662921348314607,
+          "correct": 35,
+          "total": 89,
+          "net_correct": 0
+        }
+      },
+      "benchmark": {
+        "peak_memory_mib": 14017.263671875,
+        "p95_latency_ms": 8788.529661530629,
+        "throughput": 71.47399160772484,
+        "completed_case_count": 16,
+        "oom_case_count": 0
+      },
+      "performance_vs_all_int4": {
+        "peak_memory_ratio": 1.0,
+        "p95_latency_ratio": 1.0,
+        "throughput_ratio": 1.0,
+        "oom_case_count": 0
+      },
+      "quality_pass": true,
+      "performance_pass": true,
+      "selected": true,
+      "eligible_rank": 1
+    },
+    {
+      "plan_id": "all_linear_int8",
+      "status": "completed",
+      "role": "quality_reference",
+      "quality": {
+        "full_dev": {
+          "parse_rate": 0.9988674971687429,
+          "correct": 341,
+          "total": 883,
+          "net_correct": 4
+        },
+        "high_risk": {
+          "parse_rate": 1.0,
+          "correct": 24,
+          "total": 91,
+          "net_correct": 2
+        },
+        "long_context": {
+          "parse_rate": 1.0,
+          "correct": 39,
+          "total": 89,
+          "net_correct": 4
+        }
+      },
+      "benchmark": {
+        "peak_memory_mib": 12717.6640625,
+        "p95_latency_ms": 3169.6989075746387,
+        "throughput": 67.93504588476992,
+        "completed_case_count": 15,
+        "oom_case_count": 1
+      },
+      "performance_vs_all_int4": {
+        "peak_memory_ratio": 0.9072857841732272,
+        "p95_latency_ratio": 0.3606631631965838,
+        "throughput_ratio": 0.9504862448094695,
+        "oom_case_count": 1
+      },
+      "quality_pass": true,
+      "performance_pass": false,
+      "selected": false
+    },
+    {
+      "plan_id": "mixed_l10_mlp_int8",
+      "status": "not_evaluated",
+      "reason": "outside evaluation_plan_ids",
+      "selected": false
+    },
+    {
+      "plan_id": "mixed_l10_mlp_bf16",
+      "status": "not_evaluated",
+      "reason": "outside evaluation_plan_ids",
+      "selected": false
+    },
+    {
+      "plan_id": "mixed_l10_mlp_lm_head_int8",
+      "status": "completed",
+      "role": "primary",
+      "quality": {
+        "full_dev": {
+          "parse_rate": 0.9954699886749717,
+          "correct": 332,
+          "total": 883,
+          "net_correct": -5
+        },
+        "high_risk": {
+          "parse_rate": 1.0,
+          "correct": 23,
+          "total": 91,
+          "net_correct": 1
+        },
+        "long_context": {
+          "parse_rate": 0.9887640449438202,
+          "correct": 36,
+          "total": 89,
+          "net_correct": 1
+        }
+      },
+      "benchmark": {
+        "peak_memory_mib": 13609.3740234375,
+        "p95_latency_ms": 8517.054167762399,
+        "throughput": 66.98959182091897,
+        "completed_case_count": 16,
+        "oom_case_count": 0
+      },
+      "performance_vs_all_int4": {
+        "peak_memory_ratio": 0.9709009077673332,
+        "p95_latency_ratio": 0.9691102489012993,
+        "throughput_ratio": 0.9372582993347024,
+        "oom_case_count": 0
+      },
+      "quality_pass": false,
+      "performance_pass": true,
+      "selected": false
+    },
+    {
+      "plan_id": "mixed_l10_l23_mlp_lm_head_int8",
+      "status": "not_evaluated",
+      "reason": "outside evaluation_plan_ids",
+      "selected": false
+    },
+    {
+      "plan_id": "mixed_l10_mlp_lm_head_embedding_int8",
+      "status": "unsupported",
+      "reason": "torchao Linear weight-only workflow does not quantize nn.Embedding",
+      "selected": false
+    }
+  ],
+  "eligible_ranking": [
+    {
+      "plan_id": "all_linear_int4",
+      "status": "completed",
+      "role": "deployment_baseline",
+      "quality": {
+        "full_dev": {
+          "parse_rate": 0.9932049830124575,
+          "correct": 337,
+          "total": 883,
+          "net_correct": 0
+        },
+        "high_risk": {
+          "parse_rate": 1.0,
+          "correct": 22,
+          "total": 91,
+          "net_correct": 0
+        },
+        "long_context": {
+          "parse_rate": 0.9662921348314607,
+          "correct": 35,
+          "total": 89,
+          "net_correct": 0
+        }
+      },
+      "benchmark": {
+        "peak_memory_mib": 14017.263671875,
+        "p95_latency_ms": 8788.529661530629,
+        "throughput": 71.47399160772484,
+        "completed_case_count": 16,
+        "oom_case_count": 0
+      },
+      "performance_vs_all_int4": {
+        "peak_memory_ratio": 1.0,
+        "p95_latency_ratio": 1.0,
+        "throughput_ratio": 1.0,
+        "oom_case_count": 0
+      },
+      "quality_pass": true,
+      "performance_pass": true,
+      "selected": true,
+      "eligible_rank": 1
+    }
+  ],
+  "recommendation": "all_linear_int4",
+  "deployment_claims_allowed": true
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "7.4",
+  "status": "completed",
+  "plan_id": "mixed_l10_mlp_lm_head_int8",
+  "suite": "high_risk",
+  "metrics": {
+    "total": 91,
+    "parsed": 91,
+    "correct": 23,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.25274725274725274
+  },
+  "structured_output_rate": 1.0,
+  "format_retry_count": 1,
+  "predictions_sha256": "c933a650b4835079dba7b67f0110095f6f71adb60b62cdb05691ab60569fcbb1",
+  "duration_seconds": 306.4936110691633
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "7.4",
+  "status": "completed",
+  "plan_id": "mixed_l10_mlp_lm_head_int8",
+  "suite": "long_context",
+  "metrics": {
+    "total": 89,
+    "parsed": 88,
+    "correct": 36,
+    "parse_rate": 0.9887640449438202,
+    "numeric_accuracy": 0.4044943820224719
+  },
+  "structured_output_rate": 0.9887640449438202,
+  "format_retry_count": 1,
+  "predictions_sha256": "14494e2290ac180ccf8df8c53b09b7300db2bd418dc79fb8d9be3b6f5bb136f1",
+  "duration_seconds": 363.24468215112574
+}
