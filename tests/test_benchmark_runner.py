@@ -87,11 +87,11 @@ class BenchmarkRunnerTest(unittest.TestCase):
 
         self.assertEqual(len(cases), 4)
 
-    def test_complete_report_passes_eleven_checks(self):
+    def test_complete_report_passes_all_checks(self):
         report = self.validate(self.complete_report())
 
         self.assertTrue(report.complete)
-        self.assertEqual([check.status for check in report.checks], [PASS] * 11)
+        self.assertEqual([check.status for check in report.checks], [PASS] * 12)
 
     def test_single_batch_size_fails_matrix_check(self):
         payload = self.complete_report()
@@ -102,6 +102,23 @@ class BenchmarkRunnerTest(unittest.TestCase):
         report = self.validate(payload)
 
         self.assertEqual(report.checks[8].status, FAIL)
+
+    def test_oom_case_is_valid_capacity_evidence(self):
+        payload = self.complete_report()
+        payload["cases"][-1] = {
+            "case_id": "bs2-in512-out32",
+            "batch_size": 2,
+            "input_tokens": 512,
+            "output_tokens": 32,
+            "status": "oom",
+            "error": {"type": "torch.OutOfMemoryError", "message": "CUDA out of memory"},
+            "memory_at_failure": {"allocated_mib": 15000.0, "reserved_mib": 15500.0},
+        }
+
+        report = self.validate(payload)
+
+        self.assertTrue(report.complete)
+        self.assertIn("OOM cases: 1", report.checks[-1].detail)
 
 
 if __name__ == "__main__":

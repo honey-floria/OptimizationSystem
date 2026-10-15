@@ -585,14 +585,19 @@ def _quality_summary(payload: dict[str, Any]) -> dict[str, float | int]:
     }
 
 
-def _benchmark_summary(payload: dict[str, Any]) -> dict[str, float]:
+def _benchmark_summary(payload: dict[str, Any]) -> dict[str, float | int]:
     cases = payload.get("cases", [])
     if not cases:
         raise ValueError("Benchmark evidence has no cases")
+    completed = [row for row in cases if row.get("status", "completed") == "completed"]
+    if not completed:
+        raise ValueError("Benchmark evidence has no completed cases")
     return {
-        "peak_memory_mib": max(float(row["memory"]["peak_allocated_mib"]) for row in cases),
-        "p95_latency_ms": max(float(row["latency_ms"]["end_to_end"]["p95"]) for row in cases),
-        "throughput": sum(float(row["throughput"]["mean_output_tokens_per_second"]) for row in cases) / len(cases),
+        "peak_memory_mib": max(float(row["memory"]["peak_allocated_mib"]) for row in completed),
+        "p95_latency_ms": max(float(row["latency_ms"]["end_to_end"]["p95"]) for row in completed),
+        "throughput": sum(float(row["throughput"]["mean_output_tokens_per_second"]) for row in completed) / len(completed),
+        "completed_case_count": len(completed),
+        "oom_case_count": sum(row.get("status") == "oom" for row in cases),
     }
 
 
@@ -615,6 +620,8 @@ def finalize_search(project_root: str | Path, config: dict[str, Any]) -> dict[st
     if baseline_id not in active_ids:
         raise ValueError(f"Performance baseline is not active: {baseline_id}")
     baseline_benchmark = _benchmark_summary(_load_frozen_evidence(evidence_root, baseline_id, "benchmark"))
+    if baseline_benchmark["oom_case_count"]:
+        raise ValueError("The all-INT4 performance baseline contains OOM cases; the workload contract needs review")
     baseline_quality = {
         suite: _quality_summary(_load_frozen_evidence(evidence_root, baseline_id, suite))
         for suite in ("full_dev", "high_risk", "long_context")
@@ -635,10 +642,11 @@ def finalize_search(project_root: str | Path, config: dict[str, Any]) -> dict[st
             "peak_memory_ratio": benchmark["peak_memory_mib"] / baseline_benchmark["peak_memory_mib"],
             "p95_latency_ratio": benchmark["p95_latency_ms"] / baseline_benchmark["p95_latency_ms"],
             "throughput_ratio": benchmark["throughput"] / baseline_benchmark["throughput"],
+            "oom_case_count": benchmark["oom_case_count"],
         }
         qg, pg = config["quality_gates"], config["performance_gates"]
         quality_pass = quality["full_dev"]["parse_rate"] >= qg["min_parse_rate"] and quality["full_dev"]["net_correct"] >= qg["min_full_dev_net_correct"] and quality["high_risk"]["net_correct"] >= qg["min_high_risk_net_correct"] and quality["long_context"]["net_correct"] >= qg["min_long_context_net_correct"]
-        performance_pass = perf["peak_memory_ratio"] <= pg["max_peak_memory_ratio"] and perf["p95_latency_ratio"] <= pg["max_p95_latency_ratio"] and perf["throughput_ratio"] >= pg["min_throughput_ratio"]
+        performance_pass = perf["oom_case_count"] == 0 and perf["peak_memory_ratio"] <= pg["max_peak_memory_ratio"] and perf["p95_latency_ratio"] <= pg["max_p95_latency_ratio"] and perf["throughput_ratio"] >= pg["min_throughput_ratio"]
         rows.append({"plan_id": candidate.plan_id, "status": "completed", "role": candidate.role, "quality": quality, "benchmark": benchmark, "performance_vs_all_int4": perf, "quality_pass": quality_pass, "performance_pass": performance_pass, "selected": quality_pass and performance_pass})
     eligible = [row for row in rows if row.get("selected")]
     eligible.sort(key=lambda row: (-row["quality"]["full_dev"]["net_correct"], row["benchmark"]["peak_memory_mib"], row["benchmark"]["p95_latency_ms"]))
@@ -651,12 +659,12 @@ def finalize_search(project_root: str | Path, config: dict[str, Any]) -> dict[st
         "",
         f"Recommendation: `{result['recommendation']}`" if result["recommendation"] else "Recommendation: none (no candidate passed both gates)",
         "",
-        "| Plan | Full-dev net | High-risk net | Long-context net | Peak memory ratio | P95 latency ratio | Throughput ratio | Selected |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+        "| Plan | Full-dev net | High-risk net | Long-context net | Peak memory ratio | P95 latency ratio | Throughput ratio | OOM cases | Selected |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for row in rows:
         if row["status"] != "completed":
-            report_lines.append(f"| `{row['plan_id']}` | — | — | — | — | — | — | no (`{row['status']}`) |")
+            report_lines.append(f"| `{row['plan_id']}` | — | — | — | — | — | — | — | no (`{row['status']}`) |")
             continue
         report_lines.append(
             f"| `{row['plan_id']}` | {row['quality']['full_dev']['net_correct']} | "
@@ -664,6 +672,7 @@ def finalize_search(project_root: str | Path, config: dict[str, Any]) -> dict[st
             f"{row['performance_vs_all_int4']['peak_memory_ratio']:.3f} | "
             f"{row['performance_vs_all_int4']['p95_latency_ratio']:.3f} | "
             f"{row['performance_vs_all_int4']['throughput_ratio']:.3f} | "
+            f"{row['performance_vs_all_int4']['oom_case_count']} | "
             f"{'yes' if row['selected'] else 'no'} |"
         )
     _write_text(output / "report.md", "\n".join(report_lines))

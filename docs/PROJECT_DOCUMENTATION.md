@@ -3127,8 +3127,8 @@ Layer 23 MLP 在 7.2 完整评测中没有通过统计门禁；保留它只是�
 
 每个可运行候选使用 TorchAO 内置的 `tile_packed_to_4d` INT4 格式，避免 `plain` 格式对可选 MSLK 包的强制依赖，
 并保存模型配置、Tokenizer、TorchAO 量化 state_dict、完整模块—位宽清单、文件大小、SHA256 和后端
-版本。加载时先在 meta device 上创建空模型，再使用 `assign=True` 装入量化 Tensor，避免先构造一份完整高精度权重；
-SHA256 不一致时拒绝加载。
+版本。加载时先在 CPU 上创建 BF16 模型骨架，正确初始化不写入 state_dict 的非持久 buffer，再将已经映射到目标
+GPU 的量化 Tensor 通过 `assign=True` 替换进去；SHA256 不一致或 state_dict 键不匹配时拒绝加载。
 
 导出阶段同样不能先把完整 7B BF16 模型放到 16 GiB GPU 后再量化，否则 INT4 padding/packing 的临时张量会造成
 OOM。实现会把高精度母版留在 CPU，并对单个 Linear 调用 TorchAO `quantize_(..., device=cuda)`，逐模块流式搬运和量化；全部 packed
@@ -3136,7 +3136,7 @@ OOM。实现会把高精度母版留在 CPU，并对单个 Linear 调用 TorchAO
 
 ### 7.4 导出问题与排障记录
 
-首次在 16 GiB NVIDIA GPU 上执行真实混合精度导出时，先后遇到了四类问题。它们发生在不同阶段，不能只根据
+首次在 16 GiB NVIDIA GPU 上执行真实混合精度导出与评测时，先后遇到了六类问题。它们发生在不同阶段，不能只根据
 Traceback 最后一行之外的 warning 判断原因。
 
 | 现象 | 根因 | 修复 | 如何确认 |
@@ -3147,6 +3147,48 @@ Traceback 最后一行之外的 warning 判断原因。
 | `CUDA out of memory ... allocate 1.16 GiB` | 先把完整 7B BF16 权重放进 16 GiB GPU，再为大矩阵建立 padding/packing 临时张量；当时 GPU 仅余约 463 MiB | 高精度母版留在 CPU，每次只移动一个 Linear 到 GPU 完成 packing；量化结束后再移动 BF16 特殊模块 | 导出时用 `nvidia-smi` 观察，不应先出现约 14～15 GiB 的完整 BF16 常驻 |
 | `basic_ios::clear: iostream error` 出现在 `torch.save` | 量化已经完成，但输出文件系统空间不足、用户 quota 超限，或网络文件系统无法完成约 4～8 GiB 的大文件 | 改为 `.partial` 临时文件原子写入，失败时自动清理；必要时用 `MIXED_PRECISION_OUTPUT_ROOT` 改到大容量 scratch | 同时检查 `df -h`、`df -i`、`quota -s` 和输出目录已有占用 |
 | `Cannot copy out of meta tensor; no data` | meta 骨架中的 RoPE 等非持久 buffer 不在 state_dict 内，`assign=True` 不会恢复它们，整模型 `.to(cuda)` 时仍会遇到残留 meta tensor | 在 CPU 构造 BF16 模型骨架以初始化非持久 buffer，再将量化 state_dict 映射到目标 GPU并用 `assign=True` 替换权重 | 加载期间系统内存临时增加约 14～16 GiB，但 GPU 不会出现完整 BF16 权重 |
+| `Benchmark 16/16: bs16-in512-out32` 后 CUDA OOM | 全 INT8 已常驻约 14.47 GiB，16×512 prefill 的 MLP 中间张量还需约 296 MiB，但卡上仅余约 300 MiB，allocator 连续映射空间也不足 | 保留 16 项压力矩阵；runner 将单案例 OOM 记录为容量证据、清理 CUDA cache 并继续流程，不把真实容量上限伪装成成功 | 报告中的该案例为 `status=oom`；候选 `oom_case_count>0` 时性能门禁必定失败 |
+
+#### 评测加载阶段的 meta tensor 故障
+
+该错误发生在 `run_quality_evaluation()` 调用 `load_mixed_precision_service()` 时，而不是导出或保存阶段。报错前如果
+三个目录中已经存在有效的 `quantized_model_manifest.json`，对应 `.pt` 制品仍然有效，不需要删除或重新导出。旧加载流程为：
+
+```text
+meta device 创建模型骨架
+  → 量化 state_dict 使用 assign=True 恢复持久参数和 buffer
+  → RoPE 等非持久 buffer 仍为 meta tensor
+  → model.to(cuda)
+  → NotImplementedError: Cannot copy out of meta tensor
+```
+
+原因是 PyTorch state_dict 不保存 `persistent=False` 的 buffer。`assign=True` 只能替换 state_dict 中实际存在的条目，
+不能为缺失的 meta buffer 补充数据；直接改用 `to_empty()` 虽能分配存储，却不能恢复这些 buffer 的正确初始化值。因此修复后
+不使用 meta 骨架，而是在 CPU 上正常构造 BF16 骨架：
+
+```text
+CPU 创建 BF16 模型骨架并初始化全部非持久 buffer
+  → torch.load(..., map_location=cuda) 恢复 TorchAO 量化 state_dict
+  → load_state_dict(assign=True) 用量化张量替换 CPU 权重
+  → 检查 missing_keys / unexpected_keys 必须为空
+  → model.to(cuda) 只需搬运剩余的小型 CPU buffer
+```
+
+此方案的峰值系统内存会临时增加约 14～16 GiB，建议运行前至少保留约 20 GiB 可用内存。修复后的恢复步骤是先用较短的
+高风险集验证加载，再重新启动完整脚本；断点逻辑会跳过已有导出和已有证据：
+
+```bash
+free -h
+nvidia-smi
+
+python3 scripts/run_mixed_precision_search.py evaluate \
+  --plan-id all_linear_int4 \
+  --suite high_risk \
+  --device cuda:0
+
+MODEL_PATH=/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16 \
+  bash scripts/run_mixed_precision_search.sh
+```
 
 日志中的以下内容只是 TorchAO/PyTorch 弃用警告，不是上述失败的直接原因：
 

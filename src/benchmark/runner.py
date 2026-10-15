@@ -282,22 +282,52 @@ def run_benchmark(
             f"Benchmark {case_index}/{len(cases)}: {case.case_id}",
             flush=True,
         )
-        for _ in range(warmup_runs):
-            _run_sample(
-                service, prompt, case, bool(benchmark_config.get("use_cache", True))
+        try:
+            for _ in range(warmup_runs):
+                _run_sample(
+                    service, prompt, case, bool(benchmark_config.get("use_cache", True))
+                )
+            samples = [
+                _run_sample(
+                    service, prompt, case, bool(benchmark_config.get("use_cache", True))
+                )
+                for _ in range(measured_runs)
+            ]
+        except torch.OutOfMemoryError as exc:
+            allocated_mib = (
+                torch.cuda.memory_allocated() / MIB if torch.cuda.is_available() else 0.0
             )
-        samples = [
-            _run_sample(
-                service, prompt, case, bool(benchmark_config.get("use_cache", True))
+            reserved_mib = (
+                torch.cuda.memory_reserved() / MIB if torch.cuda.is_available() else 0.0
             )
-            for _ in range(measured_runs)
-        ]
+            case_reports.append(
+                {
+                    "case_id": case.case_id,
+                    "batch_size": case.batch_size,
+                    "input_tokens": case.input_tokens,
+                    "output_tokens": case.output_tokens,
+                    "status": "oom",
+                    "error": {
+                        "type": "torch.OutOfMemoryError",
+                        "message": str(exc),
+                    },
+                    "memory_at_failure": {
+                        "allocated_mib": allocated_mib,
+                        "reserved_mib": reserved_mib,
+                    },
+                }
+            )
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            print(f"OOM recorded for {case.case_id}; continuing.", flush=True)
+            continue
         case_reports.append(
             {
                 "case_id": case.case_id,
                 "batch_size": case.batch_size,
                 "input_tokens": case.input_tokens,
                 "output_tokens": case.output_tokens,
+                "status": "completed",
                 "samples": samples,
                 "latency_ms": {
                     "ttft": _distribution([row["ttft_ms"] for row in samples]),
@@ -352,6 +382,10 @@ def run_benchmark(
             "synthetic_length_control": True,
         },
         "cases": case_reports,
+        "completed_case_count": sum(
+            row.get("status", "completed") == "completed" for row in case_reports
+        ),
+        "oom_case_count": sum(row.get("status") == "oom" for row in case_reports),
     }
 
 
@@ -368,6 +402,10 @@ def validate_benchmark_report(
 ) -> BenchmarkValidationReport:
     report_path, report = _load_json(report_file)
     cases = report.get("cases", [])
+    completed_cases = [
+        case for case in cases if case.get("status", "completed") == "completed"
+    ]
+    oom_cases = [case for case in cases if case.get("status") == "oom"]
     samples = _all_samples(report)
     command_ready = report.get("command") == "python -m src.benchmark.runner run"
     ttft_ready = bool(samples) and all(row.get("ttft_ms", 0) > 0 for row in samples)
@@ -383,18 +421,26 @@ def validate_benchmark_report(
     batch_throughput_ready = bool(samples) and all(
         row.get("requests_per_second", 0) > 0 for row in samples
     )
-    percentile_ready = bool(cases) and all(
+    percentile_ready = bool(completed_cases) and all(
         0 < latency.get("p50", 0)
         <= latency.get("p95", 0)
         <= latency.get("p99", 0)
-        for case in cases
+        for case in completed_cases
         for latency in (case.get("latency_ms", {}).get("end_to_end", {}),)
     )
-    memory_ready = bool(cases) and all(
+    memory_ready = bool(completed_cases) and all(
         case.get("memory", {}).get("model_allocated_mib", 0) > 0
         and case.get("memory", {}).get("peak_allocated_mib", 0)
         >= case.get("memory", {}).get("model_allocated_mib", 0)
         and case.get("memory", {}).get("kv_cache_mib", 0) > 0
+        for case in completed_cases
+    )
+    case_outcomes_ready = bool(cases) and all(
+        case.get("status", "completed") in {"completed", "oom"}
+        and (
+            case.get("status", "completed") == "completed"
+            or case.get("error", {}).get("type") == "torch.OutOfMemoryError"
+        )
         for case in cases
     )
     batch_sizes = {case.get("batch_size") for case in cases}
@@ -425,6 +471,7 @@ def validate_benchmark_report(
         CheckResult("batch_size_matrix_measured", PASS if batch_matrix_ready else FAIL, "Batch size one and larger batches are covered."),
         CheckResult("input_output_length_matrix_measured", PASS if length_matrix_ready else FAIL, "Multiple input and output lengths are covered."),
         CheckResult("fp16_or_bf16_baseline_report_generated", PASS if baseline_report_ready else FAIL, "Baseline model and runtime metadata are complete."),
+        CheckResult("benchmark_case_outcomes_recorded", PASS if case_outcomes_ready else FAIL, f"All cases have a completed or OOM outcome; OOM cases: {len(oom_cases)}."),
     ]
     return BenchmarkValidationReport(str(report_path), checks)
 
