@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "format": "torchao-mixed-weight-only",
+  "status": "completed",
+  "plan": {
+    "plan_id": "mixed_l10_mlp_lm_head_int8",
+    "description": "其余 Linear INT4，Layer 10 MLP 与 lm_head 使用 INT8；当前主部署候选。",
+    "default_linear_precision": "int4",
+    "overrides": {
+      "model.layers.10.mlp": "int8",
+      "lm_head": "int8"
+    },
+    "special_modules": {
+      "embedding": "bf16",
+      "norm": "bf16",
+      "kv_cache": "bf16"
+    },
+    "runnable": true,
+    "role": "primary",
+    "unsupported_reason": null
+  },
+  "model_path": "/userhome/cs5/u3680889/OptimizationSystem/out/mixed_precision_search/exports/mixed_l10_mlp_lm_head_int8",
+  "source_model_path": "/userhome/cs5/u3680889/OptimizationSystem/models/data/Qwen2.5-7B-Instruct-QLoRA-step724-merged-fp16",
+  "state_dict": "/userhome/cs5/u3680889/OptimizationSystem/out/mixed_precision_search/exports/mixed_l10_mlp_lm_head_int8/mixed_precision_state_dict.pt",
+  "state_dict_bytes": 6223261471,
+  "state_dict_sha256": "b9d08addaef2c1f1e9e451b0b1239baa7e8a60fbdc9812d9d9c0ce73a5d5c084",
+  "module_assignment": "/userhome/cs5/u3680889/OptimizationSystem/out/mixed_precision_search/exports/mixed_l10_mlp_lm_head_int8/module_assignment.json",
+  "backend_versions": {
+    "torch": "2.14.1",
+    "torchao": "0.18.0",
+    "transformers": "5.18.0"
+  },
+  "backend_artifact_valid": true,
+  "deployment_claims_allowed": false
+}

@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "experiment_name": "finqa-fp16-quality-repair-4080",
+  "created_at": "2026-10-14T21:11:44.766719+00:00",
+  "dataset": {
+    "role": "long_context",
+    "size": 89,
+    "source_size": 89,
+    "version": null,
+    "sha256": null
+  },
+  "variants": [
+    {
+      "variant": "structured_json",
+      "output_mode": "json",
+      "calculator_enabled": false,
+      "stable_cell_ids": false,
+      "cell_ids_only": false,
+      "fallback_to_structured": false,
+      "question_routing": false,
+      "prompt_suffix": "\nReturn exactly one JSON object and no other text. Use this schema: {\"evidence\":[\"table field and year\"],\"formula\":\"numeric arithmetic formula\",\"value\":0,\"unit\":\"million|percent|dollars|shares|times|multiple|mmboe|\"}. Preserve the table column, row, year, and unit in evidence. Use times or multiple for a ratio, and mmboe when the table uses that unit. The value must be the final answer.",
+      "metrics": {
+        "total": 89,
+        "parsed": 89,
+        "correct": 39,
+        "parse_rate": 1.0,
+        "numeric_accuracy": 0.43820224719101125
+      },
+      "structured_output_rate": 1.0,
+      "calculator_use_rate": 0.0,
+      "format_retry_count": 1,
+      "validation_failure_count": 0,
+      "fallback_count": 0,
+      "duration_seconds": 323.9490046990104,
+      "predictions_file": "structured_json/predictions.jsonl",
+      "predictions_sha256": "b44f49b5054b475d734ac4105a39bfd552054a361817efb7c4721ec9700c34cb"
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "formula",
+      "value",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "formula": {
+        "type": "string"
+      },
+      "value": {
+        "type": "number"
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "evidence_operation_schema": {
+    "type": "object",
+    "required": [
+      "evidence",
+      "operands",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "cell_id",
+            "value"
+          ],
+          "properties": {
+            "cell_id": {
+              "type": "string",
+              "pattern": "^r[0-9]+c[0-9]+$"
+            },
+            "value": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "operands": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "cell_ids_operation_schema": {
+    "type": "object",
+    "required": [
+      "cell_ids",
+      "operation",
+      "unit"
+    ],
+    "properties": {
+      "cell_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "absolute_difference",
+          "add",
+          "average",
+          "difference",
+          "divide",
+          "multiply",
+          "percent",
+          "percent_change",
+          "percentage",
+          "ratio",
+          "subtract",
+          "sum"
+        ]
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "steps_operation_schema": {
+    "type": "object",
+    "required": [
+      "steps",
+      "unit"
+    ],
+    "properties": {
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "operation",
+            "operands"
+          ],
+          "properties": {
+            "operation": {
+              "type": "string",
+              "enum": [
+                "absolute_difference",
+                "add",
+                "average",
+                "difference",
+                "divide",
+                "multiply",
+                "percent",
+                "percent_change",
+                "percentage",
+                "ratio",
+                "subtract",
+                "sum"
+              ]
+            },
+            "operands": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "unit": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "candidate_cell_ids_operation_schema": {
+    "type": "object",
+    "required": [
+      "candidates"
+    ],
+    "properties": {
+      "candidates": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "required": [
+            "cell_ids",
+            "operation",
+            "unit"
+          ],
+          "properties": {
+            "cell_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "absolute_difference",
+                "add",
+                "average",
+                "difference",
+                "divide",
+                "multiply",
+                "percent",
+                "percent_change",
+                "percentage",
+                "ratio",
+                "subtract",
+                "sum"
+              ]
+            },
+            "unit": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "generation": {
+    "max_new_tokens": 256,
+    "do_sample": false,
+    "num_beams": 1
+  },
+  "scoring": {
+    "tolerance": 0.0001,
+    "numeric_references": "native display scale",
+    "text_references": "unit-normalized scale"
+  },
+  "note": "Few-shot examples must come from calibration/train, never evaluation dev/test."
+}

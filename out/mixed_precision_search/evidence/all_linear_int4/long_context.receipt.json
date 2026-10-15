@@ -1,0 +1,19 @@
+{
+  "plan_id": "all_linear_int4",
+  "suite": "long_context",
+  "source": "/userhome/cs5/u3680889/OptimizationSystem/out/mixed_precision_search/runs/all_linear_int4/long_context/result.json",
+  "evidence": "/userhome/cs5/u3680889/OptimizationSystem/out/mixed_precision_search/evidence/all_linear_int4/long_context.json",
+  "sha256": "0fa8296e70f16a2063c62bcf5f87ae885661d71a86296031bfd92c250b6d9554",
+  "top_level_keys": [
+    "duration_seconds",
+    "format_retry_count",
+    "metrics",
+    "plan_id",
+    "predictions_sha256",
+    "schema_version",
+    "stage",
+    "status",
+    "structured_output_rate",
+    "suite"
+  ]
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "stage": "7.4",
   "status": "prepared",
-  "created_at": "2026-10-14T18:23:01.392073+00:00",
+  "created_at": "2026-10-14T19:20:02.751199+00:00",
   "backend": {
     "name": "torchao",
     "weight_only": true,
@@ -16,9 +16,9 @@
       "transformers"
     ]
   },
-  "source_model_manifest": "/Users/ys/PycharmProjects/OptimizationSystem/out/layer_sensitivity/setup/merged_model_manifest.json",
-  "module_policy": "/Users/ys/PycharmProjects/OptimizationSystem/out/module_sensitivity/final_evaluation/protection_policy.json",
-  "combination_ranking": "/Users/ys/PycharmProjects/OptimizationSystem/out/module_sensitivity/combination_evaluation/final_evaluation/ranking.json",
+  "source_model_manifest": "/userhome/cs5/u3680889/OptimizationSystem/out/layer_sensitivity/setup/merged_model_manifest.json",
+  "module_policy": "/userhome/cs5/u3680889/OptimizationSystem/out/module_sensitivity/final_evaluation/protection_policy.json",
+  "combination_ranking": "/userhome/cs5/u3680889/OptimizationSystem/out/module_sensitivity/combination_evaluation/final_evaluation/ranking.json",
   "candidates": [
     {
       "plan_id": "all_linear_int4",
