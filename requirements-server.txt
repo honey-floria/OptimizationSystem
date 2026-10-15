@@ -1,5 +1,5 @@
 torch>=2.2
-transformers>=4.40
+transformers>=5.18
 torchao>=0.17
 huggingface-hub>=0.23
 accelerate>=0.28

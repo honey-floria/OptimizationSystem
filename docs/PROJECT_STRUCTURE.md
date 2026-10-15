@@ -54,6 +54,7 @@ configs/
 ├── module_sensitivity.json           # 7.2.1 模块发现、精度规则和 KV Cache 能力契约
 ├── financial_error_localization.json # 7.3 错误类型、输入预测与覆盖状态契约
 ├── mixed_precision_search.json       # 7.4 TorchAO 候选、质量和性能门禁
+├── structured_pruning.json          # 8.1 结构化剪枝候选、形状约束和质量拐点门禁
 └── environment/
     ├── nvidia_colab_t4.json          # 已采集的 NVIDIA Colab/T4 环境模板
     └── ascend.pending.json           # 等待真实昇腾机器补齐的环境模板
@@ -74,11 +75,13 @@ scripts/
 ├── run_module_sensitivity_pilot.sh    # 逐进程续跑 7.2.2/7.2.3 完整 pilot 矩阵
 ├── run_module_sensitivity_final.sh    # 冻结晋级并续跑 7.2.4/7.2.5 最终评测
 ├── run_financial_error_localization.py# 7.3 离线错误定位与制品校验
-└── run_mixed_precision_search.py      # 7.4 真实量化、评测、Benchmark 与筛选
+├── run_mixed_precision_search.py      # 7.4 真实量化、评测、Benchmark 与筛选
+└── run_structured_pruning.py         # 8.1 候选准备、剪枝导出、证据登记和拐点收口
 
 notebooks/
-└── optimization_system_all_colab.ipynb
-                                       # 按 TODO 顺序合并的 Colab 全流程 Notebook
+├── optimization_system_all_colab.ipynb
+│                                      # 按 TODO 顺序合并的 Colab 全流程 Notebook
+└── structured_pruning_colab.ipynb    # 8.1 单候选低存储 Colab 验证 Notebook
 
 inputs/
 └── model_manifest.example.json        # 上游模型资产清单示例
@@ -141,19 +144,23 @@ src/
 │   ├── quality_repair.py             # Prompt、JSON 解析、确定性计算和 LoRA 评测核心逻辑
 │   └── stage5_acceptance.py          # 第 5 章 NVIDIA 基线阶段验收
 │
-└── quantization/
-    ├── __init__.py                   # 导出统一量化接口
-    ├── framework.py                  # 量化配置、后端适配器、导出和日志契约
-    ├── awq.py                        # AWQ INT4 导出、加载、评测和证据校验
-    ├── gptq.py                       # GPTQ INT4 导出、加载、评测和证据校验
-    ├── int8_fp8.py                   # SmoothQuant INT8、FP8 能力探测和质量对比
-    ├── comparison.py                 # 汇总 FP16/INT8/AWQ/GPTQ 的质量与性能报告
-    ├── module_sensitivity.py         # 7.2.1 上游合同、模块发现、tied weights 与 KV Cache 审计
-    ├── module_sensitivity_experiments.py
-    │                                  # 7.2.2/7.2.3 计划矩阵、专项 probe、评测和续跑
-    ├── module_sensitivity_final.py    # 7.2.4/7.2.5 晋级冻结、完整评测、排名与保护策略
-    ├── stage7_acceptance.py           # 7.5 汇总 7.1～7.4 证据并执行阶段门禁
-    └── stage6_acceptance.py          # 第 6 章定制量化阶段验收
+├── quantization/
+│   ├── __init__.py                   # 导出统一量化接口
+│   ├── framework.py                  # 量化配置、后端适配器、导出和日志契约
+│   ├── awq.py                        # AWQ INT4 导出、加载、评测和证据校验
+│   ├── gptq.py                       # GPTQ INT4 导出、加载、评测和证据校验
+│   ├── int8_fp8.py                   # SmoothQuant INT8、FP8 能力探测和质量对比
+│   ├── comparison.py                 # 汇总 FP16/INT8/AWQ/GPTQ 的质量与性能报告
+│   ├── module_sensitivity.py         # 7.2.1 上游合同、模块发现、tied weights 与 KV Cache 审计
+│   ├── module_sensitivity_experiments.py
+│   │                                  # 7.2.2/7.2.3 计划矩阵、专项 probe、评测和续跑
+│   ├── module_sensitivity_final.py    # 7.2.4/7.2.5 晋级冻结、完整评测、排名与保护策略
+│   ├── stage7_acceptance.py           # 7.5 汇总 7.1～7.4 证据并执行阶段门禁
+│   └── stage6_acceptance.py          # 第 6 章定制量化阶段验收
+│
+└── pruning/
+    ├── __init__.py                   # 结构化剪枝包定义
+    └── structured.py                 # 8.1 Attention/MLP/层剪枝、结构审计和质量拐点
 ```
 
 核心调用关系：
@@ -195,6 +202,7 @@ tests/
 │                                      # 7.3 对齐、分类、退化和哈希校验测试
 ├── test_mixed_precision.py           # 7.4 候选、证据与筛选门禁测试
 ├── test_stage7_acceptance.py          # 7.5 阶段门禁、部署声明和交付物测试
+├── test_structured_pruning.py         # 8.1 GQA/MLP 约束、候选矩阵和拐点门禁测试
 │
 ├── test_quantization_framework.py    # 统一量化契约测试
 ├── test_awq.py                       # AWQ 流程测试

@@ -3409,3 +3409,39 @@ out/stage7/
 ├── validation.json
 └── report.md
 ```
+
+## 8.1 结构化剪枝实现（2026-10-15）
+
+本轮完成了 8.1 的可执行框架，但未在当前本地环境冒充 7B 真实实验结果。实现位于
+`src/pruning/structured.py`，配置和入口分别为 `configs/structured_pruning.json` 和
+`scripts/run_structured_pruning.py`。
+
+实现采用真实结构删减而不是 mask：Attention 同步改写 Q/K/V/O 投影，MLP 同步改写
+SwiGLU 的 gate/up/down 通道，可选层剪枝会重建 `ModuleList` 并重编 cache 所需的 `layer_idx`。
+Qwen2.5-7B 的 28Q/4KV GQA 不能将任意百分比直接换算为 head 数；搜索器因此同时约束整除性、
+目标偏差和 Q/KV 剪枝比例失衡，并将目标率与实际参数减少率分开记录。
+由于旧版 Qwen2 运行时会从 `hidden_size/num_heads` 重新推导 head 维度，剪枝后宽度只能在支持
+显式 `head_dim` 的版本可移植重载。项目已按现有真实服务器环境将 `requirements-server.txt`
+提升为 `transformers>=5.18`，并把落盘后独立重载列为强制门禁。
+
+四个预注册候选为 `structured_05/10/15/20`。导出时必须通过投影形状、GQA 整除、MLP
+通道一致性、单 token forward 和从磁盘独立重载后的二次 forward。质量证据登记时会与同源
+BF16 883 条 full-dev 报告关联并保存 SHA256 receipt；只有四个候选的导出和质量证据都齐全，
+`finalize` 才会记录首个绝对准确率下降超过 2 个百分点的拐点。
+
+服务器执行顺序为：
+
+```bash
+python3 scripts/run_structured_pruning.py prepare
+python3 scripts/run_structured_pruning.py evaluate-baseline --device cuda:0
+python3 scripts/run_structured_pruning.py export --plan-id structured_05 --device cuda:0
+python3 scripts/run_structured_pruning.py evaluate --plan-id structured_05 --device cuda:0
+# 若已有外部同口径报告，可以用 record-quality 代替 evaluate
+python3 scripts/run_structured_pruning.py record-quality --plan-id structured_05 --source <candidate-quality-report.json>
+python3 scripts/run_structured_pruning.py pending
+python3 scripts/run_structured_pruning.py finalize
+```
+
+当前本地 `.venv` 未安装 PyTorch 和 pytest，因此只完成语法、候选矩阵、GQA 可行形状、MLP
+对齐、证据哈希和拐点收口的纯 Python 检查。`TODO.md` 中仅勾选已实现的四项代码能力；
+结构合法性实模型验收、5%/10%/15%/20% 评测和质量拐点仍保持未勾选，等待服务器证据。

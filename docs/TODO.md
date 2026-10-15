@@ -735,10 +735,20 @@ full-dev 层级/模块排名只覆盖预注册晋级子集；7.3 只完成当前
 
 ### 8.1 结构化剪枝
 
-- [ ] 确定可剪枝模块和约束
-- [ ] 实现 Attention head 剪枝
-- [ ] 实现 MLP 中间维度剪枝
-- [ ] 实现可选 Transformer 层剪枝
+实现契约：
+
+- 基线使用 7.1 冻结的合并 BF16 模型，不在量化 Tensor 上做结构修改；每个候选都必须保存为可独立重载的 Transformers 模型。Attention 宽度改写依赖显式 `head_dim` 配置，因此服务器锁定到已验证的 `transformers>=5.18`；旧版会从 `hidden_size/num_heads` 重算宽度，不得用于导出。
+- Attention 对 `q_proj/k_proj/v_proj` 删行、对 `o_proj` 删对应列；依据权重 L2 重要度保留 head。GQA 同时搜索 Q/KV head 数，在满足 `Q heads % KV heads == 0` 的前提下同时惩罚目标剪枝率偏差和 Q/KV 剪枝比例失衡，避免为追求总宽度接近目标而过度删除 KV head；报告必须记录实际剪枝率，不把目标值当作实测值。
+- MLP 对 SwiGLU `gate_proj/up_proj` 删相同行，对 `down_proj` 删对应列；三个权重的 L2 重要度联合排序，保留维度按 128 对齐。
+- Transformer 层剪枝只接受显式 `layer_indices`，不从全局百分比暗中推导；删层后重编 `layer_idx` 并更新 `num_hidden_layers`。
+- 候选矩阵固定为 5%/10%/15%/20% Attention+MLP 组合剪枝。每个候选先通过投影形状、GQA 整除性、MLP 通道一致性、单 token forward 和重载检查，再进入完整金融业务评估。
+- 质量拐点定义为按剪枝率升序的第一个“金融业务准确率较同源 BF16 基线绝对下降超过 2 个百分点”的候选；没有完整证据时不允许生成拐点结论。
+- 执行入口为 `scripts/run_structured_pruning.py`，配置为 `configs/structured_pruning.json`，输出及证据统一放入 `out/structured_pruning/`。
+
+- [x] 确定可剪枝模块和约束
+- [x] 实现 Attention head 剪枝
+- [x] 实现 MLP 中间维度剪枝
+- [x] 实现可选 Transformer 层剪枝
 - [ ] 验证剪枝后模型结构合法
 - [ ] 测试 5% 剪枝率
 - [ ] 测试 10% 剪枝率

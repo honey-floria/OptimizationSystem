@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "stage": "8.1",
+  "dtype": "bfloat16",
+  "paths": {
+    "output_root": "out/structured_pruning",
+    "source_model_manifest": "out/layer_sensitivity/setup/merged_model_manifest.json",
+    "baseline_quality_report": "out/structured_pruning/baseline/comparison_report.json",
+    "baseline_config": "configs/baseline.json",
+    "quality_config": "configs/quality_repair_4080.json",
+    "dataset_dir": "datasets_contextual"
+  },
+  "architecture": {
+    "family": "qwen2",
+    "block_path": "model.layers",
+    "attention_module": "self_attn",
+    "mlp_module": "mlp"
+  },
+  "constraints": {
+    "importance": "weight_l2",
+    "minimum_transformers_version": "5.18.0",
+    "requires_explicit_head_dim": true,
+    "attention_rule": "rate-close balanced GQA pair with num_attention_heads divisible by num_key_value_heads",
+    "mlp_alignment": 128,
+    "layer_pruning_requires_explicit_indices": true,
+    "minimum_remaining_layers": 1
+  },
+  "quality_gate": {
+    "metric": "financial_business_accuracy",
+    "variant": "structured_json",
+    "max_absolute_accuracy_drop": 0.02,
+    "min_parse_rate": 0.99
+  },
+  "candidates": [
+    {"plan_id": "structured_05", "target_rate": 0.05, "components": ["attention", "mlp"]},
+    {"plan_id": "structured_10", "target_rate": 0.10, "components": ["attention", "mlp"]},
+    {"plan_id": "structured_15", "target_rate": 0.15, "components": ["attention", "mlp"]},
+    {"plan_id": "structured_20", "target_rate": 0.20, "components": ["attention", "mlp"]}
+  ]
+}
