@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "7.4",
+  "status": "completed",
+  "plan_id": "all_linear_int4",
+  "suite": "full_dev",
+  "metrics": {
+    "total": 883,
+    "parsed": 877,
+    "correct": 337,
+    "parse_rate": 0.9932049830124575,
+    "numeric_accuracy": 0.38165345413363533
+  },
+  "structured_output_rate": 0.9932049830124575,
+  "format_retry_count": 13,
+  "predictions_sha256": "b41e19b30c92d22d72d516d4fea12d252ad21bbd9a70a58ef8a65edf04487a61",
+  "duration_seconds": 1945.986270755995
+}

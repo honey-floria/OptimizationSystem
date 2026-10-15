@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "7.4",
+  "status": "completed",
+  "plan_id": "all_linear_int4",
+  "suite": "high_risk",
+  "metrics": {
+    "total": 91,
+    "parsed": 91,
+    "correct": 22,
+    "parse_rate": 1.0,
+    "numeric_accuracy": 0.24175824175824176
+  },
+  "structured_output_rate": 0.989010989010989,
+  "format_retry_count": 2,
+  "predictions_sha256": "9e9b0258b7a1394b06251d375b7017ad611947cad9bf2261654bc17ff89b275a",
+  "duration_seconds": 291.2354345668573
+}

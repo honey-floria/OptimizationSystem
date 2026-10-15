@@ -1,0 +1,19 @@
+{
+  "plan_id": "all_linear_int4",
+  "suite": "benchmark",
+  "source": "/userhome/cs5/u3680889/OptimizationSystem/out/mixed_precision_search/runs/all_linear_int4/benchmark/benchmark.json",
+  "evidence": "/userhome/cs5/u3680889/OptimizationSystem/out/mixed_precision_search/evidence/all_linear_int4/benchmark.json",
+  "sha256": "4552d338c27268634b699da9394075cb50aa03a58f8a230eed9b8b8025bf0ef1",
+  "top_level_keys": [
+    "baseline_config",
+    "benchmark_config",
+    "benchmark_name",
+    "cases",
+    "command",
+    "created_at",
+    "environment",
+    "model_metadata",
+    "schema_version",
+    "workload"
+  ]
+}
